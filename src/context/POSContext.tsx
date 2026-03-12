@@ -36,6 +36,7 @@ interface POSContextType {
 
   exportData: () => string;
   importData: (json: string) => void;
+  factoryReset: () => void;
 }
 
 const POSContext = createContext<POSContextType | null>(null);
