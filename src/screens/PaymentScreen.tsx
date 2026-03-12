@@ -1,36 +1,57 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { usePOS } from '@/context/POSContext';
 import { TopBar } from '@/components/pos/Navigation';
 import QRDisplay from '@/components/pos/QRDisplay';
 import BillPreview from '@/components/pos/BillPreview';
-import { Banknote, Smartphone, CheckCircle2, RotateCcw } from 'lucide-react';
+import { Banknote, Smartphone, CheckCircle2, RotateCcw, Home } from 'lucide-react';
 import { printer, formatReceipt } from '@/utils/printer';
 import { format } from 'date-fns';
+import { Order, OrderItem } from '@/types/pos';
 
 const PaymentScreen = () => {
   const { tableId } = useParams<{ tableId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { tables, orders, settings, getActiveOrder, updateOrderStatus, addPayment, resetTable, getNextBillNumber } = usePOS();
+  const { tables, settings, getActiveOrder, updateOrderStatus, addPayment, resetTable, getNextBillNumber } = usePOS();
 
   const rawState = location.state as { discount?: number; discountType?: 'percent' | 'fixed'; total?: number; subtotal?: number; discountAmount?: number } | null;
   const state = rawState || {};
   const table = tables.find(t => t.id === tableId);
   const order = tableId ? getActiveOrder(tableId) : undefined;
 
+  // Snapshot order data so it survives status changes
+  const orderSnapshot = useRef<{ id: string; items: OrderItem[]; tableNumber: number } | null>(null);
+  useEffect(() => {
+    if (order && !orderSnapshot.current) {
+      orderSnapshot.current = { id: order.id, items: [...order.items], tableNumber: order.tableNumber };
+    }
+  }, [order]);
+
+  const snap = orderSnapshot.current || (order ? { id: order.id, items: order.items, tableNumber: order.tableNumber } : null);
+
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [paid, setPaid] = useState(false);
   const [billNum, setBillNum] = useState<number>(0);
 
-  if (!table || !order) {
-    return <div className="min-h-screen bg-background flex items-center justify-center text-foreground">No active order.</div>;
+  if (!table || !snap) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+        <p className="text-foreground">No active order for this table.</p>
+        <button
+          onClick={() => navigate('/')}
+          className="px-6 py-3 rounded-xl bg-accent text-accent-foreground font-bold flex items-center gap-2 transition-all active:scale-95"
+        >
+          <Home size={18} /> Go to Tables
+        </button>
+      </div>
+    );
   }
 
-  const total = state.total || order.items.reduce((s, i) => s + i.price * i.quantity, 0);
+  const total = state.total || snap.items.reduce((s, i) => s + i.price * i.quantity, 0);
   const subtotal = state.subtotal || total;
   const discountAmt = state.discountAmount || 0;
-  const reference = `${settings.cafeName.replace(/\s/g, '')}-T${table.number}-B${settings.billCounter + 1}`;
+  const reference = `${settings.cafeName.replace(/\s/g, '')}-T${snap.tableNumber}-B${settings.billCounter + 1}`;
 
   const methods = [
     { id: 'cash', label: 'Cash', icon: Banknote },
@@ -40,7 +61,7 @@ const PaymentScreen = () => {
   ];
 
   const generateEsewaQR = () => {
-    return `eSewa://pay?eSewaID=${settings.esewaPhone || settings.esewaId}&amount=${total}&table=${table.number}&ref=${reference}`;
+    return `eSewa://pay?eSewaID=${settings.esewaPhone || settings.esewaId}&amount=${total}&table=${snap.tableNumber}&ref=${reference}`;
   };
 
   const handleConfirmPayment = async () => {
@@ -49,9 +70,9 @@ const PaymentScreen = () => {
     setBillNum(bn);
 
     addPayment({
-      orderId: order.id,
-      tableNumber: table.number,
-      items: [...order.items],
+      orderId: snap.id,
+      tableNumber: snap.tableNumber,
+      items: [...snap.items],
       subtotal,
       discount: state.discount || 0,
       discountType: state.discountType || 'fixed',
@@ -63,15 +84,14 @@ const PaymentScreen = () => {
       billNumber: bn,
     });
 
-    updateOrderStatus(order.id, 'paid');
+    updateOrderStatus(snap.id, 'paid');
     setPaid(true);
 
-    // Try printing
     if (printer.isConnected) {
       await printer.print(formatReceipt({
         cafeName: settings.cafeName,
-        tableNumber: table.number,
-        items: order.items,
+        tableNumber: snap.tableNumber,
+        items: snap.items,
         subtotal,
         discount: discountAmt,
         total,
@@ -84,7 +104,7 @@ const PaymentScreen = () => {
 
   const handleReset = () => {
     if (tableId) resetTable(tableId);
-    navigate('/');
+    navigate('/', { replace: true });
   };
 
   if (paid) {
@@ -100,8 +120,8 @@ const PaymentScreen = () => {
 
           <BillPreview
             cafeName={settings.cafeName}
-            tableNumber={table.number}
-            items={order.items}
+            tableNumber={snap.tableNumber}
+            items={snap.items}
             subtotal={subtotal}
             discount={state.discount || 0}
             discountType={state.discountType || 'fixed'}
@@ -115,7 +135,14 @@ const PaymentScreen = () => {
             onClick={handleReset}
             className="w-full py-4 rounded-xl bg-success text-accent-foreground font-bold text-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
           >
-            <RotateCcw size={20} /> Reset Table
+            <RotateCcw size={20} /> Reset Table & Go Home
+          </button>
+
+          <button
+            onClick={() => navigate('/', { replace: true })}
+            className="w-full py-3 rounded-xl bg-secondary text-secondary-foreground font-medium flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+          >
+            <Home size={18} /> Back to Tables
           </button>
         </div>
       </div>
@@ -124,14 +151,13 @@ const PaymentScreen = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <TopBar title={`Payment — Table ${table.number}`} showBack onBack={() => navigate(`/billing/${tableId}`)} />
+      <TopBar title={`Payment — Table ${snap.tableNumber}`} showBack onBack={() => navigate(`/billing/${tableId}`, { replace: true })} />
       <div className="max-w-lg mx-auto p-4 space-y-4">
         <div className="bg-card rounded-xl border border-border p-4 text-center">
           <p className="text-muted-foreground text-sm">Amount Due</p>
           <p className="text-3xl font-bold text-accent mt-1">Rs. {total}</p>
         </div>
 
-        {/* Payment Methods */}
         <div className="space-y-2">
           <h3 className="font-bold text-foreground">Select Payment Method</h3>
           <div className="grid grid-cols-2 gap-3">
@@ -152,14 +178,8 @@ const PaymentScreen = () => {
           </div>
         </div>
 
-        {/* QR Code for digital payments */}
         {selectedMethod === 'esewa' && (
-          <QRDisplay
-            data={generateEsewaQR()}
-            label="eSewa Payment"
-            amount={total}
-            reference={reference}
-          />
+          <QRDisplay data={generateEsewaQR()} label="eSewa Payment" amount={total} reference={reference} />
         )}
 
         {selectedMethod && selectedMethod !== 'esewa' && selectedMethod !== 'cash' && (

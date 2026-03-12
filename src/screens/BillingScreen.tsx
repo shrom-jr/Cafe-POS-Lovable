@@ -29,8 +29,14 @@ const BillingScreen = () => {
 
   if (!table || !order) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center text-foreground">
-        No active order for this table.
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+        <p className="text-foreground">No active order for this table.</p>
+        <button
+          onClick={() => navigate('/')}
+          className="px-6 py-3 rounded-xl bg-accent text-accent-foreground font-bold flex items-center gap-2 transition-all active:scale-95"
+        >
+          Go to Tables
+        </button>
       </div>
     );
   }
