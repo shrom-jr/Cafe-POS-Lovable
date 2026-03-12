@@ -195,6 +195,7 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const factoryReset = useCallback(() => {
     db.clearAll();
+    // clearAll removes pos_initialized, so seed will re-populate defaults
     db.seed();
     setTables(db.getTables());
     setCategories(db.getCategories());
