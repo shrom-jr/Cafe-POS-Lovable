@@ -528,7 +528,8 @@ const ReportsSection = () => {
 
 // ====== BACKUP ======
 const BackupSection = () => {
-  const { exportData, importData } = usePOS();
+  const { exportData, importData, factoryReset } = usePOS();
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleExport = () => {
