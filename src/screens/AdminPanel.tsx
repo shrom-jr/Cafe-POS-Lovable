@@ -72,6 +72,7 @@ const AdminPanel = () => {
     { id: 'menu', label: 'Menu', icon: <Coffee size={16} /> },
     { id: 'tables', label: 'Tables', icon: <Table2 size={16} /> },
     { id: 'payments', label: 'Payments', icon: <CreditCard size={16} /> },
+    { id: 'bill', label: 'Bill Design', icon: <Receipt size={16} /> },
     { id: 'reports', label: 'Reports', icon: <TrendingUp size={16} /> },
     { id: 'backup', label: 'Backup', icon: <FileDown size={16} /> },
   ];
