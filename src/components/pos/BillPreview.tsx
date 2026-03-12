@@ -3,6 +3,10 @@ import { format } from 'date-fns';
 
 interface Props {
   cafeName: string;
+  cafeLogo?: string;
+  cafeAddress?: string;
+  cafePhone?: string;
+  billFooter?: string;
   tableNumber: number;
   items: OrderItem[];
   subtotal: number;
@@ -14,7 +18,7 @@ interface Props {
   date?: number;
 }
 
-const BillPreview = ({ cafeName, tableNumber, items, subtotal, discount, discountType, total, method, billNumber, date }: Props) => {
+const BillPreview = ({ cafeName, cafeLogo, cafeAddress, cafePhone, billFooter, tableNumber, items, subtotal, discount, discountType, total, method, billNumber, date }: Props) => {
   const dateStr = format(date || Date.now(), 'yyyy-MM-dd HH:mm');
   const discountDisplay = discountType === 'percent' ? `${discount}%` : `Rs. ${discount}`;
 
@@ -22,7 +26,10 @@ const BillPreview = ({ cafeName, tableNumber, items, subtotal, discount, discoun
     <div className="bg-card border border-border rounded-xl p-6 max-w-md mx-auto">
       {/* Header */}
       <div className="text-center mb-4">
+        {cafeLogo && <img src={cafeLogo} alt="Logo" className="w-16 h-16 object-contain mx-auto mb-2 rounded-lg" />}
         <h2 className="text-xl font-bold text-accent">{cafeName}</h2>
+        {cafeAddress && <p className="text-xs text-muted-foreground">{cafeAddress}</p>}
+        {cafePhone && <p className="text-xs text-muted-foreground">{cafePhone}</p>}
         <div className="text-xs text-muted-foreground mt-1">
           {billNumber && <span>Bill #{billNumber} · </span>}
           Table {tableNumber}
