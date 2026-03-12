@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
+import BillPreview from '@/components/pos/BillPreview';
 import { usePOS } from '@/context/POSContext';
 import Navigation from '@/components/pos/Navigation';
 import { TopBar } from '@/components/pos/Navigation';
