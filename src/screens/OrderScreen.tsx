@@ -15,17 +15,11 @@ const OrderScreen = () => {
   const [activeCat, setActiveCat] = useState(categories[0]?.id || '');
   const [search, setSearch] = useState('');
 
-  // Create or get order
+  // Get existing order (don't auto-create — wait for first item)
   const order = useMemo(() => {
     if (!tableId || !table) return null;
     return getActiveOrder(tableId) || null;
   }, [tableId, table, getActiveOrder, orders]);
-
-  useEffect(() => {
-    if (tableId && table && !order) {
-      createOrder(tableId, table.number);
-    }
-  }, [tableId, table]);
 
   const filteredItems = useMemo(() => {
     let items = menuItems;
