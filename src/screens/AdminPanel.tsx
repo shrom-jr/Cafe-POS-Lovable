@@ -12,7 +12,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { format, startOfDay, subDays, startOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval } from 'date-fns';
 
-type AdminTab = 'dashboard' | 'menu' | 'tables' | 'payments' | 'reports' | 'backup';
+type AdminTab = 'dashboard' | 'menu' | 'tables' | 'payments' | 'bill' | 'reports' | 'backup';
 
 const AdminPanel = () => {
   const [authenticated, setAuthenticated] = useState(false);
