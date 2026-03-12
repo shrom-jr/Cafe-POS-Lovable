@@ -36,6 +36,7 @@ interface POSContextType {
 
   exportData: () => string;
   importData: (json: string) => void;
+  factoryReset: () => void;
 }
 
 const POSContext = createContext<POSContextType | null>(null);
@@ -192,6 +193,18 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSettings(db.getSettings());
   }, []);
 
+  const factoryReset = useCallback(() => {
+    db.clearAll();
+    // clearAll removes pos_initialized, so seed will re-populate defaults
+    db.seed();
+    setTables(db.getTables());
+    setCategories(db.getCategories());
+    setMenuItems(db.getMenuItems());
+    setOrders(db.getOrders());
+    setPayments(db.getPayments());
+    setSettings(db.getSettings());
+  }, []);
+
   return (
     <POSContext.Provider value={{
       tables, addTable, updateTable, deleteTable, resetTable,
@@ -200,7 +213,7 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       orders, getActiveOrder, createOrder, addItemToOrder, updateItemQuantity, removeItemFromOrder, updateOrderStatus,
       payments, addPayment,
       settings, updateSettings, getNextBillNumber,
-      exportData, importData,
+      exportData, importData, factoryReset,
     }}>
       {children}
     </POSContext.Provider>

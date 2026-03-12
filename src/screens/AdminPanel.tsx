@@ -528,7 +528,8 @@ const ReportsSection = () => {
 
 // ====== BACKUP ======
 const BackupSection = () => {
-  const { exportData, importData } = usePOS();
+  const { exportData, importData, factoryReset } = usePOS();
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleExport = () => {
@@ -580,6 +581,38 @@ const BackupSection = () => {
         >
           <Upload size={16} /> Import Backup
         </button>
+      </div>
+
+      {/* Factory Reset */}
+      <div className="bg-card rounded-xl border-2 border-destructive/30 p-4 space-y-3">
+        <h3 className="font-bold text-destructive">Factory Reset</h3>
+        <p className="text-sm text-muted-foreground">Delete all data and restore default settings. This cannot be undone.</p>
+        {!showResetConfirm ? (
+          <button
+            onClick={() => setShowResetConfirm(true)}
+            className="w-full py-3 rounded-xl bg-destructive/10 text-destructive font-medium flex items-center justify-center gap-2 hover:bg-destructive/20 transition-colors"
+          >
+            <Trash2 size={16} /> Factory Reset
+          </button>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-destructive text-center">Are you sure? All data will be erased.</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                className="flex-1 py-3 rounded-xl bg-secondary text-secondary-foreground font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { factoryReset(); window.location.reload(); }}
+                className="flex-1 py-3 rounded-xl bg-destructive text-destructive-foreground font-bold"
+              >
+                Confirm Reset
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
