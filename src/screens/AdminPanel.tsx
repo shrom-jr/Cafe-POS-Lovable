@@ -393,11 +393,51 @@ const PaymentsSection = () => {
           <input value={esewaPhone} onChange={(e) => setEsewaPhone(e.target.value)} onBlur={() => updateSettings({ esewaPhone })} placeholder="98XXXXXXXX" className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
         </div>
         {(['esewa', 'khalti', 'fonepay'] as const).map(key => (
-          <div key={key} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
-            <span className="text-sm font-medium text-foreground capitalize">{key}</span>
-            <button onClick={() => toggleWallet(key)} className="text-accent">
-              {settings.wallets[key].enabled ? <ToggleRight size={28} /> : <ToggleLeft size={28} className="text-muted-foreground" />}
-            </button>
+          <div key={key} className="p-3 bg-secondary/50 rounded-lg space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-foreground capitalize">{key}</span>
+              <button onClick={() => toggleWallet(key)} className="text-accent">
+                {settings.wallets[key].enabled ? <ToggleRight size={28} /> : <ToggleLeft size={28} className="text-muted-foreground" />}
+              </button>
+            </div>
+
+            {/* QR Image Upload */}
+            {settings.wallets[key].enabled && (
+              <div className="space-y-2">
+                {settings.wallets[key].qrImage && (
+                  <div className="relative w-32 h-32 mx-auto">
+                    <img src={settings.wallets[key].qrImage} alt={`${key} QR`} className="w-full h-full object-contain rounded-lg border border-border bg-foreground p-1" />
+                    <button
+                      onClick={() => updateSettings({
+                        wallets: { ...settings.wallets, [key]: { ...settings.wallets[key], qrImage: undefined } }
+                      })}
+                      className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-danger text-accent-foreground flex items-center justify-center"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                )}
+                <label className="flex items-center justify-center gap-2 w-full py-2 rounded-lg bg-primary text-foreground text-sm font-medium cursor-pointer hover:bg-accent/20 transition-colors">
+                  <Upload size={14} /> {settings.wallets[key].qrImage ? 'Replace' : 'Upload'} QR Image
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        updateSettings({
+                          wallets: { ...settings.wallets, [key]: { ...settings.wallets[key], qrImage: reader.result as string } }
+                        });
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                </label>
+              </div>
+            )}
           </div>
         ))}
       </div>
