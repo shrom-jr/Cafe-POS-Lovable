@@ -100,6 +100,7 @@ const AdminPanel = () => {
         {activeTab === 'menu' && <MenuSection />}
         {activeTab === 'tables' && <TablesSection />}
         {activeTab === 'payments' && <PaymentsSection />}
+        {activeTab === 'bill' && <BillDesignSection />}
         {activeTab === 'reports' && <ReportsSection />}
         {activeTab === 'backup' && <BackupSection />}
       </div>
