@@ -460,6 +460,122 @@ const PaymentsSection = () => {
   );
 };
 
+// ====== BILL DESIGN ======
+const BillDesignSection = () => {
+  const { settings, updateSettings } = usePOS();
+  const [cafeName, setCafeName] = useState(settings.cafeName);
+  const [cafeAddress, setCafeAddress] = useState(settings.cafeAddress || '');
+  const [cafePhone, setCafePhone] = useState(settings.cafePhone || '');
+  const [billFooter, setBillFooter] = useState(settings.billFooter || 'Thank you for visiting!');
+  const [billCounter, setBillCounter] = useState(String(settings.billCounter));
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => updateSettings({ cafeLogo: reader.result as string });
+    reader.readAsDataURL(file);
+  };
+
+  const saveAll = () => {
+    updateSettings({
+      cafeName,
+      cafeAddress: cafeAddress || undefined,
+      cafePhone: cafePhone || undefined,
+      billFooter: billFooter || undefined,
+      billCounter: Number(billCounter) || settings.billCounter,
+    });
+  };
+
+  const sampleItems = [
+    { menuItemId: '1', name: 'Cappuccino', price: 250, quantity: 2 },
+    { menuItemId: '2', name: 'Croissant', price: 180, quantity: 1 },
+  ];
+  const sampleSubtotal = 680;
+  const sampleTotal = 680;
+
+  return (
+    <div className="space-y-4">
+      {/* Logo Upload */}
+      <div className="bg-card rounded-xl border border-border p-4 space-y-3">
+        <h3 className="font-bold text-foreground">Café Logo</h3>
+        <div className="flex items-center gap-4">
+          {settings.cafeLogo ? (
+            <div className="relative w-20 h-20">
+              <img src={settings.cafeLogo} alt="Logo" className="w-full h-full object-contain rounded-lg border border-border" />
+              <button
+                onClick={() => updateSettings({ cafeLogo: undefined })}
+                className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          ) : (
+            <div className="w-20 h-20 rounded-lg border-2 border-dashed border-border flex items-center justify-center text-muted-foreground">
+              <ImagePlus size={24} />
+            </div>
+          )}
+          <label className="flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-secondary-foreground text-sm font-medium cursor-pointer hover:bg-accent/20 transition-colors">
+            <Upload size={14} /> {settings.cafeLogo ? 'Replace' : 'Upload'} Logo
+            <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+          </label>
+        </div>
+      </div>
+
+      {/* Bill Info */}
+      <div className="bg-card rounded-xl border border-border p-4 space-y-3">
+        <h3 className="font-bold text-foreground">Bill Information</h3>
+        <div className="space-y-2">
+          <div>
+            <label className="text-xs text-muted-foreground">Café Name</label>
+            <input value={cafeName} onChange={(e) => setCafeName(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-accent" />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Address</label>
+            <input value={cafeAddress} onChange={(e) => setCafeAddress(e.target.value)} placeholder="e.g. Kathmandu, Nepal" className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Phone</label>
+            <input value={cafePhone} onChange={(e) => setCafePhone(e.target.value)} placeholder="e.g. 01-XXXXXXX" className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Bill Footer Message</label>
+            <input value={billFooter} onChange={(e) => setBillFooter(e.target.value)} placeholder="Thank you for visiting!" className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Current Bill Number</label>
+            <input value={billCounter} onChange={(e) => setBillCounter(e.target.value)} type="number" className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-accent" />
+            <p className="text-xs text-muted-foreground mt-1">Next bill will be #{Number(billCounter) + 1}</p>
+          </div>
+        </div>
+        <button onClick={saveAll} className="w-full py-3 rounded-xl bg-accent text-accent-foreground font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
+          <Save size={16} /> Save Changes
+        </button>
+      </div>
+
+      {/* Bill Preview */}
+      <div className="bg-card rounded-xl border border-border p-4 space-y-3">
+        <h3 className="font-bold text-foreground">Bill Preview</h3>
+        <BillPreview
+          cafeName={cafeName}
+          cafeLogo={settings.cafeLogo}
+          cafeAddress={cafeAddress}
+          cafePhone={cafePhone}
+          billFooter={billFooter}
+          tableNumber={1}
+          items={sampleItems}
+          subtotal={sampleSubtotal}
+          discount={0}
+          discountType="fixed"
+          total={sampleTotal}
+          billNumber={Number(billCounter) + 1}
+          date={Date.now()}
+        />
+      </div>
+    </div>
+  );
+};
+
 // ====== REPORTS ======
 const ReportsSection = () => {
   const { payments } = usePOS();
