@@ -120,6 +120,10 @@ const PaymentScreen = () => {
 
           <BillPreview
             cafeName={settings.cafeName}
+            cafeLogo={settings.cafeLogo}
+            cafeAddress={settings.cafeAddress}
+            cafePhone={settings.cafePhone}
+            billFooter={settings.billFooter}
             tableNumber={snap.tableNumber}
             items={snap.items}
             subtotal={subtotal}

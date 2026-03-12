@@ -59,6 +59,10 @@ export interface WalletConfig {
 
 export interface Settings {
   cafeName: string;
+  cafeLogo?: string;
+  cafeAddress?: string;
+  cafePhone?: string;
+  billFooter?: string;
   adminPin: string;
   esewaId: string;
   esewaPhone: string;

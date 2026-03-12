@@ -146,22 +146,42 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const updateItemQuantity = useCallback((orderId: string, menuItemId: string, delta: number) => {
-    setOrders(prev => prev.map(o => {
-      if (o.id !== orderId) return o;
-      return {
-        ...o,
-        items: o.items
+    setOrders(prev => {
+      const updated = prev.map(o => {
+        if (o.id !== orderId) return o;
+        const newItems = o.items
           .map(i => i.menuItemId === menuItemId ? { ...i, quantity: i.quantity + delta } : i)
-          .filter(i => i.quantity > 0),
-      };
-    }));
+          .filter(i => i.quantity > 0);
+        return { ...o, items: newItems };
+      });
+      // If order now has 0 items, reset the table
+      const order = updated.find(o => o.id === orderId);
+      if (order && order.items.length === 0) {
+        setTables(prev => prev.map(t =>
+          t.id === order.tableId ? { ...t, status: 'free' as const, orderId: undefined, orderStartTime: undefined } : t
+        ));
+        // Remove the empty order
+        return updated.filter(o => o.id !== orderId);
+      }
+      return updated;
+    });
   }, []);
 
   const removeItemFromOrder = useCallback((orderId: string, menuItemId: string) => {
-    setOrders(prev => prev.map(o => {
-      if (o.id !== orderId) return o;
-      return { ...o, items: o.items.filter(i => i.menuItemId !== menuItemId) };
-    }));
+    setOrders(prev => {
+      const updated = prev.map(o => {
+        if (o.id !== orderId) return o;
+        return { ...o, items: o.items.filter(i => i.menuItemId !== menuItemId) };
+      });
+      const order = updated.find(o => o.id === orderId);
+      if (order && order.items.length === 0) {
+        setTables(prev => prev.map(t =>
+          t.id === order.tableId ? { ...t, status: 'free' as const, orderId: undefined, orderStartTime: undefined } : t
+        ));
+        return updated.filter(o => o.id !== orderId);
+      }
+      return updated;
+    });
   }, []);
 
   const updateOrderStatus = useCallback((orderId: string, status: Order['status']) => {
