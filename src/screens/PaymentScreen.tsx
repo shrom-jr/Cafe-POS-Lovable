@@ -14,7 +14,8 @@ const PaymentScreen = () => {
   const location = useLocation();
   const { tables, orders, settings, getActiveOrder, updateOrderStatus, addPayment, resetTable, getNextBillNumber } = usePOS();
 
-  const state = (location.state as { discount: number; discountType: 'percent' | 'fixed'; total: number; subtotal: number; discountAmount: number }) || {};
+  const rawState = location.state as { discount?: number; discountType?: 'percent' | 'fixed'; total?: number; subtotal?: number; discountAmount?: number } | null;
+  const state = rawState || {};
   const table = tables.find(t => t.id === tableId);
   const order = tableId ? getActiveOrder(tableId) : undefined;
 
