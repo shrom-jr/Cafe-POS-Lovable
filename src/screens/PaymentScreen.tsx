@@ -178,18 +178,31 @@ const PaymentScreen = () => {
           </div>
         </div>
 
-        {selectedMethod === 'esewa' && (
-          <QRDisplay data={generateEsewaQR()} label="eSewa Payment" amount={total} reference={reference} />
-        )}
+        {/* Show uploaded QR or generated QR for digital wallets */}
+        {selectedMethod && selectedMethod !== 'cash' && (() => {
+          const walletKey = selectedMethod as 'esewa' | 'khalti' | 'fonepay';
+          const wallet = settings.wallets[walletKey];
+          const label = selectedMethod.charAt(0).toUpperCase() + selectedMethod.slice(1);
 
-        {selectedMethod && selectedMethod !== 'esewa' && selectedMethod !== 'cash' && (
-          <QRDisplay
-            data={`pay://${selectedMethod}?amount=${total}&ref=${reference}`}
-            label={`${selectedMethod.charAt(0).toUpperCase() + selectedMethod.slice(1)} Payment`}
-            amount={total}
-            reference={reference}
-          />
-        )}
+          // If admin uploaded a QR image, show that instead
+          if (wallet?.qrImage) {
+            return (
+              <div className="flex flex-col items-center gap-4 p-6 bg-card rounded-xl border border-border">
+                <h3 className="text-lg font-bold text-foreground">{label} Payment</h3>
+                <img src={wallet.qrImage} alt={`${label} QR`} className="w-56 h-56 object-contain rounded-xl border border-border bg-foreground p-2" />
+                <p className="text-2xl font-bold text-accent">Rs. {total}</p>
+                <p className="text-xs text-muted-foreground font-mono">{reference}</p>
+                <p className="text-sm text-muted-foreground text-center">Scan with {label} app to pay</p>
+              </div>
+            );
+          }
+
+          // Otherwise generate QR
+          const data = selectedMethod === 'esewa'
+            ? generateEsewaQR()
+            : `pay://${selectedMethod}?amount=${total}&ref=${reference}`;
+          return <QRDisplay data={data} label={`${label} Payment`} amount={total} reference={reference} />;
+        })()}
 
         <button
           onClick={handleConfirmPayment}
