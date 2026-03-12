@@ -7,6 +7,7 @@ import {
   BarChart3, Coffee, UtensilsCrossed, CreditCard, Table2, Settings2, FileDown, FileUp,
   Plus, Trash2, Edit3, Save, X, Lock, Unlock, TrendingUp, DollarSign, ShoppingCart,
   Printer, Download, Upload, Moon, Bluetooth, Smartphone, ToggleLeft, ToggleRight,
+  Receipt, ImagePlus,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { format, startOfDay, subDays, startOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval } from 'date-fns';
