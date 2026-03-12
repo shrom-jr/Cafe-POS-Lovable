@@ -212,7 +212,7 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       orders, getActiveOrder, createOrder, addItemToOrder, updateItemQuantity, removeItemFromOrder, updateOrderStatus,
       payments, addPayment,
       settings, updateSettings, getNextBillNumber,
-      exportData, importData,
+      exportData, importData, factoryReset,
     }}>
       {children}
     </POSContext.Provider>
