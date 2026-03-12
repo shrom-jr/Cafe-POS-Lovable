@@ -90,7 +90,7 @@ const BillPreview = ({ cafeName, cafeLogo, cafeAddress, cafePhone, billFooter, t
       )}
 
       <div className="border-t border-dashed border-border my-3" />
-      <p className="text-center text-xs text-muted-foreground">Thank you for visiting!</p>
+      <p className="text-center text-xs text-muted-foreground">{billFooter || 'Thank you for visiting!'}</p>
     </div>
   );
 };

@@ -168,10 +168,20 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const removeItemFromOrder = useCallback((orderId: string, menuItemId: string) => {
-    setOrders(prev => prev.map(o => {
-      if (o.id !== orderId) return o;
-      return { ...o, items: o.items.filter(i => i.menuItemId !== menuItemId) };
-    }));
+    setOrders(prev => {
+      const updated = prev.map(o => {
+        if (o.id !== orderId) return o;
+        return { ...o, items: o.items.filter(i => i.menuItemId !== menuItemId) };
+      });
+      const order = updated.find(o => o.id === orderId);
+      if (order && order.items.length === 0) {
+        setTables(prev => prev.map(t =>
+          t.id === order.tableId ? { ...t, status: 'free' as const, orderId: undefined, orderStartTime: undefined } : t
+        ));
+        return updated.filter(o => o.id !== orderId);
+      }
+      return updated;
+    });
   }, []);
 
   const updateOrderStatus = useCallback((orderId: string, status: Order['status']) => {
