@@ -193,6 +193,17 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSettings(db.getSettings());
   }, []);
 
+  const factoryReset = useCallback(() => {
+    db.clearAll();
+    db.seed();
+    setTables(db.getTables());
+    setCategories(db.getCategories());
+    setMenuItems(db.getMenuItems());
+    setOrders(db.getOrders());
+    setPayments(db.getPayments());
+    setSettings(db.getSettings());
+  }, []);
+
   return (
     <POSContext.Provider value={{
       tables, addTable, updateTable, deleteTable, resetTable,
