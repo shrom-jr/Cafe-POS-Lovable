@@ -133,7 +133,7 @@ const PaymentScreen = () => {
 
           <button
             onClick={handleReset}
-            className="w-full py, rounded-xl bg-success text-accent-foreground font-bold text-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+            className="w-full py-4 rounded-xl bg-success text-accent-foreground font-bold text-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
           >
             <RotateCcw size={20} /> Reset Table & Go Home
           </button>
