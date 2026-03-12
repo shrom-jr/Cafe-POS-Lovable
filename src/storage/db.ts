@@ -1,0 +1,127 @@
+import { CafeTable, Category, MenuItem, Order, Payment, Settings } from '@/types/pos';
+
+const KEYS = {
+  tables: 'pos_tables',
+  categories: 'pos_categories',
+  menuItems: 'pos_menuItems',
+  orders: 'pos_orders',
+  payments: 'pos_payments',
+  settings: 'pos_settings',
+};
+
+function get<T>(key: string, fallback: T): T {
+  try {
+    const d = localStorage.getItem(key);
+    return d ? JSON.parse(d) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function set(key: string, val: unknown) {
+  localStorage.setItem(key, JSON.stringify(val));
+}
+
+const defaultTables: CafeTable[] = Array.from({ length: 8 }, (_, i) => ({
+  id: `table-${i + 1}`,
+  number: i + 1,
+  status: 'free' as const,
+}));
+
+const defaultCategories: Category[] = [
+  { id: 'cat-hot', name: 'Hot Drinks', order: 1 },
+  { id: 'cat-cold', name: 'Cold Drinks', order: 2 },
+  { id: 'cat-pastry', name: 'Pastries', order: 3 },
+  { id: 'cat-snack', name: 'Snacks', order: 4 },
+];
+
+const defaultMenuItems: MenuItem[] = [
+  { id: 'mi-1', categoryId: 'cat-hot', name: 'Espresso', price: 150 },
+  { id: 'mi-2', categoryId: 'cat-hot', name: 'Americano', price: 180 },
+  { id: 'mi-3', categoryId: 'cat-hot', name: 'Cappuccino', price: 250 },
+  { id: 'mi-4', categoryId: 'cat-hot', name: 'Latte', price: 280 },
+  { id: 'mi-5', categoryId: 'cat-hot', name: 'Mocha', price: 300 },
+  { id: 'mi-6', categoryId: 'cat-hot', name: 'Hot Chocolate', price: 220 },
+  { id: 'mi-7', categoryId: 'cat-hot', name: 'Macchiato', price: 200 },
+  { id: 'mi-8', categoryId: 'cat-cold', name: 'Iced Latte', price: 300 },
+  { id: 'mi-9', categoryId: 'cat-cold', name: 'Iced Americano', price: 220 },
+  { id: 'mi-10', categoryId: 'cat-cold', name: 'Cold Brew', price: 280 },
+  { id: 'mi-11', categoryId: 'cat-cold', name: 'Mango Smoothie', price: 350 },
+  { id: 'mi-12', categoryId: 'cat-cold', name: 'Berry Smoothie', price: 350 },
+  { id: 'mi-13', categoryId: 'cat-cold', name: 'Iced Mocha', price: 320 },
+  { id: 'mi-14', categoryId: 'cat-pastry', name: 'Croissant', price: 180 },
+  { id: 'mi-15', categoryId: 'cat-pastry', name: 'Chocolate Muffin', price: 200 },
+  { id: 'mi-16', categoryId: 'cat-pastry', name: 'Blueberry Scone', price: 220 },
+  { id: 'mi-17', categoryId: 'cat-pastry', name: 'Cinnamon Roll', price: 250 },
+  { id: 'mi-18', categoryId: 'cat-pastry', name: 'Bagel', price: 160 },
+  { id: 'mi-19', categoryId: 'cat-snack', name: 'Club Sandwich', price: 350 },
+  { id: 'mi-20', categoryId: 'cat-snack', name: 'Caesar Salad', price: 400 },
+  { id: 'mi-21', categoryId: 'cat-snack', name: 'French Fries', price: 200 },
+  { id: 'mi-22', categoryId: 'cat-snack', name: 'Garlic Bread', price: 180 },
+  { id: 'mi-23', categoryId: 'cat-snack', name: 'Panini', price: 320 },
+];
+
+const defaultSettings: Settings = {
+  cafeName: 'Café Brew',
+  adminPin: '1234',
+  esewaId: '',
+  esewaPhone: '',
+  wallets: {
+    esewa: { enabled: false },
+    khalti: { enabled: false },
+    fonepay: { enabled: false },
+  },
+  billCounter: 1000,
+};
+
+export const db = {
+  getTables: (): CafeTable[] => get(KEYS.tables, defaultTables),
+  saveTables: (t: CafeTable[]) => set(KEYS.tables, t),
+
+  getCategories: (): Category[] => get(KEYS.categories, defaultCategories),
+  saveCategories: (c: Category[]) => set(KEYS.categories, c),
+
+  getMenuItems: (): MenuItem[] => get(KEYS.menuItems, defaultMenuItems),
+  saveMenuItems: (m: MenuItem[]) => set(KEYS.menuItems, m),
+
+  getOrders: (): Order[] => get(KEYS.orders, []),
+  saveOrders: (o: Order[]) => set(KEYS.orders, o),
+
+  getPayments: (): Payment[] => get(KEYS.payments, []),
+  savePayments: (p: Payment[]) => set(KEYS.payments, p),
+
+  getSettings: (): Settings => get(KEYS.settings, defaultSettings),
+  saveSettings: (s: Settings) => set(KEYS.settings, s),
+
+  exportAll: () => {
+    const data: Record<string, string | null> = {};
+    Object.entries(KEYS).forEach(([k, v]) => {
+      data[k] = localStorage.getItem(v);
+    });
+    return JSON.stringify(data, null, 2);
+  },
+
+  importAll: (json: string) => {
+    const data = JSON.parse(json);
+    Object.entries(KEYS).forEach(([k, v]) => {
+      if (data[k]) localStorage.setItem(v, typeof data[k] === 'string' ? data[k] : JSON.stringify(data[k]));
+    });
+  },
+
+  seed: () => {
+    if (!localStorage.getItem('pos_initialized')) {
+      set(KEYS.tables, defaultTables);
+      set(KEYS.categories, defaultCategories);
+      set(KEYS.menuItems, defaultMenuItems);
+      set(KEYS.orders, []);
+      set(KEYS.payments, []);
+      set(KEYS.settings, defaultSettings);
+      localStorage.setItem('pos_initialized', 'true');
+    }
+  },
+
+  clearAll: () => {
+    Object.values(KEYS).forEach((k) => localStorage.removeItem(k));
+    localStorage.removeItem('pos_initialized');
+  },
+};
