@@ -89,7 +89,11 @@ const OrderScreen = () => {
                 <MenuItemCard
                   key={item.id}
                   item={item}
-                  onAdd={() => order && addItemToOrder(order.id, item)}
+                  onAdd={() => {
+                    if (!tableId || !table) return;
+                    const currentOrder = order || createOrder(tableId, table.number);
+                    addItemToOrder(currentOrder.id, item);
+                  }}
                 />
               ))}
             </div>
