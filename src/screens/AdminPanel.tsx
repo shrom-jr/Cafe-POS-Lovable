@@ -7,7 +7,7 @@ import {
   BarChart3, Coffee, UtensilsCrossed, CreditCard, Table2, TrendingUp, FileDown,
   Plus, Trash2, Edit3, Save, X, Lock, DollarSign, ShoppingCart,
   Printer, Download, Upload, Bluetooth, Smartphone, ToggleLeft, ToggleRight,
-  Receipt, ImagePlus,
+  Receipt, ImagePlus, Image,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format, startOfDay, subDays, startOfWeek, startOfMonth } from 'date-fns';
@@ -189,6 +189,97 @@ const DashboardSection = () => {
   );
 };
 
+// ====== HELPERS ======
+const compressImage = (file: File, maxPx = 400): Promise<string> =>
+  new Promise((resolve) => {
+    const img = new window.Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = maxPx;
+      canvas.height = maxPx;
+      const ctx = canvas.getContext('2d')!;
+      const srcSize = Math.min(img.width, img.height);
+      const sx = (img.width - srcSize) / 2;
+      const sy = (img.height - srcSize) / 2;
+      ctx.drawImage(img, sx, sy, srcSize, srcSize, 0, 0, maxPx, maxPx);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/jpeg', 0.82));
+    };
+    img.src = url;
+  });
+
+const ItemImageField = ({
+  image,
+  onChange,
+  onRemove,
+}: {
+  image?: string;
+  onChange: (dataUrl: string) => void;
+  onRemove: () => void;
+}) => {
+  const [dragging, setDragging] = useState(false);
+
+  const handleFile = async (file: File) => {
+    if (!file.type.startsWith('image/')) return;
+    const compressed = await compressImage(file);
+    onChange(compressed);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  };
+
+  return (
+    <div className="flex items-center gap-3">
+      {/* Preview / drop zone */}
+      <label
+        className={`relative w-16 h-16 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer overflow-hidden transition-colors flex-shrink-0
+          ${dragging ? 'border-accent bg-accent/10' : 'border-border hover:border-accent/50 bg-secondary/50'}`}
+        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={handleDrop}
+      >
+        {image ? (
+          <img src={image} alt="Item" className="w-full h-full object-cover" />
+        ) : (
+          <Image size={20} className="text-muted-foreground" />
+        )}
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+        />
+      </label>
+
+      {/* Actions */}
+      <div className="flex flex-col gap-1.5">
+        <label className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-secondary text-secondary-foreground text-xs font-medium cursor-pointer hover:bg-accent/15 hover:text-accent transition-colors">
+          <Upload size={12} /> {image ? 'Replace' : 'Upload'}
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+          />
+        </label>
+        {image && (
+          <button
+            onClick={onRemove}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-danger/70 hover:text-danger hover:bg-danger/10 transition-colors"
+          >
+            <X size={12} /> Remove
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ====== MENU MANAGEMENT ======
 const MenuSection = () => {
   const categories = usePOSStore((s) => s.categories);
@@ -207,14 +298,37 @@ const MenuSection = () => {
   const [showAddItem, setShowAddItem] = useState(false);
   const [itemName, setItemName] = useState('');
   const [itemPrice, setItemPrice] = useState('');
+  const [itemImage, setItemImage] = useState<string | undefined>(undefined);
   const [editItem, setEditItem] = useState<string | null>(null);
   const [editItemName, setEditItemName] = useState('');
   const [editItemPrice, setEditItemPrice] = useState('');
+  const [editItemImage, setEditItemImage] = useState<string | undefined>(undefined);
 
   const catItems = menuItems.filter((i) => i.categoryId === selectedCat);
 
+  const handleAddItem = () => {
+    if (itemName.trim() && Number(itemPrice) > 0 && selectedCat) {
+      addMenuItem({ categoryId: selectedCat, name: itemName.trim(), price: Number(itemPrice), image: itemImage });
+      setItemName(''); setItemPrice(''); setItemImage(undefined); setShowAddItem(false);
+    }
+  };
+
+  const handleSaveEdit = () => {
+    if (!editItem) return;
+    updateMenuItem(editItem, { name: editItemName, price: Number(editItemPrice), image: editItemImage });
+    setEditItem(null);
+  };
+
+  const startEdit = (item: typeof catItems[0]) => {
+    setEditItem(item.id);
+    setEditItemName(item.name);
+    setEditItemPrice(String(item.price));
+    setEditItemImage(item.image);
+  };
+
   return (
     <div className="space-y-4">
+      {/* Categories */}
       <div className="bg-card rounded-xl border border-border p-4 space-y-3">
         <h3 className="font-bold text-foreground">Categories</h3>
         <div className="flex gap-2">
@@ -262,11 +376,12 @@ const MenuSection = () => {
         </div>
       </div>
 
+      {/* Menu items */}
       <div className="bg-card rounded-xl border border-border p-4 space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-foreground">Menu Items</h3>
           <button
-            onClick={() => setShowAddItem(!showAddItem)}
+            onClick={() => { setShowAddItem(!showAddItem); setItemName(''); setItemPrice(''); setItemImage(undefined); }}
             data-testid="button-toggle-add-item"
             className="px-3 py-1.5 rounded-lg bg-accent text-accent-foreground text-sm font-medium flex items-center gap-1"
           >
@@ -274,53 +389,75 @@ const MenuSection = () => {
           </button>
         </div>
 
+        {/* Add item form */}
         {showAddItem && (
-          <div className="flex gap-2 p-3 bg-secondary/50 rounded-lg">
-            <input
-              value={itemName}
-              onChange={(e) => setItemName(e.target.value)}
-              placeholder="Item name"
-              data-testid="input-item-name"
-              className="flex-1 px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+          <div className="p-3 bg-secondary/50 rounded-xl border border-border/50 space-y-3">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">New Item</p>
+            <ItemImageField
+              image={itemImage}
+              onChange={setItemImage}
+              onRemove={() => setItemImage(undefined)}
             />
-            <input
-              value={itemPrice}
-              onChange={(e) => setItemPrice(e.target.value)}
-              placeholder="Price"
-              type="number"
-              data-testid="input-item-price"
-              className="w-24 px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
-            />
-            <button
-              onClick={() => {
-                if (itemName.trim() && Number(itemPrice) > 0 && selectedCat) {
-                  addMenuItem({ categoryId: selectedCat, name: itemName.trim(), price: Number(itemPrice) });
-                  setItemName(''); setItemPrice(''); setShowAddItem(false);
-                }
-              }}
-              data-testid="button-add-item-confirm"
-              className="px-4 py-2 rounded-lg bg-accent text-accent-foreground text-sm font-medium"
-            >Add</button>
+            <div className="flex gap-2">
+              <input
+                value={itemName}
+                onChange={(e) => setItemName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
+                placeholder="Item name"
+                data-testid="input-item-name"
+                className="flex-1 px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+              />
+              <input
+                value={itemPrice}
+                onChange={(e) => setItemPrice(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
+                placeholder="Price"
+                type="number"
+                data-testid="input-item-price"
+                className="w-24 px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+              />
+              <button
+                onClick={handleAddItem}
+                data-testid="button-add-item-confirm"
+                className="px-4 py-2 rounded-lg bg-accent text-accent-foreground text-sm font-medium"
+              >Add</button>
+            </div>
           </div>
         )}
 
+        {/* Item list */}
         <div className="space-y-2">
           {catItems.map((item) => (
-            <div key={item.id} className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg" data-testid={`menu-item-row-${item.id}`}>
+            <div key={item.id} className="bg-secondary/50 rounded-xl border border-border/30" data-testid={`menu-item-row-${item.id}`}>
               {editItem === item.id ? (
-                <>
-                  <input value={editItemName} onChange={(e) => setEditItemName(e.target.value)} className="flex-1 px-2 py-1 rounded bg-secondary border border-border text-foreground text-sm focus:outline-none" />
-                  <input value={editItemPrice} onChange={(e) => setEditItemPrice(e.target.value)} type="number" className="w-20 px-2 py-1 rounded bg-secondary border border-border text-foreground text-sm focus:outline-none" />
-                  <button onClick={() => { updateMenuItem(item.id, { name: editItemName, price: Number(editItemPrice) }); setEditItem(null); }} className="text-success"><Save size={16} /></button>
-                  <button onClick={() => setEditItem(null)} className="text-muted-foreground"><X size={16} /></button>
-                </>
+                <div className="p-3 space-y-3">
+                  <ItemImageField
+                    image={editItemImage}
+                    onChange={setEditItemImage}
+                    onRemove={() => setEditItemImage(undefined)}
+                  />
+                  <div className="flex gap-2 items-center">
+                    <input value={editItemName} onChange={(e) => setEditItemName(e.target.value)} className="flex-1 px-2 py-1.5 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-accent" />
+                    <input value={editItemPrice} onChange={(e) => setEditItemPrice(e.target.value)} type="number" className="w-24 px-2 py-1.5 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-accent" />
+                    <button onClick={handleSaveEdit} className="text-success hover:opacity-80"><Save size={16} /></button>
+                    <button onClick={() => setEditItem(null)} className="text-muted-foreground hover:text-foreground"><X size={16} /></button>
+                  </div>
+                </div>
               ) : (
-                <>
+                <div className="flex items-center gap-3 p-3">
+                  {/* Thumbnail */}
+                  {item.image ? (
+                    <img src={item.image} alt={item.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center flex-shrink-0 text-accent font-bold text-base select-none">
+                      {item.name.charAt(0)}
+                    </div>
+                  )}
                   <span className="flex-1 text-sm text-foreground">{item.name}</span>
                   <span className="text-sm font-bold text-accent">Rs. {item.price}</span>
-                  <button onClick={() => { setEditItem(item.id); setEditItemName(item.name); setEditItemPrice(String(item.price)); }} className="text-muted-foreground hover:text-foreground"><Edit3 size={16} /></button>
-                  <button onClick={() => deleteMenuItem(item.id)} className="text-danger hover:text-danger"><Trash2 size={16} /></button>
-                </>
+                  <button onClick={() => startEdit(item)} className="text-muted-foreground hover:text-foreground"><Edit3 size={16} /></button>
+                  <button onClick={() => deleteMenuItem(item.id)} className="text-danger hover:opacity-80"><Trash2 size={16} /></button>
+                </div>
               )}
             </div>
           ))}
