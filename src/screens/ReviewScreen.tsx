@@ -108,12 +108,12 @@ const ReviewScreen = () => {
         </div>
       </div>
 
-      {/* Scrollable item list - flex shrink */}
-      <div className="flex-1 overflow-y-auto min-h-0 px-3 py-2 space-y-1">
+      {/* Item list — capped at ~55% of screen height, scrollable */}
+      <div className="overflow-y-auto px-3 py-1.5 space-y-0.5" style={{ maxHeight: '55vh' }}>
         {items.map((item) => (
           <div
             key={item.menuItemId}
-            className="flex items-center justify-between py-2 border-b border-border/30 last:border-0"
+            className="flex items-center justify-between py-1.5 border-b border-border/25 last:border-0"
           >
             <div className="flex-1 min-w-0 pr-3">
               <p className="text-sm font-semibold text-foreground truncate">{item.name}</p>
@@ -126,44 +126,47 @@ const ReviewScreen = () => {
         ))}
       </div>
 
-      {/* Fixed bottom panel */}
-      <div className="flex-shrink-0 border-t border-border bg-card px-3 pt-3 pb-4 space-y-3">
+      {/* Spacer pushes bottom panel down when list is short */}
+      <div className="flex-1" />
 
-        {/* Totals */}
-        <div className="space-y-1.5">
-          <div className="flex justify-between text-sm">
+      {/* Bottom action panel — always visible, elevated */}
+      <div className="flex-shrink-0 bg-card border-t-2 border-border shadow-[0_-6px_24px_-4px_rgba(0,0,0,0.35)] px-3 pt-3 pb-4 space-y-2.5">
+
+        {/* Compact summary */}
+        <div className="space-y-1">
+          <div className="flex justify-between text-xs">
             <span className="text-muted-foreground">Subtotal</span>
             <span className="font-medium text-foreground">Rs. {bill.subtotal}</span>
           </div>
-          <div className="flex justify-between text-sm">
+          <div className="flex justify-between text-xs">
             <span className="text-muted-foreground">Discount</span>
             <span className={`font-semibold ${bill.discountAmount > 0 ? 'text-success' : 'text-muted-foreground'}`}>
               -{bill.discountAmount > 0 ? `Rs. ${bill.discountAmount}` : 'Rs. 0'}
             </span>
           </div>
           {bill.vatEnabled && (
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between text-xs">
               <span className="text-muted-foreground">VAT ({Math.round(bill.vatRate * 100)}%)</span>
               <span className="font-medium text-foreground">Rs. {bill.vatAmount}</span>
             </div>
           )}
-          <div className="flex justify-between items-center pt-1 border-t border-border/40">
-            <span className="font-black text-foreground">Total</span>
-            <span className="font-black text-2xl text-foreground">Rs. {bill.total}</span>
+          <div className="flex justify-between items-center pt-1.5 border-t border-border/50">
+            <span className="font-black text-foreground text-sm">Total</span>
+            <span className="font-black text-xl text-foreground">Rs. {bill.total}</span>
           </div>
         </div>
 
         {/* Discount controls */}
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {/* Preset buttons */}
           <div className="flex gap-1.5 items-center">
-            <Tag size={13} className="text-muted-foreground flex-shrink-0" />
+            <Tag size={12} className="text-muted-foreground flex-shrink-0" />
             <div className="flex gap-1.5 flex-1">
               {PRESETS.map((pct) => (
                 <button
                   key={pct}
                   onClick={() => handlePreset(pct)}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95 ${
+                  className={`flex-1 py-1 rounded-lg text-xs font-bold transition-all active:scale-95 ${
                     activePreset === pct && discountMode === 'percent'
                       ? 'bg-accent text-accent-foreground shadow-[0_2px_8px_-2px_hsl(var(--accent)/0.4)]'
                       : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
@@ -177,11 +180,10 @@ const ReviewScreen = () => {
 
           {/* Manual input */}
           <div className="flex gap-1.5 items-center">
-            {/* Mode toggle */}
             <div className="flex rounded-lg overflow-hidden border border-border flex-shrink-0">
               <button
                 onClick={() => handleModeToggle('percent')}
-                className={`px-2.5 py-1.5 text-xs font-bold transition-colors ${
+                className={`px-2.5 py-1 text-xs font-bold transition-colors ${
                   discountMode === 'percent'
                     ? 'bg-accent text-accent-foreground'
                     : 'bg-secondary text-muted-foreground hover:text-foreground'
@@ -191,7 +193,7 @@ const ReviewScreen = () => {
               </button>
               <button
                 onClick={() => handleModeToggle('fixed')}
-                className={`px-2.5 py-1.5 text-xs font-bold transition-colors ${
+                className={`px-2.5 py-1 text-xs font-bold transition-colors ${
                   discountMode === 'fixed'
                     ? 'bg-accent text-accent-foreground'
                     : 'bg-secondary text-muted-foreground hover:text-foreground'
@@ -200,7 +202,7 @@ const ReviewScreen = () => {
                 Rs
               </button>
             </div>
-            <div className="relative flex-1">
+            <div className="flex-1">
               <input
                 type="number"
                 min="0"
@@ -208,17 +210,17 @@ const ReviewScreen = () => {
                 placeholder={discountMode === 'percent' ? 'Custom %' : 'Amount in Rs.'}
                 value={discountInput}
                 onChange={(e) => handleInputChange(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+                className="w-full px-3 py-1 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
               />
             </div>
           </div>
         </div>
 
-        {/* Pay button */}
+        {/* Pay button — elevated, prominent */}
         <button
           onClick={handlePay}
           disabled={items.length === 0}
-          className="w-full py-4 rounded-xl bg-success text-white font-black text-lg flex items-center justify-center gap-2 transition-all active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed hover:brightness-110 shadow-[0_4px_16px_-4px_hsl(var(--success)/0.45)]"
+          className="w-full py-3.5 rounded-xl bg-success text-white font-black text-lg flex items-center justify-center gap-2 transition-all active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed hover:brightness-110 shadow-[0_6px_20px_-4px_hsl(var(--success)/0.55)]"
         >
           <CreditCard size={20} />
           💳 Pay Rs. {bill.total}
