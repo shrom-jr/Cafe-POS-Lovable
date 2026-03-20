@@ -11,7 +11,6 @@ import { format } from 'date-fns';
 import { OrderItem } from '@/types/pos';
 import { playSuccess } from '@/utils/sounds';
 
-const AUTO_REDIRECT_SECS = 3;
 
 const PaymentScreen = () => {
   const { tableId } = useParams<{ tableId: string }>();
@@ -59,25 +58,6 @@ const PaymentScreen = () => {
   const [paidMethod, setPaidMethod] = useState<string>('');
   const [printing, setPrinting] = useState(false);
 
-  // Auto-redirect countdown after payment
-  const [countdown, setCountdown] = useState(AUTO_REDIRECT_SECS);
-  const [cancelRedirect, setCancelRedirect] = useState(false);
-  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    if (!paid || cancelRedirect) return;
-    countdownRef.current = setInterval(() => {
-      setCountdown((c) => {
-        if (c <= 1) {
-          clearInterval(countdownRef.current!);
-          navigate('/', { replace: true });
-          return 0;
-        }
-        return c - 1;
-      });
-    }, 1000);
-    return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
-  }, [paid, cancelRedirect, navigate]);
 
   // Compute discount/total — must be before early return (hooks rules)
   const subtotalRaw = snap?.items.reduce((s, i) => s + i.price * i.quantity, 0) ?? 0;
@@ -287,30 +267,13 @@ const PaymentScreen = () => {
             <p className="text-xs text-muted-foreground animate-pulse">Printing receipt...</p>
           )}
 
-          {/* Auto-redirect countdown */}
-          {!cancelRedirect ? (
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <span>Returning to tables in {countdown}s...</span>
-              <button
-                onClick={() => { setCancelRedirect(true); if (countdownRef.current) clearInterval(countdownRef.current); }}
-                className="text-accent font-semibold hover:text-accent/80 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => navigate('/', { replace: true })}
-              data-testid="button-back-home"
-              className="w-full max-w-sm py-4 rounded-2xl bg-success text-white font-black text-base flex items-center justify-center gap-2 transition-all active:scale-[0.97] hover:brightness-110 shadow-[0_4px_16px_-4px_hsl(var(--success)/0.4)]"
-            >
-              <Home size={20} /> Back to Tables
-            </button>
-          )}
-
-          {cancelRedirect && (
-            <p className="text-xs text-muted-foreground -mt-2">Auto-return cancelled</p>
-          )}
+          <button
+            onClick={() => navigate('/', { replace: true })}
+            data-testid="button-back-home"
+            className="w-full max-w-sm py-4 rounded-2xl bg-success text-white font-black text-base flex items-center justify-center gap-2 transition-all active:scale-[0.97] hover:brightness-110 shadow-[0_4px_16px_-4px_hsl(var(--success)/0.4)]"
+          >
+            <Home size={20} /> Back to Tables
+          </button>
         </div>
       </div>
     );
