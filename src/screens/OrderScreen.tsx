@@ -202,8 +202,6 @@ const OrderScreen = () => {
               }
               onPay={handlePay}
               onClear={handleClear}
-              onRepeatLast={handleRepeatLast}
-              hasLastOrder={hasLastOrder}
             />
           </div>
         )}
@@ -266,8 +264,6 @@ const OrderScreen = () => {
                 }
                 onPay={() => { setShowCart(false); handlePay(); }}
                 onClear={handleClear}
-                onRepeatLast={handleRepeatLast}
-                hasLastOrder={hasLastOrder}
               />
             </div>
           </div>

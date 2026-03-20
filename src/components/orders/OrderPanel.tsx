@@ -1,5 +1,16 @@
+import { useState } from 'react';
 import { Order, OrderItem } from '@/types/pos';
-import { Minus, Plus, Trash2, ShoppingBag, RotateCcw } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface OrderPanelProps {
   order: Order | null;
@@ -7,8 +18,6 @@ interface OrderPanelProps {
   onRemove: (menuItemId: string) => void;
   onPay: () => void;
   onClear?: () => void;
-  onRepeatLast?: () => void;
-  hasLastOrder?: boolean;
 }
 
 const OrderPanel = ({
@@ -17,12 +26,17 @@ const OrderPanel = ({
   onRemove,
   onPay,
   onClear,
-  onRepeatLast,
-  hasLastOrder,
 }: OrderPanelProps) => {
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+
   const items = order?.items || [];
   const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const itemCount = items.reduce((s, i) => s + i.quantity, 0);
+
+  const handleClearConfirmed = () => {
+    onClear?.();
+    setShowClearConfirm(false);
+  };
 
   return (
     <div className="flex flex-col h-full bg-card overflow-hidden">
@@ -33,9 +47,20 @@ const OrderPanel = ({
           {order ? `Table ${order.tableNumber}` : 'Order'}
         </h3>
         {itemCount > 0 && (
-          <span className="px-2 py-0.5 rounded-full bg-accent/15 text-accent text-xs font-bold">
-            {itemCount} items
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded-full bg-accent/15 text-accent text-xs font-bold">
+              {itemCount} items
+            </span>
+            {onClear && (
+              <button
+                onClick={() => setShowClearConfirm(true)}
+                data-testid="button-clear-order"
+                className="px-2.5 py-1 rounded-lg text-xs font-semibold text-muted-foreground border border-border transition-all active:scale-95 hover:border-destructive/60 hover:text-destructive hover:bg-destructive/10 active:border-destructive active:text-destructive"
+              >
+                Clear
+              </button>
+            )}
+          </div>
         )}
       </div>
 
@@ -44,17 +69,8 @@ const OrderPanel = ({
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full py-12 text-muted-foreground">
             <ShoppingBag size={40} className="mb-3 opacity-15" />
-            <p className="text-sm font-semibold text-center">No items yet</p>
-            <p className="text-xs opacity-60 mt-1 text-center">Start adding from the menu</p>
-            {hasLastOrder && onRepeatLast && (
-              <button
-                onClick={onRepeatLast}
-                className="mt-4 flex items-center gap-1.5 px-3 py-2 rounded-lg bg-secondary text-secondary-foreground text-xs font-medium hover:bg-accent/10 hover:text-accent transition-colors active:scale-95"
-              >
-                <RotateCcw size={12} />
-                Repeat Last Order
-              </button>
-            )}
+            <p className="text-base font-bold text-center">No items yet</p>
+            <p className="text-xs opacity-70 mt-1.5 text-center">Tap items on the left to start building the order</p>
           </div>
         ) : (
           items.map((item) => (
@@ -71,32 +87,6 @@ const OrderPanel = ({
           <span className="text-3xl font-black text-foreground">Rs. {total}</span>
         </div>
 
-        {/* Secondary actions */}
-        {items.length > 0 && (
-          <div className="flex gap-2">
-            {onClear && (
-              <button
-                onClick={onClear}
-                data-testid="button-clear-order"
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-danger/30 text-danger/70 text-xs font-semibold transition-all active:scale-95 hover:bg-danger/10 hover:border-danger hover:text-danger"
-              >
-                <Trash2 size={13} />
-                Clear
-              </button>
-            )}
-            {hasLastOrder && onRepeatLast && (
-              <button
-                onClick={onRepeatLast}
-                data-testid="button-repeat-last"
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-border text-muted-foreground text-xs font-semibold transition-all active:scale-95 hover:bg-secondary hover:text-foreground"
-              >
-                <RotateCcw size={13} />
-                Repeat
-              </button>
-            )}
-          </div>
-        )}
-
         {/* Primary Pay button */}
         <button
           onClick={onPay}
@@ -107,6 +97,27 @@ const OrderPanel = ({
           {items.length > 0 ? 'Review Order →' : 'Add items to order'}
         </button>
       </div>
+
+      {/* Clear confirmation dialog */}
+      <AlertDialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear all items?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove all items from the order.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleClearConfirmed}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Clear Order
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
