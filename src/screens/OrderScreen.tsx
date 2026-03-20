@@ -15,7 +15,7 @@ const OrderScreen = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
-  const { tables, updateTable } = useTables();
+  const { tables } = useTables();
   const {
     getActiveOrder,
     createOrder,
@@ -75,13 +75,7 @@ const OrderScreen = () => {
 
   const handlePay = () => {
     if (!order || order.items.length === 0) return;
-    updateTable(tableId, { status: 'occupied' });
     navigate(`/payment/${tableId}`);
-  };
-
-  const handleViewBill = () => {
-    if (!order || order.items.length === 0) return;
-    navigate(`/billing/${tableId}`);
   };
 
   const handleAddItem = (item: typeof menuItems[0]) => {
@@ -206,7 +200,6 @@ const OrderScreen = () => {
                 order && removeItemFromOrder(order.id, menuItemId)
               }
               onPay={handlePay}
-              onViewBill={handleViewBill}
               onClear={handleClear}
               onRepeatLast={handleRepeatLast}
               hasLastOrder={hasLastOrder}
@@ -271,7 +264,6 @@ const OrderScreen = () => {
                   order && removeItemFromOrder(order.id, menuItemId)
                 }
                 onPay={() => { setShowCart(false); handlePay(); }}
-                onViewBill={() => { setShowCart(false); handleViewBill(); }}
                 onClear={handleClear}
                 onRepeatLast={handleRepeatLast}
                 hasLastOrder={hasLastOrder}

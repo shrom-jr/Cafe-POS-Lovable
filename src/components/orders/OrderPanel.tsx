@@ -1,12 +1,11 @@
 import { Order, OrderItem } from '@/types/pos';
-import { Minus, Plus, Trash2, ShoppingBag, RotateCcw, CreditCard, Receipt } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingBag, RotateCcw, CreditCard } from 'lucide-react';
 
 interface OrderPanelProps {
   order: Order | null;
   onUpdateQty: (menuItemId: string, delta: number) => void;
   onRemove: (menuItemId: string) => void;
   onPay: () => void;
-  onViewBill?: () => void;
   onClear?: () => void;
   onRepeatLast?: () => void;
   hasLastOrder?: boolean;
@@ -17,7 +16,6 @@ const OrderPanel = ({
   onUpdateQty,
   onRemove,
   onPay,
-  onViewBill,
   onClear,
   onRepeatLast,
   hasLastOrder,
@@ -29,7 +27,7 @@ const OrderPanel = ({
   return (
     <div className="flex flex-col h-full bg-card overflow-hidden">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-border flex items-center gap-2 bg-card">
+      <div className="px-4 py-3 border-b border-border flex items-center gap-2">
         <ShoppingBag size={16} className="text-accent" />
         <h3 className="font-bold text-foreground text-sm flex-1">
           {order ? `Table ${order.tableNumber}` : 'Order'}
@@ -65,10 +63,10 @@ const OrderPanel = ({
         )}
       </div>
 
-      {/* Footer: total + actions */}
+      {/* Footer */}
       <div className="border-t border-border bg-card p-4 space-y-3">
         {/* Total */}
-        <div className="flex items-center justify-between pb-1">
+        <div className="flex items-center justify-between">
           <span className="text-muted-foreground text-sm font-medium">Total</span>
           <span className="text-3xl font-black text-foreground">Rs. {total}</span>
         </div>
@@ -94,17 +92,6 @@ const OrderPanel = ({
               >
                 <RotateCcw size={13} />
                 Repeat
-              </button>
-            )}
-            {onViewBill && (
-              <button
-                onClick={onViewBill}
-                data-testid="button-view-bill"
-                title="View Bill / Apply Discount"
-                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-border text-muted-foreground text-xs font-semibold transition-all active:scale-95 hover:bg-secondary hover:text-foreground"
-              >
-                <Receipt size={13} />
-                Bill
               </button>
             )}
           </div>

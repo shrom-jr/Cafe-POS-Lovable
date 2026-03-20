@@ -1,0 +1,109 @@
+Refine an existing React + Vite + Tailwind café POS frontend using Zustand.
+
+Do NOT redesign from scratch. Do NOT touch already fixed systems (table lock, QR modal, order panel layout, navigation). Focus only on flow simplification, UX clarity, and remaining issues.
+
+---
+
+CORE FLOW
+
+Tables → Order → Pay → Payment → Done
+
+No separate billing step.
+
+---
+
+REMOVE BILL STEP
+
+* Remove "Bill" button from Order Panel
+* Do NOT navigate to any Bill screen
+
+---
+
+DISCOUNT FLOW
+
+* Move discount UI into PaymentScreen
+
+* Place below total:
+  → % options (5, 10, 15, 20)
+  → optional manual input
+
+* Update total instantly after applying discount
+
+* Show savings clearly
+
+---
+
+PAYMENT SCREEN
+
+* Large, prominent total amount
+* Clear payment method selection
+* QR methods open modal (already implemented)
+* Keep layout clean and fast for cashier use
+
+---
+
+PAYMENT COMPLETE (FINAL UX)
+
+* Treat as confirmation state, not a long page
+
+* Show:
+  → Success message
+  → Payment method used
+  → Final amount
+
+* Show compact receipt:
+  → 2–3 items only
+  → "+X more items" if needed
+  → total clearly visible
+
+* Everything must fit in one screen (no scrolling)
+
+---
+
+PRINT (FRONTEND LIMITATION SAFE)
+
+* After payment confirmation:
+  → trigger window.print()
+
+* Show subtle message:
+  "Printing receipt..."
+
+* Create clean print layout:
+  → hide unnecessary UI
+  → receipt optimized for thermal printing
+
+* Do NOT attempt silent printing
+
+---
+
+ACTIONS
+
+* Only one visible action:
+  → "Back to Tables"
+
+* Remove:
+  → "New Order"
+  → visible "Print" button
+
+---
+
+OPTIONAL (IF EASY)
+
+* Auto return to tables after 2–3 seconds
+* Show:
+  "Returning to tables... Cancel"
+
+---
+
+UI/UX POLISH
+
+* Reduce visual clutter
+* Improve spacing and hierarchy
+* Keep interactions fast and minimal
+* Ensure no unnecessary clicks in checkout flow
+
+---
+
+GOAL
+
+Make the POS fast, frictionless, and production-ready with minimal steps and zero confusion

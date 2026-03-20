@@ -139,3 +139,34 @@
     animation: pulse-soft 2s ease-in-out infinite;
   }
 }
+
+/* ── PRINT STYLES ─────────────────────────────────────── */
+@media print {
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Hide everything by default */
+  body > * {
+    display: none !important;
+  }
+
+  /* Show only the printable receipt */
+  #printable-receipt {
+    display: block !important;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    color: #000;
+    background: #fff;
+    width: 80mm;
+    max-width: 80mm;
+    margin: 0 auto;
+    padding: 4mm;
+  }
+
+  /* Also hide the non-print div */
+  .non-print {
+    display: none !important;
+  }
+}
