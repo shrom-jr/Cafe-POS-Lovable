@@ -92,21 +92,31 @@ const TableOverview = () => {
             <p className="text-sm mt-1">Go to Admin → Tables to add tables.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
-            {tables
-              .sort((a, b) => a.number - b.number)
-              .map((table) => {
-                const data = tableOrderData[table.id] || { itemCount: 0, runningTotal: 0 };
-                return (
-                  <TableCard
-                    key={table.id}
-                    table={table}
-                    itemCount={data.itemCount}
-                    runningTotal={data.runningTotal}
-                    onClick={() => handleTableClick(table)}
-                  />
-                );
-              })}
+          <div
+            className="rounded-2xl border border-white/[0.07] p-5"
+            style={{
+              background:
+                'radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 70%), rgba(255,255,255,0.03)',
+              boxShadow:
+                '0 8px 40px -8px rgba(0,0,0,0.5), 0 2px 8px -2px rgba(0,0,0,0.3), inset 0 1px 0 0 rgba(255,255,255,0.06)',
+            }}
+          >
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
+              {tables
+                .sort((a, b) => a.number - b.number)
+                .map((table) => {
+                  const data = tableOrderData[table.id] || { itemCount: 0, runningTotal: 0 };
+                  return (
+                    <TableCard
+                      key={table.id}
+                      table={table}
+                      itemCount={data.itemCount}
+                      runningTotal={data.runningTotal}
+                      onClick={() => handleTableClick(table)}
+                    />
+                  );
+                })}
+            </div>
           </div>
         )}
       </div>
