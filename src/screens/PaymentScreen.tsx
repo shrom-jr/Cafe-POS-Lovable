@@ -1,13 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { usePOSStore } from '@/store/usePOSStore';
 import { useOrders } from '@/hooks/useOrders';
 import { useTables } from '@/hooks/useTables';
 import { TopBar } from '@/components/ui/Navigation';
-import QRDisplay from '@/components/payment/QRDisplay';
+import { QRCodeSVG } from 'qrcode.react';
 import BillPreview from '@/components/billing/BillPreview';
-import { Banknote, Smartphone, CheckCircle2, Home, Printer } from 'lucide-react';
+import { Banknote, Smartphone, CheckCircle2, Home, Printer, X } from 'lucide-react';
 import { printer, formatReceipt } from '@/utils/printer';
 import { format } from 'date-fns';
 import { OrderItem } from '@/types/pos';
@@ -39,13 +38,20 @@ const PaymentScreen = () => {
   const orderSnapshot = useRef<{ id: string; items: OrderItem[]; tableNumber: number } | null>(null);
   useEffect(() => {
     if (order && !orderSnapshot.current) {
-      orderSnapshot.current = { id: order.id, items: [...order.items], tableNumber: order.tableNumber };
+      orderSnapshot.current = {
+        id: order.id,
+        items: [...order.items],
+        tableNumber: order.tableNumber,
+      };
     }
   }, [order]);
 
-  const snap = orderSnapshot.current || (order ? { id: order.id, items: order.items, tableNumber: order.tableNumber } : null);
+  const snap =
+    orderSnapshot.current ||
+    (order ? { id: order.id, items: order.items, tableNumber: order.tableNumber } : null);
 
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
+  const [showQRModal, setShowQRModal] = useState(false);
   const [paid, setPaid] = useState(false);
   const [billNum, setBillNum] = useState<number>(0);
 
@@ -63,20 +69,42 @@ const PaymentScreen = () => {
     );
   }
 
-  const total = state.total || snap.items.reduce((s, i) => s + i.price * i.quantity, 0);
-  const subtotal = state.subtotal || total;
-  const discountAmt = state.discountAmount || 0;
+  const total = state.total ?? snap.items.reduce((s, i) => s + i.price * i.quantity, 0);
+  const subtotal = state.subtotal ?? total;
+  const discountAmt = state.discountAmount ?? 0;
   const reference = `${settings.cafeName.replace(/\s/g, '')}-T${snap.tableNumber}-B${settings.billCounter + 1}`;
 
   const methods = [
-    { id: 'cash', label: 'Cash', icon: Banknote },
-    ...(settings.wallets.esewa.enabled ? [{ id: 'esewa', label: 'eSewa', icon: Smartphone }] : []),
-    ...(settings.wallets.khalti.enabled ? [{ id: 'khalti', label: 'Khalti', icon: Smartphone }] : []),
-    ...(settings.wallets.fonepay.enabled ? [{ id: 'fonepay', label: 'Fonepay', icon: Smartphone }] : []),
+    { id: 'cash', label: 'Cash', icon: Banknote, isQR: false },
+    ...(settings.wallets.esewa.enabled
+      ? [{ id: 'esewa', label: 'eSewa', icon: Smartphone, isQR: true }]
+      : []),
+    ...(settings.wallets.khalti.enabled
+      ? [{ id: 'khalti', label: 'Khalti', icon: Smartphone, isQR: true }]
+      : []),
+    ...(settings.wallets.fonepay.enabled
+      ? [{ id: 'fonepay', label: 'Fonepay', icon: Smartphone, isQR: true }]
+      : []),
   ];
 
-  const generateEsewaQR = () =>
-    `eSewa://pay?eSewaID=${settings.esewaPhone || settings.esewaId}&amount=${total}&table=${snap.tableNumber}&ref=${reference}`;
+  const getQRData = (method: string) => {
+    if (method === 'esewa') {
+      return `eSewa://pay?eSewaID=${settings.esewaPhone || settings.esewaId}&amount=${total}&table=${snap.tableNumber}&ref=${reference}`;
+    }
+    return `pay://${method}?amount=${total}&ref=${reference}`;
+  };
+
+  const getQRImage = (method: string) => {
+    const walletKey = method as 'esewa' | 'khalti' | 'fonepay';
+    return settings.wallets[walletKey]?.qrImage || null;
+  };
+
+  const handleSelectMethod = (id: string, isQR: boolean) => {
+    setSelectedMethod(id);
+    if (isQR) {
+      setShowQRModal(true);
+    }
+  };
 
   const handleConfirmPayment = async () => {
     if (!selectedMethod) return;
@@ -101,6 +129,7 @@ const PaymentScreen = () => {
     updateOrderStatus(snap.id, 'paid');
     if (tableId) resetTable(tableId);
     playSuccess();
+    setShowQRModal(false);
     setPaid(true);
 
     if (printer.isConnected) {
@@ -128,6 +157,7 @@ const PaymentScreen = () => {
     }
   };
 
+  /* ── SUCCESS SCREEN ────────────────────────────────────── */
   if (paid) {
     return (
       <div className="min-h-screen bg-background">
@@ -183,6 +213,7 @@ const PaymentScreen = () => {
     );
   }
 
+  /* ── PAYMENT SCREEN ────────────────────────────────────── */
   return (
     <div className="min-h-screen bg-background">
       <TopBar
@@ -190,95 +221,137 @@ const PaymentScreen = () => {
         showBack
         onBack={() => navigate(-1)}
       />
+
       <div className="max-w-lg mx-auto p-4 space-y-4 pb-8">
         {/* Large amount display */}
-        <div className="bg-gradient-to-b from-card to-card/80 rounded-2xl border border-border p-6 text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4)]">
-          <p className="text-muted-foreground text-sm font-medium uppercase tracking-wide">Amount Due</p>
-          <p className="text-6xl font-black text-success mt-2 tracking-tight">Rs. {total}</p>
+        <div className="rounded-2xl border border-border bg-gradient-to-b from-card to-card/70 p-6 text-center shadow-[0_4px_24px_-4px_rgba(0,0,0,0.5)]">
+          <p className="text-muted-foreground text-xs font-semibold uppercase tracking-widest">Amount Due</p>
+          <p className="text-6xl font-black text-foreground mt-2 tracking-tight">Rs. {total}</p>
           {discountAmt > 0 && (
-            <p className="text-xs text-success mt-2 font-medium bg-success/10 inline-block px-3 py-1 rounded-full">
+            <span className="inline-block mt-2 px-3 py-1 rounded-full bg-success/15 text-success text-xs font-semibold">
               Saved Rs. {discountAmt}
-            </p>
+            </span>
           )}
           <p className="text-xs text-muted-foreground mt-3 font-mono">Table {snap.tableNumber}</p>
         </div>
 
         {/* Payment methods */}
         <div className="space-y-2">
-          <h3 className="font-bold text-foreground text-sm">Select Payment Method</h3>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-0.5">
+            Payment Method
+          </p>
           <div className="grid grid-cols-2 gap-2.5">
-            {methods.map(({ id, label, icon: Icon }) => (
+            {methods.map(({ id, label, icon: Icon, isQR }) => (
               <button
                 key={id}
-                onClick={() => setSelectedMethod(id)}
+                onClick={() => handleSelectMethod(id, isQR)}
                 data-testid={`button-payment-method-${id}`}
                 className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all active:scale-[0.97] ${
                   selectedMethod === id
                     ? 'border-success bg-success/10 shadow-[0_2px_12px_-4px_hsl(var(--success)/0.3)]'
-                    : 'border-border bg-card hover:border-border/80 hover:bg-card/80'
+                    : 'border-border bg-card hover:bg-secondary/40 hover:border-border/80'
                 }`}
               >
-                <Icon
-                  size={24}
-                  className={selectedMethod === id ? 'text-success' : 'text-muted-foreground'}
-                />
-                <span
-                  className={`font-semibold text-sm ${
-                    selectedMethod === id ? 'text-success' : 'text-foreground'
-                  }`}
-                >
-                  {label}
-                </span>
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                  selectedMethod === id ? 'bg-success/15' : 'bg-secondary'
+                }`}>
+                  <Icon size={20} className={selectedMethod === id ? 'text-success' : 'text-muted-foreground'} />
+                </div>
+                <div className="text-left">
+                  <p className={`font-semibold text-sm ${selectedMethod === id ? 'text-success' : 'text-foreground'}`}>
+                    {label}
+                  </p>
+                  {isQR && (
+                    <p className="text-[10px] text-muted-foreground">Opens QR</p>
+                  )}
+                </div>
               </button>
             ))}
           </div>
         </div>
 
-        {/* QR display for digital wallets */}
-        {selectedMethod && selectedMethod !== 'cash' && (() => {
-          const walletKey = selectedMethod as 'esewa' | 'khalti' | 'fonepay';
-          const wallet = settings.wallets[walletKey];
-          const label = selectedMethod.charAt(0).toUpperCase() + selectedMethod.slice(1);
+        {/* Cash confirm button (only shows when cash selected) */}
+        {selectedMethod === 'cash' && (
+          <button
+            onClick={handleConfirmPayment}
+            data-testid="button-confirm-payment"
+            className="w-full py-5 rounded-2xl bg-success text-white font-black text-xl transition-all active:scale-[0.97] hover:brightness-110 shadow-[0_4px_20px_-4px_hsl(var(--success)/0.5)]"
+          >
+            Confirm Payment Rs. {total}
+          </button>
+        )}
 
-          if (wallet?.qrImage) {
-            return (
-              <div className="flex flex-col items-center gap-4 p-6 bg-card rounded-2xl border border-border shadow-[0_2px_12px_-4px_rgba(0,0,0,0.4)]">
-                <h3 className="text-lg font-bold text-foreground">{label} Payment</h3>
-                <img
-                  src={wallet.qrImage}
-                  alt={`${label} QR`}
-                  className="w-56 h-56 object-contain rounded-xl border-2 border-border bg-white p-2"
-                />
-                <p className="text-3xl font-black text-success">Rs. {total}</p>
-                <p className="text-xs text-muted-foreground font-mono">{reference}</p>
-                <p className="text-sm text-muted-foreground text-center">
-                  Scan with {label} app to pay
-                </p>
-              </div>
-            );
-          }
-
-          const data =
-            selectedMethod === 'esewa'
-              ? generateEsewaQR()
-              : `pay://${selectedMethod}?amount=${total}&ref=${reference}`;
-          return (
-            <QRDisplay data={data} label={`${label} Payment`} amount={total} reference={reference} />
-          );
-        })()}
-
-        {/* Single confirm button */}
-        <button
-          onClick={handleConfirmPayment}
-          disabled={!selectedMethod}
-          data-testid="button-confirm-payment"
-          className="w-full py-5 rounded-2xl bg-success text-white font-black text-xl transition-all active:scale-[0.97] disabled:opacity-35 disabled:cursor-not-allowed hover:brightness-110 shadow-[0_4px_16px_-4px_hsl(var(--success)/0.5)]"
-        >
-          {selectedMethod
-            ? `Confirm Payment Rs. ${total}`
-            : 'Select a Payment Method'}
-        </button>
+        {/* Placeholder prompt when no method selected */}
+        {!selectedMethod && (
+          <div className="w-full py-5 rounded-2xl border-2 border-dashed border-border text-center text-muted-foreground text-sm font-medium">
+            Select a payment method above
+          </div>
+        )}
       </div>
+
+      {/* ── QR PAYMENT MODAL ──────────────────────────────── */}
+      {showQRModal && selectedMethod && selectedMethod !== 'cash' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="bg-card rounded-3xl border border-border w-full max-w-sm shadow-2xl flex flex-col items-center overflow-hidden">
+            {/* Modal header */}
+            <div className="w-full flex items-center justify-between px-5 py-4 border-b border-border">
+              <h3 className="font-black text-foreground text-base">
+                {selectedMethod.charAt(0).toUpperCase() + selectedMethod.slice(1)} Payment
+              </h3>
+              <button
+                onClick={() => { setShowQRModal(false); setSelectedMethod(null); }}
+                className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors active:scale-90"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="w-full p-6 flex flex-col items-center gap-4">
+              {/* Total */}
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Amount Due</p>
+                <p className="text-5xl font-black text-foreground mt-1">Rs. {total}</p>
+              </div>
+
+              {/* QR code */}
+              <div className="p-4 bg-white rounded-2xl shadow-inner">
+                {getQRImage(selectedMethod) ? (
+                  <img
+                    src={getQRImage(selectedMethod)!}
+                    alt={`${selectedMethod} QR`}
+                    className="w-52 h-52 object-contain"
+                  />
+                ) : (
+                  <QRCodeSVG
+                    value={getQRData(selectedMethod)}
+                    size={208}
+                    bgColor="#ffffff"
+                    fgColor="#000000"
+                    level="M"
+                  />
+                )}
+              </div>
+
+              {/* Instructions */}
+              <div className="text-center space-y-1">
+                <p className="text-sm font-semibold text-foreground">
+                  Scan with {selectedMethod.charAt(0).toUpperCase() + selectedMethod.slice(1)} app
+                </p>
+                <p className="text-xs text-muted-foreground font-mono">{reference}</p>
+              </div>
+
+              {/* Confirm button inside modal */}
+              <button
+                onClick={handleConfirmPayment}
+                data-testid="button-confirm-payment"
+                className="w-full py-4 rounded-2xl bg-success text-white font-black text-lg transition-all active:scale-[0.97] hover:brightness-110 shadow-[0_4px_16px_-4px_hsl(var(--success)/0.5)]"
+              >
+                Confirm Payment Rs. {total}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
