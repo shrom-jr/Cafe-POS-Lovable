@@ -45,6 +45,7 @@ const PaymentScreen = () => {
   const snap = orderSnapshot.current || (order ? { id: order.id, items: order.items, tableNumber: order.tableNumber } : null);
 
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
   const [paid, setPaid] = useState(false);
   const [billNum, setBillNum] = useState<number>(0);
 
@@ -79,6 +80,7 @@ const PaymentScreen = () => {
 
   const handleConfirmPayment = async () => {
     if (!selectedMethod) return;
+    if (!confirming) { setConfirming(true); return; }
     const bn = getNextBillNumber();
     setBillNum(bn);
 
@@ -219,7 +221,7 @@ const PaymentScreen = () => {
             {methods.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
-                onClick={() => setSelectedMethod(id)}
+                onClick={() => { setSelectedMethod(id); setConfirming(false); }}
                 data-testid={`button-payment-method-${id}`}
                 className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all active:scale-[0.97] ${
                   selectedMethod === id
@@ -275,14 +277,45 @@ const PaymentScreen = () => {
           );
         })()}
 
-        <button
-          onClick={handleConfirmPayment}
-          disabled={!selectedMethod}
-          data-testid="button-confirm-payment"
-          className="w-full py-4 rounded-2xl bg-accent text-accent-foreground font-black text-lg transition-all active:scale-[0.97] disabled:opacity-35 disabled:cursor-not-allowed hover:brightness-110 shadow-[0_4px_16px_-4px_hsl(var(--accent)/0.5)]"
-        >
-          {selectedMethod ? `Confirm ${selectedMethod.charAt(0).toUpperCase() + selectedMethod.slice(1)} Payment` : 'Select a Payment Method'}
-        </button>
+        {confirming ? (
+          <div className="rounded-2xl border-2 border-accent/50 bg-accent/10 p-4 space-y-3">
+            <p className="text-center text-sm font-semibold text-foreground">
+              Confirm{' '}
+              <span className="text-accent font-black">
+                {selectedMethod!.charAt(0).toUpperCase() + selectedMethod!.slice(1)}
+              </span>{' '}
+              payment of{' '}
+              <span className="text-accent font-black">Rs. {total}</span>?
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConfirming(false)}
+                data-testid="button-cancel-confirm"
+                className="flex-1 py-3 rounded-xl bg-secondary text-secondary-foreground font-bold text-sm transition-all active:scale-[0.97] hover:bg-secondary/70"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmPayment}
+                data-testid="button-final-confirm"
+                className="flex-1 py-3 rounded-xl bg-accent text-accent-foreground font-black text-sm transition-all active:scale-[0.97] hover:brightness-110 shadow-[0_4px_12px_-4px_hsl(var(--accent)/0.5)]"
+              >
+                Yes, Confirm
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={handleConfirmPayment}
+            disabled={!selectedMethod}
+            data-testid="button-confirm-payment"
+            className="w-full py-4 rounded-2xl bg-accent text-accent-foreground font-black text-lg transition-all active:scale-[0.97] disabled:opacity-35 disabled:cursor-not-allowed hover:brightness-110 shadow-[0_4px_16px_-4px_hsl(var(--accent)/0.5)]"
+          >
+            {selectedMethod
+              ? `Confirm ${selectedMethod.charAt(0).toUpperCase() + selectedMethod.slice(1)} Payment`
+              : 'Select a Payment Method'}
+          </button>
+        )}
       </div>
     </div>
   );

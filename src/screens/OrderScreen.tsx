@@ -6,7 +6,7 @@ import { useTables } from '@/hooks/useTables';
 import { TopBar } from '@/components/ui/Navigation';
 import MenuItemCard from '@/components/orders/MenuItemCard';
 import OrderPanel from '@/components/orders/OrderPanel';
-import { Search, ShoppingBag, X } from 'lucide-react';
+import { Search, ShoppingBag, X, Trash2, RotateCcw, Receipt, AlertTriangle, ArrowRight } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { playClick } from '@/utils/sounds';
 
@@ -70,6 +70,11 @@ const OrderScreen = () => {
     );
   }
 
+  const isBilling = table.status === 'billing';
+  const itemCount = order?.items.reduce((s, i) => s + i.quantity, 0) || 0;
+  const runningTotal = order?.items.reduce((s, i) => s + i.price * i.quantity, 0) || 0;
+  const hasItems = itemCount > 0;
+
   const handleBill = () => {
     if (!order || order.items.length === 0) return;
     updateOrderStatus(order.id, 'billed');
@@ -78,17 +83,19 @@ const OrderScreen = () => {
   };
 
   const handleAddItem = (item: typeof menuItems[0]) => {
+    if (isBilling) return;
     const currentOrder = order || createOrder(tableId, table.number);
     addItemToOrder(currentOrder.id, item);
     playClick();
   };
 
   const handleClear = () => {
-    if (!order) return;
+    if (!order || isBilling) return;
     clearOrder(order.id);
   };
 
   const handleRepeatLast = () => {
+    if (isBilling) return;
     const tablePayments = payments
       .filter((p) => p.tableNumber === table.number)
       .sort((a, b) => b.createdAt - a.createdAt);
@@ -107,14 +114,31 @@ const OrderScreen = () => {
     playClick();
   };
 
-  const itemCount = order?.items.reduce((s, i) => s + i.quantity, 0) || 0;
-  const runningTotal = order?.items.reduce((s, i) => s + i.price * i.quantity, 0) || 0;
-
   return (
     <div className="h-screen bg-background flex flex-col">
-      <TopBar title={`Table ${table.number} — Order`} showBack onBack={() => navigate('/')} />
-      <div className="flex-1 flex overflow-hidden">
+      <TopBar title={`Table ${table.number}`} showBack onBack={() => navigate('/')} />
+
+      {/* Billing lock banner */}
+      {isBilling && (
+        <button
+          onClick={() => navigate(`/billing/${tableId}`)}
+          className="flex items-center justify-between px-4 py-3 bg-warning/15 border-b border-warning/30 text-warning w-full"
+          data-testid="banner-billing-lock"
+        >
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <AlertTriangle size={15} />
+            This table is currently being billed
+          </div>
+          <div className="flex items-center gap-1 text-xs font-bold">
+            Go to Payment <ArrowRight size={13} />
+          </div>
+        </button>
+      )}
+
+      <div className="flex-1 flex overflow-hidden min-h-0">
+        {/* Left: Menu */}
         <div className="flex-1 flex flex-col border-r border-border min-w-0">
+          {/* Search */}
           <div className="p-3 border-b border-border">
             <div className="relative">
               <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -137,6 +161,7 @@ const OrderScreen = () => {
             </div>
           </div>
 
+          {/* Categories */}
           {!search && (
             <div className="flex gap-2 p-3 overflow-x-auto border-b border-border no-scrollbar">
               {categories.map((cat) => (
@@ -156,7 +181,8 @@ const OrderScreen = () => {
             </div>
           )}
 
-          <div className={`flex-1 overflow-y-auto p-3 ${isMobile ? 'pb-24' : ''}`}>
+          {/* Items grid */}
+          <div className="flex-1 overflow-y-auto p-3">
             <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3'} gap-2.5`}>
               {filteredItems.map((item) => (
                 <MenuItemCard
@@ -164,6 +190,7 @@ const OrderScreen = () => {
                   item={item}
                   quantityInOrder={orderQtyMap[item.id] || 0}
                   onAdd={() => handleAddItem(item)}
+                  disabled={isBilling}
                 />
               ))}
             </div>
@@ -173,41 +200,120 @@ const OrderScreen = () => {
           </div>
         </div>
 
+        {/* Right: Order Panel — desktop only */}
         {!isMobile && (
-          <div className="w-[340px] lg:w-[380px] flex-shrink-0 p-3">
+          <div className="w-[340px] lg:w-[380px] flex-shrink-0 p-3 pb-0">
             <OrderPanel
               order={order}
-              onUpdateQty={(menuItemId, delta) => order && updateItemQuantity(order.id, menuItemId, delta)}
-              onRemove={(menuItemId) => order && removeItemFromOrder(order.id, menuItemId)}
+              onUpdateQty={(menuItemId, delta) =>
+                !isBilling && order && updateItemQuantity(order.id, menuItemId, delta)
+              }
+              onRemove={(menuItemId) =>
+                !isBilling && order && removeItemFromOrder(order.id, menuItemId)
+              }
               onBill={handleBill}
               onClear={handleClear}
               onRepeatLast={handleRepeatLast}
               hasLastOrder={hasLastOrder}
+              locked={isBilling}
             />
           </div>
         )}
       </div>
 
-      {isMobile && itemCount > 0 && !showCart && (
+      {/* ─── QUICK ACTION BAR ────────────────────────────────────── */}
+      <div className="flex-shrink-0 border-t border-border bg-card/95 backdrop-blur-sm px-3 py-2.5 flex items-center gap-2 safe-bottom">
+        {/* Clear */}
         <button
-          onClick={() => setShowCart(true)}
-          data-testid="button-open-cart"
-          className="fixed bottom-4 left-4 right-4 z-50 flex items-center justify-between px-5 py-4 rounded-2xl bg-accent text-accent-foreground font-bold text-base shadow-[0_8px_24px_-4px_hsl(var(--accent)/0.5)] active:scale-95 transition-all"
+          onClick={handleClear}
+          disabled={!hasItems || isBilling}
+          data-testid="button-quick-clear"
+          className="flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl bg-secondary text-muted-foreground font-medium text-xs transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-danger/15 hover:text-danger min-w-[52px]"
         >
-          <div className="flex items-center gap-2">
-            <ShoppingBag size={20} />
-            <span>{itemCount} item{itemCount !== 1 ? 's' : ''}</span>
-          </div>
-          <span className="font-black">Rs. {runningTotal}</span>
+          <Trash2 size={18} />
+          <span>Clear</span>
         </button>
-      )}
 
+        {/* Repeat Last */}
+        <button
+          onClick={handleRepeatLast}
+          disabled={!hasLastOrder || isBilling}
+          data-testid="button-quick-repeat"
+          className="flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl bg-secondary text-muted-foreground font-medium text-xs transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-accent/15 hover:text-accent min-w-[52px]"
+        >
+          <RotateCcw size={18} />
+          <span>Repeat</span>
+        </button>
+
+        {/* Order summary / cart view trigger (mobile) */}
+        {isMobile ? (
+          <button
+            onClick={() => hasItems && setShowCart(true)}
+            data-testid="button-view-order"
+            className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${
+              hasItems
+                ? 'bg-secondary/80 hover:bg-secondary cursor-pointer'
+                : 'bg-secondary/40 cursor-default'
+            }`}
+          >
+            <ShoppingBag size={16} className="text-muted-foreground flex-shrink-0" />
+            <span className="text-sm text-muted-foreground truncate">
+              {hasItems ? `${itemCount} item${itemCount !== 1 ? 's' : ''}` : 'No items'}
+            </span>
+            {hasItems && (
+              <span className="ml-auto font-bold text-accent text-sm whitespace-nowrap">
+                Rs. {runningTotal}
+              </span>
+            )}
+          </button>
+        ) : (
+          /* Desktop: show total */
+          <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl bg-secondary/40">
+            <ShoppingBag size={15} className="text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">
+              {hasItems ? `${itemCount} item${itemCount !== 1 ? 's' : ''}` : 'No items added'}
+            </span>
+            {hasItems && (
+              <span className="ml-auto font-bold text-accent text-sm">Rs. {runningTotal}</span>
+            )}
+          </div>
+        )}
+
+        {/* Proceed to Billing */}
+        {isBilling ? (
+          <button
+            onClick={() => navigate(`/billing/${tableId}`)}
+            data-testid="button-go-billing"
+            className="flex flex-col items-center justify-center gap-0.5 px-4 py-2 rounded-xl bg-warning text-black font-bold text-xs transition-all active:scale-95 min-w-[72px]"
+          >
+            <Receipt size={18} />
+            <span>Payment</span>
+          </button>
+        ) : (
+          <button
+            onClick={handleBill}
+            disabled={!hasItems}
+            data-testid="button-quick-bill"
+            className="flex flex-col items-center justify-center gap-0.5 px-4 py-2 rounded-xl bg-accent text-accent-foreground font-bold text-xs transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed hover:brightness-110 shadow-[0_2px_12px_-4px_hsl(var(--accent)/0.5)] min-w-[72px]"
+          >
+            <Receipt size={18} />
+            <span>Bill</span>
+          </button>
+        )}
+      </div>
+
+      {/* Mobile: Cart slide-up sheet */}
       {isMobile && showCart && (
         <div className="fixed inset-0 z-50 flex flex-col">
-          <div className="flex-1 bg-background/60 backdrop-blur-sm" onClick={() => setShowCart(false)} />
+          <div
+            className="flex-1 bg-background/60 backdrop-blur-sm"
+            onClick={() => setShowCart(false)}
+          />
           <div className="bg-card border-t border-border rounded-t-2xl max-h-[82vh] flex flex-col animate-slide-up">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-              <h3 className="font-bold text-foreground">Your Order</h3>
+              <h3 className="font-bold text-foreground">
+                Table {table.number} — Order
+              </h3>
               <button
                 onClick={() => setShowCart(false)}
                 className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary transition-colors"
@@ -219,12 +325,17 @@ const OrderScreen = () => {
             <div className="flex-1 overflow-y-auto">
               <OrderPanel
                 order={order}
-                onUpdateQty={(menuItemId, delta) => order && updateItemQuantity(order.id, menuItemId, delta)}
-                onRemove={(menuItemId) => order && removeItemFromOrder(order.id, menuItemId)}
+                onUpdateQty={(menuItemId, delta) =>
+                  !isBilling && order && updateItemQuantity(order.id, menuItemId, delta)
+                }
+                onRemove={(menuItemId) =>
+                  !isBilling && order && removeItemFromOrder(order.id, menuItemId)
+                }
                 onBill={() => { setShowCart(false); handleBill(); }}
                 onClear={() => { setShowCart(false); handleClear(); }}
                 onRepeatLast={handleRepeatLast}
                 hasLastOrder={hasLastOrder}
+                locked={isBilling}
               />
             </div>
           </div>

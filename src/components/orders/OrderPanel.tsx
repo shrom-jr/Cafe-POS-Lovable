@@ -9,9 +9,10 @@ interface OrderPanelProps {
   onClear?: () => void;
   onRepeatLast?: () => void;
   hasLastOrder?: boolean;
+  locked?: boolean;
 }
 
-const OrderPanel = ({ order, onUpdateQty, onRemove, onBill, onClear, onRepeatLast, hasLastOrder }: OrderPanelProps) => {
+const OrderPanel = ({ order, onUpdateQty, onRemove, onBill, onClear, onRepeatLast, hasLastOrder, locked }: OrderPanelProps) => {
   const items = order?.items || [];
   const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const itemCount = items.reduce((s, i) => s + i.quantity, 0);
@@ -29,7 +30,7 @@ const OrderPanel = ({ order, onUpdateQty, onRemove, onBill, onClear, onRepeatLas
           </span>
         )}
         <div className="ml-auto flex items-center gap-1">
-          {hasLastOrder && onRepeatLast && (
+          {hasLastOrder && onRepeatLast && !locked && (
             <button
               onClick={onRepeatLast}
               data-testid="button-repeat-last"
@@ -40,7 +41,7 @@ const OrderPanel = ({ order, onUpdateQty, onRemove, onBill, onClear, onRepeatLas
               <span className="hidden sm:inline">Repeat</span>
             </button>
           )}
-          {items.length > 0 && onClear && (
+          {items.length > 0 && onClear && !locked && (
             <button
               onClick={onClear}
               data-testid="button-clear-order"
@@ -80,14 +81,21 @@ const OrderPanel = ({ order, onUpdateQty, onRemove, onBill, onClear, onRepeatLas
           <span className="text-muted-foreground text-sm font-medium">Total</span>
           <span className="text-2xl font-black text-accent">Rs. {total}</span>
         </div>
-        <button
-          onClick={onBill}
-          disabled={items.length === 0}
-          data-testid="button-proceed-to-bill"
-          className="w-full py-3.5 rounded-xl bg-accent text-accent-foreground font-bold text-base transition-all active:scale-[0.97] disabled:opacity-35 disabled:cursor-not-allowed hover:brightness-110 shadow-[0_4px_12px_-2px_hsl(var(--accent)/0.4)]"
-        >
-          Proceed to Bill
-        </button>
+        {!locked && (
+          <button
+            onClick={onBill}
+            disabled={items.length === 0}
+            data-testid="button-proceed-to-bill"
+            className="w-full py-3.5 rounded-xl bg-accent text-accent-foreground font-bold text-base transition-all active:scale-[0.97] disabled:opacity-35 disabled:cursor-not-allowed hover:brightness-110 shadow-[0_4px_12px_-2px_hsl(var(--accent)/0.4)]"
+          >
+            Proceed to Bill
+          </button>
+        )}
+        {locked && (
+          <div className="text-center text-xs text-warning font-medium py-1">
+            Table is being billed — editing disabled
+          </div>
+        )}
       </div>
     </div>
   );

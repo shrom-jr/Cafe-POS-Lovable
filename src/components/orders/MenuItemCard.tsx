@@ -6,12 +6,14 @@ interface MenuItemCardProps {
   item: MenuItem;
   quantityInOrder?: number;
   onAdd: () => void;
+  disabled?: boolean;
 }
 
-const MenuItemCard = ({ item, quantityInOrder = 0, onAdd }: MenuItemCardProps) => {
+const MenuItemCard = ({ item, quantityInOrder = 0, onAdd, disabled = false }: MenuItemCardProps) => {
   const [flash, setFlash] = useState(false);
 
   const handleClick = () => {
+    if (disabled) return;
     onAdd();
     setFlash(true);
     setTimeout(() => setFlash(false), 180);
@@ -23,12 +25,12 @@ const MenuItemCard = ({ item, quantityInOrder = 0, onAdd }: MenuItemCardProps) =
       data-testid={`menu-item-${item.id}`}
       className={`
         relative flex flex-col items-center justify-center p-3 rounded-xl
-        border transition-all duration-150 active:scale-[0.93] hover:scale-[1.02]
-        shadow-[0_2px_8px_-2px_rgba(0,0,0,0.4)] hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.5)]
-        min-h-[96px] w-full
-        ${flash
-          ? 'border-accent/80 bg-accent/15 scale-[0.95]'
-          : 'border-border bg-card hover:border-accent/40 hover:bg-card/80'
+        border transition-all duration-150 min-h-[96px] w-full
+        ${disabled
+          ? 'opacity-40 cursor-not-allowed border-border bg-card'
+          : flash
+            ? 'border-accent/80 bg-accent/15 scale-[0.95] active:scale-[0.93]'
+            : 'border-border bg-card hover:border-accent/40 hover:bg-card/80 hover:scale-[1.02] active:scale-[0.93] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.4)] hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.5)]'
         }
       `}
     >
