@@ -58,6 +58,12 @@ const PaymentScreen = () => {
   const [printing, setPrinting] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
+  useEffect(() => {
+    if (!paid) return;
+    const t = setTimeout(() => navigate('/', { replace: true }), 1800);
+    return () => clearTimeout(t);
+  }, [paid]);
+
   // All financial values come from ReviewScreen via navigation state — no recalculation here
   const subtotal = rawState?.subtotal ?? 0;
   const discountAmount = rawState?.discountAmount ?? 0;
@@ -253,7 +259,7 @@ const PaymentScreen = () => {
             <div className="w-16 h-16 rounded-full bg-success/15 flex items-center justify-center shadow-[0_0_32px_-4px_hsl(var(--success)/0.4)]">
               <CheckCircle2 size={36} className="text-success" />
             </div>
-            <h2 className="text-xl font-black text-foreground">Payment Received!</h2>
+            <h2 className="text-xl font-black text-foreground">Payment Successful</h2>
             <div className="flex items-center gap-2">
               <span className="text-3xl font-black text-foreground">Rs. {finalTotal}</span>
               <span className="px-2.5 py-0.5 rounded-full bg-success/15 text-success text-xs font-bold uppercase">
@@ -294,10 +300,8 @@ const PaymentScreen = () => {
             </div>
           </div>
 
-          {/* Printing indicator */}
-          {printing && (
-            <p className="text-xs text-muted-foreground animate-pulse">Printing receipt...</p>
-          )}
+          {/* Printing + auto-nav indicator */}
+          <p className="text-xs text-muted-foreground animate-pulse">Printing receipt...</p>
 
           <button
             onClick={() => navigate('/', { replace: true })}
@@ -327,7 +331,7 @@ const PaymentScreen = () => {
           <p className="text-6xl font-black text-foreground mt-1 tracking-tight text-center tabular-nums">
             Rs. {finalTotal}
           </p>
-          <p className="text-xs text-muted-foreground mt-1 font-mono text-center">Table {snap.tableNumber}</p>
+          <p className="text-xs text-muted-foreground/60 mt-1 font-mono text-center">Table {snap.tableNumber}</p>
 
           {/* Breakdown */}
           <div className="mt-4 pt-3 border-t border-border/40 space-y-1.5">
@@ -378,7 +382,7 @@ const PaymentScreen = () => {
                   key={id}
                   onClick={() => { setSelectedMethod(id); setShowQRModal(true); }}
                   data-testid={`button-payment-method-${id}`}
-                  className="flex items-center gap-3 p-3.5 rounded-xl border border-border bg-card transition-all active:scale-[0.97] hover:bg-secondary/40 hover:border-border/80"
+                  className="flex items-center gap-3 p-3.5 rounded-xl border border-border bg-card transition-all active:scale-[0.97] hover:scale-[1.015] hover:bg-secondary/50 hover:border-foreground/20 hover:shadow-sm"
                 >
                   <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">
                     <Smartphone size={18} className="text-muted-foreground" />
@@ -406,9 +410,9 @@ const PaymentScreen = () => {
               </h3>
               <button
                 onClick={() => { setShowQRModal(false); setSelectedMethod(null); setConfirming(false); }}
-                className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors active:scale-90"
+                className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all active:scale-90"
               >
-                <X size={16} />
+                <X size={17} />
               </button>
             </div>
 
