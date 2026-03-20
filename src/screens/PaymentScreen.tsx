@@ -57,12 +57,8 @@ const PaymentScreen = () => {
   const [paidMethod, setPaidMethod] = useState<string>('');
   const [printing, setPrinting] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [reprinting, setReprinting] = useState(false);
 
-  useEffect(() => {
-    if (!paid) return;
-    const t = setTimeout(() => navigate('/', { replace: true }), 1800);
-    return () => clearTimeout(t);
-  }, [paid]);
 
   // All financial values come from ReviewScreen via navigation state — no recalculation here
   const subtotal = rawState?.subtotal ?? 0;
@@ -300,16 +296,53 @@ const PaymentScreen = () => {
             </div>
           </div>
 
-          {/* Printing + auto-nav indicator */}
-          <p className="text-xs text-muted-foreground animate-pulse">Printing receipt...</p>
+          {/* Printing indicator */}
+          {printing && (
+            <p className="text-xs text-muted-foreground animate-pulse">Printing receipt...</p>
+          )}
 
-          <button
-            onClick={() => navigate('/', { replace: true })}
-            data-testid="button-back-home"
-            className="w-full max-w-sm py-4 rounded-2xl bg-success text-white font-black text-base flex items-center justify-center gap-2 transition-all active:scale-[0.97] hover:brightness-110 shadow-[0_4px_16px_-4px_hsl(var(--success)/0.4)]"
-          >
-            <Home size={20} /> Back to Tables
-          </button>
+          {/* Action buttons */}
+          <div className="w-full max-w-sm flex gap-2.5">
+            <button
+              onClick={async () => {
+                if (reprinting) return;
+                setReprinting(true);
+                window.print();
+                if (printer.isConnected) {
+                  await printer.print(
+                    formatReceipt({
+                      cafeName: settings.cafeName,
+                      tableNumber: snap.tableNumber,
+                      items: snap.items,
+                      subtotal,
+                      discount: discountAmount,
+                      vatAmount,
+                      vatRate,
+                      vatEnabled,
+                      total: finalTotal,
+                      method: paidMethod,
+                      date: format(Date.now(), 'yyyy-MM-dd HH:mm'),
+                      billNumber: billNum,
+                    })
+                  );
+                }
+                setTimeout(() => setReprinting(false), 1800);
+              }}
+              disabled={reprinting}
+              data-testid="button-reprint"
+              className="flex-1 py-4 rounded-2xl border border-border bg-secondary text-foreground font-bold text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.97] hover:bg-secondary/80 disabled:opacity-60"
+            >
+              {reprinting ? 'Reprinting...' : 'Reprint Receipt'}
+            </button>
+
+            <button
+              onClick={() => navigate('/', { replace: true })}
+              data-testid="button-back-home"
+              className="flex-1 py-4 rounded-2xl bg-success text-white font-black text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.97] hover:brightness-110 shadow-[0_4px_16px_-4px_hsl(var(--success)/0.4)]"
+            >
+              <Home size={18} /> Back to Tables
+            </button>
+          </div>
         </div>
         </div>
       </>
