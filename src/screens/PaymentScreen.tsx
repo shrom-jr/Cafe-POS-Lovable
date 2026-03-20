@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { usePOSStore } from '@/store/usePOSStore';
@@ -27,9 +27,13 @@ const PaymentScreen = () => {
   const rawState = location.state as {
     discount?: number;
     discountType?: 'percent' | 'fixed';
-    total?: number;
     subtotal?: number;
     discountAmount?: number;
+    vatAmount?: number;
+    vatRate?: number;
+    vatMode?: 'excluded' | 'included';
+    vatEnabled?: boolean;
+    total?: number;
   } | null;
 
   const table = tables.find((t) => t.id === tableId);
@@ -46,12 +50,6 @@ const PaymentScreen = () => {
     orderSnapshot.current ||
     (order ? { id: order.id, items: order.items, tableNumber: order.tableNumber } : null);
 
-  // Discount state — can be seeded from BillingScreen state
-  const [discountType, setDiscountType] = useState<'percent' | 'fixed'>(
-    rawState?.discountType || 'percent'
-  );
-  const [discountValue, setDiscountValue] = useState<number>(rawState?.discount || 0);
-
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [showQRModal, setShowQRModal] = useState(false);
   const [paid, setPaid] = useState(false);
@@ -59,27 +57,16 @@ const PaymentScreen = () => {
   const [paidMethod, setPaidMethod] = useState<string>('');
   const [printing, setPrinting] = useState(false);
 
-
-  // Compute discount/total — must be before early return (hooks rules)
-  const subtotalRaw = snap?.items.reduce((s, i) => s + i.price * i.quantity, 0) ?? 0;
-  const discountAmount = useMemo(() => {
-    if (discountType === 'percent') return Math.round((subtotalRaw * discountValue) / 100);
-    return Math.min(discountValue, subtotalRaw);
-  }, [subtotalRaw, discountType, discountValue]);
-  const afterDiscount = Math.max(0, subtotalRaw - discountAmount);
-
-  const vatEnabled = settings.vatEnabled ?? false;
-  const vatRate = settings.vatRate ?? 0.13;
-  const vatMode = settings.vatMode ?? 'excluded';
-  const vatAmount = useMemo(() => {
-    if (!vatEnabled) return 0;
-    return vatMode === 'excluded'
-      ? Math.round(afterDiscount * vatRate)
-      : Math.round(afterDiscount * vatRate / (1 + vatRate));
-  }, [vatEnabled, vatMode, vatRate, afterDiscount]);
-  const finalTotalRaw = vatEnabled && vatMode === 'excluded'
-    ? afterDiscount + vatAmount
-    : afterDiscount;
+  // All financial values come from BillingScreen — no recalculation here
+  const subtotal = rawState?.subtotal ?? 0;
+  const discountAmount = rawState?.discountAmount ?? 0;
+  const discountValue = rawState?.discount ?? 0;
+  const discountType = rawState?.discountType ?? 'percent';
+  const vatAmount = rawState?.vatAmount ?? 0;
+  const vatRate = rawState?.vatRate ?? 0.13;
+  const vatMode = rawState?.vatMode ?? 'excluded';
+  const vatEnabled = rawState?.vatEnabled ?? false;
+  const finalTotal = rawState?.total ?? 0;
 
   if (!table || !snap) {
     return (
@@ -95,8 +82,6 @@ const PaymentScreen = () => {
     );
   }
 
-  const subtotal = subtotalRaw;
-  const finalTotal = finalTotalRaw;
   const reference = `${settings.cafeName.replace(/\s/g, '')}-T${snap.tableNumber}-B${settings.billCounter + 1}`;
 
   const methods = [
@@ -363,66 +348,6 @@ const PaymentScreen = () => {
                 <span className="text-foreground font-medium">Rs. {vatAmount}</span>
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Discount section */}
-        <div className="bg-card rounded-2xl border border-border p-4 space-y-3 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.3)]">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Discount</p>
-            {discountValue > 0 && (
-              <button
-                onClick={() => setDiscountValue(0)}
-                className="text-xs text-danger/70 hover:text-danger transition-colors"
-              >
-                Remove
-              </button>
-            )}
-          </div>
-
-          {/* Quick % buttons */}
-          <div className="flex gap-2">
-            {[5, 10, 15, 20].map((v) => (
-              <button
-                key={v}
-                onClick={() => { setDiscountType('percent'); setDiscountValue(discountValue === v && discountType === 'percent' ? 0 : v); }}
-                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all active:scale-95 ${
-                  discountValue === v && discountType === 'percent'
-                    ? 'bg-accent text-accent-foreground shadow-[0_2px_8px_-2px_hsl(var(--accent)/0.4)]'
-                    : 'bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80'
-                }`}
-              >
-                {v}%
-              </button>
-            ))}
-          </div>
-
-          {/* Manual input */}
-          <div className="flex gap-2">
-            <div className="flex rounded-lg border border-border overflow-hidden flex-1">
-              <button
-                onClick={() => setDiscountType('percent')}
-                className={`px-3 py-2 text-xs font-bold transition-colors ${discountType === 'percent' ? 'bg-accent text-accent-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'}`}
-              >
-                %
-              </button>
-              <button
-                onClick={() => setDiscountType('fixed')}
-                className={`px-3 py-2 text-xs font-bold transition-colors border-l border-border ${discountType === 'fixed' ? 'bg-accent text-accent-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'}`}
-              >
-                Rs.
-              </button>
-              <input
-                type="number"
-                min="0"
-                max={discountType === 'percent' ? 100 : subtotal}
-                value={discountValue || ''}
-                onChange={(e) => setDiscountValue(Number(e.target.value) || 0)}
-                placeholder={discountType === 'percent' ? 'Custom %' : 'Amount'}
-                data-testid="input-discount-value"
-                className="flex-1 px-3 py-2 bg-secondary text-foreground text-sm placeholder:text-muted-foreground focus:outline-none border-l border-border"
-              />
-            </div>
           </div>
         </div>
 

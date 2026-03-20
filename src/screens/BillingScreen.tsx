@@ -56,7 +56,17 @@ const BillingScreen = () => {
 
   const handlePay = () => {
     navigate(`/payment/${tableId}`, {
-      state: { discount: discountValue, discountType, total, subtotal, discountAmount, vatAmount },
+      state: {
+        discount: discountValue,
+        discountType,
+        subtotal,
+        discountAmount,
+        vatAmount,
+        vatRate,
+        vatMode,
+        vatEnabled,
+        total,
+      },
     });
   };
 
