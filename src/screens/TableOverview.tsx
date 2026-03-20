@@ -1,11 +1,10 @@
 import { useNavigate } from 'react-router-dom';
-import { usePOS } from '@/context/POSContext';
-import TableCard from '@/components/pos/TableCard';
-import Navigation from '@/components/pos/Navigation';
-import { TopBar } from '@/components/pos/Navigation';
+import { useTables } from '@/hooks/useTables';
+import TableCard from '@/components/tables/TableCard';
+import Navigation, { TopBar } from '@/components/ui/Navigation';
 
 const TableOverview = () => {
-  const { tables } = usePOS();
+  const { tables } = useTables();
   const navigate = useNavigate();
 
   return (

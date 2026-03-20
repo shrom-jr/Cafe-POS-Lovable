@@ -29,7 +29,11 @@ function useTimer(startTime?: number) {
       const h = Math.floor(diff / 3600);
       const m = Math.floor((diff % 3600) / 60);
       const s = diff % 60;
-      setElapsed(h > 0 ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`);
+      setElapsed(
+        h > 0
+          ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+          : `${m}:${String(s).padStart(2, '0')}`
+      );
     };
     update();
     const id = setInterval(update, 1000);
@@ -38,20 +42,25 @@ function useTimer(startTime?: number) {
   return elapsed;
 }
 
-interface Props {
+interface TableCardProps {
   table: CafeTable;
   onClick: () => void;
 }
 
-const TableCard = ({ table, onClick }: Props) => {
+const TableCard = ({ table, onClick }: TableCardProps) => {
   const timer = useTimer(table.orderStartTime);
 
   return (
     <button
       onClick={onClick}
+      data-testid={`table-card-${table.id}`}
       className={`relative flex flex-col items-center justify-center p-5 rounded-xl border-2 transition-all active:scale-95 ${statusColors[table.status]} hover:pos-glow min-h-[120px]`}
     >
-      <div className={`absolute top-3 right-3 w-3 h-3 rounded-full ${statusDots[table.status]} ${table.status !== 'free' ? 'animate-pulse-soft' : ''}`} />
+      <div
+        className={`absolute top-3 right-3 w-3 h-3 rounded-full ${statusDots[table.status]} ${
+          table.status !== 'free' ? 'animate-pulse-soft' : ''
+        }`}
+      />
       <span className="text-3xl font-bold text-foreground">{table.number}</span>
       <span className="text-xs font-medium text-muted-foreground mt-1">{statusLabels[table.status]}</span>
       {timer && (

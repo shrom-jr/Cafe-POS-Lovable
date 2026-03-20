@@ -1,9 +1,11 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { usePOS } from '@/context/POSContext';
-import { TopBar } from '@/components/pos/Navigation';
-import MenuItemCard from '@/components/pos/MenuItemCard';
-import OrderPanel from '@/components/pos/OrderPanel';
+import { usePOSStore } from '@/store/usePOSStore';
+import { useOrders } from '@/hooks/useOrders';
+import { useTables } from '@/hooks/useTables';
+import { TopBar } from '@/components/ui/Navigation';
+import MenuItemCard from '@/components/orders/MenuItemCard';
+import OrderPanel from '@/components/orders/OrderPanel';
 import { Search, ShoppingBag, X } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -11,32 +13,39 @@ const OrderScreen = () => {
   const { tableId } = useParams<{ tableId: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { tables, categories, menuItems, orders, getActiveOrder, createOrder, addItemToOrder, updateItemQuantity, removeItemFromOrder, updateTable, updateOrderStatus } = usePOS();
 
-  const table = tables.find(t => t.id === tableId);
+  const { tables, updateTable } = useTables();
+  const { getActiveOrder, createOrder, addItemToOrder, updateItemQuantity, removeItemFromOrder, updateOrderStatus } = useOrders();
+  const categories = usePOSStore((s) => s.categories);
+  const menuItems = usePOSStore((s) => s.menuItems);
+
+  const table = tables.find((t) => t.id === tableId);
   const [activeCat, setActiveCat] = useState(categories[0]?.id || '');
   const [search, setSearch] = useState('');
   const [showCart, setShowCart] = useState(false);
 
-  // Get existing order (don't auto-create — wait for first item)
   const order = useMemo(() => {
     if (!tableId || !table) return null;
     return getActiveOrder(tableId) || null;
-  }, [tableId, table, getActiveOrder, orders]);
+  }, [tableId, table, getActiveOrder]);
 
   const filteredItems = useMemo(() => {
     let items = menuItems;
     if (search.trim()) {
       const q = search.toLowerCase();
-      items = items.filter(i => i.name.toLowerCase().includes(q));
+      items = items.filter((i) => i.name.toLowerCase().includes(q));
     } else {
-      items = items.filter(i => i.categoryId === activeCat);
+      items = items.filter((i) => i.categoryId === activeCat);
     }
     return items;
   }, [menuItems, activeCat, search]);
 
   if (!table || !tableId) {
-    return <div className="min-h-screen bg-background flex items-center justify-center text-foreground">Table not found</div>;
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center text-foreground">
+        Table not found
+      </div>
+    );
   }
 
   const handleBill = () => {
@@ -68,6 +77,7 @@ const OrderScreen = () => {
                 placeholder="Search menu..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                data-testid="input-search-menu"
                 className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
               />
             </div>
@@ -76,10 +86,11 @@ const OrderScreen = () => {
           {/* Categories */}
           {!search && (
             <div className="flex gap-2 p-3 overflow-x-auto border-b border-border">
-              {categories.map(cat => (
+              {categories.map((cat) => (
                 <button
                   key={cat.id}
                   onClick={() => setActiveCat(cat.id)}
+                  data-testid={`button-category-${cat.id}`}
                   className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
                     activeCat === cat.id
                       ? 'bg-accent text-accent-foreground'
@@ -95,12 +106,8 @@ const OrderScreen = () => {
           {/* Items grid */}
           <div className={`flex-1 overflow-y-auto p-3 ${isMobile ? 'pb-24' : ''}`}>
             <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3'} gap-3`}>
-              {filteredItems.map(item => (
-                <MenuItemCard
-                  key={item.id}
-                  item={item}
-                  onAdd={() => handleAddItem(item)}
-                />
+              {filteredItems.map((item) => (
+                <MenuItemCard key={item.id} item={item} onAdd={() => handleAddItem(item)} />
               ))}
             </div>
             {filteredItems.length === 0 && (
@@ -126,6 +133,7 @@ const OrderScreen = () => {
       {isMobile && itemCount > 0 && !showCart && (
         <button
           onClick={() => setShowCart(true)}
+          data-testid="button-open-cart"
           className="fixed bottom-4 right-4 z-50 flex items-center gap-2 px-5 py-3.5 rounded-2xl bg-accent text-accent-foreground font-bold text-base shadow-lg active:scale-95 transition-all"
         >
           <ShoppingBag size={20} />
@@ -142,7 +150,7 @@ const OrderScreen = () => {
           <div className="bg-card border-t border-border rounded-t-2xl max-h-[80vh] flex flex-col animate-in slide-in-from-bottom duration-200">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
               <h3 className="font-bold text-foreground">Your Order</h3>
-              <button onClick={() => setShowCart(false)} className="p-1 text-muted-foreground">
+              <button onClick={() => setShowCart(false)} className="p-1 text-muted-foreground" data-testid="button-close-cart">
                 <X size={20} />
               </button>
             </div>

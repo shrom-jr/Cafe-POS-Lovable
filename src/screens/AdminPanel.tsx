@@ -1,17 +1,16 @@
-import { useState, useMemo, useRef } from 'react';
-import BillPreview from '@/components/pos/BillPreview';
-import { usePOS } from '@/context/POSContext';
-import Navigation from '@/components/pos/Navigation';
-import { TopBar } from '@/components/pos/Navigation';
+import { useState, useRef } from 'react';
+import { usePOSStore } from '@/store/usePOSStore';
+import Navigation, { TopBar } from '@/components/ui/Navigation';
+import BillPreview from '@/components/billing/BillPreview';
 import { printer } from '@/utils/printer';
 import {
-  BarChart3, Coffee, UtensilsCrossed, CreditCard, Table2, Settings2, FileDown, FileUp,
-  Plus, Trash2, Edit3, Save, X, Lock, Unlock, TrendingUp, DollarSign, ShoppingCart,
-  Printer, Download, Upload, Moon, Bluetooth, Smartphone, ToggleLeft, ToggleRight,
+  BarChart3, Coffee, UtensilsCrossed, CreditCard, Table2, TrendingUp, FileDown,
+  Plus, Trash2, Edit3, Save, X, Lock, DollarSign, ShoppingCart,
+  Printer, Download, Upload, Bluetooth, Smartphone, ToggleLeft, ToggleRight,
   Receipt, ImagePlus,
 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { format, startOfDay, subDays, startOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval } from 'date-fns';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { format, startOfDay, subDays, startOfWeek, startOfMonth } from 'date-fns';
 
 type AdminTab = 'dashboard' | 'menu' | 'tables' | 'payments' | 'bill' | 'reports' | 'backup';
 
@@ -20,7 +19,7 @@ const AdminPanel = () => {
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
-  const { settings } = usePOS();
+  const settings = usePOSStore((s) => s.settings);
 
   const handlePinSubmit = () => {
     if (pin === settings.adminPin) {
@@ -50,12 +49,14 @@ const AdminPanel = () => {
               onChange={(e) => { setPin(e.target.value); setPinError(false); }}
               onKeyDown={(e) => e.key === 'Enter' && handlePinSubmit()}
               placeholder="Enter PIN"
+              data-testid="input-admin-pin"
               className="w-full text-center text-2xl tracking-widest px-4 py-3 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
               autoFocus
             />
             {pinError && <p className="text-danger text-sm text-center">Incorrect PIN</p>}
             <button
               onClick={handlePinSubmit}
+              data-testid="button-unlock-admin"
               className="w-full py-3 rounded-xl bg-accent text-accent-foreground font-bold transition-all active:scale-[0.98]"
             >
               Unlock
@@ -81,12 +82,12 @@ const AdminPanel = () => {
   return (
     <div className="min-h-screen bg-background pb-20">
       <TopBar title="Admin Panel" />
-      {/* Tabs */}
       <div className="flex gap-1 p-3 overflow-x-auto border-b border-border">
-        {tabs.map(t => (
+        {tabs.map((t) => (
           <button
             key={t.id}
             onClick={() => setActiveTab(t.id)}
+            data-testid={`tab-admin-${t.id}`}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
               activeTab === t.id ? 'bg-accent text-accent-foreground' : 'bg-secondary text-secondary-foreground'
             }`}
@@ -112,19 +113,19 @@ const AdminPanel = () => {
 
 // ====== DASHBOARD ======
 const DashboardSection = () => {
-  const { payments, orders, tables } = usePOS();
+  const payments = usePOSStore((s) => s.payments);
+  const orders = usePOSStore((s) => s.orders);
   const today = startOfDay(new Date()).getTime();
 
-  const todayPayments = payments.filter(p => p.createdAt >= today);
+  const todayPayments = payments.filter((p) => p.createdAt >= today);
   const todaySales = todayPayments.reduce((s, p) => s + p.total, 0);
   const todayOrders = todayPayments.length;
-  const cashToday = todayPayments.filter(p => p.method === 'cash').reduce((s, p) => s + p.total, 0);
+  const cashToday = todayPayments.filter((p) => p.method === 'cash').reduce((s, p) => s + p.total, 0);
   const digitalToday = todaySales - cashToday;
 
-  // Top selling items
   const itemCounts: Record<string, { name: string; count: number; revenue: number }> = {};
-  todayPayments.forEach(p => {
-    p.items.forEach(i => {
+  todayPayments.forEach((p) => {
+    p.items.forEach((i) => {
       if (!itemCounts[i.menuItemId]) itemCounts[i.menuItemId] = { name: i.name, count: 0, revenue: 0 };
       itemCounts[i.menuItemId].count += i.quantity;
       itemCounts[i.menuItemId].revenue += i.price * i.quantity;
@@ -132,18 +133,14 @@ const DashboardSection = () => {
   });
   const topItems = Object.values(itemCounts).sort((a, b) => b.count - a.count).slice(0, 5);
 
-  // Weekly chart
   const last7 = Array.from({ length: 7 }, (_, i) => {
     const day = startOfDay(subDays(new Date(), 6 - i));
     const dayEnd = startOfDay(subDays(new Date(), 5 - i));
     const daySales = payments
-      .filter(p => p.createdAt >= day.getTime() && p.createdAt < (i === 6 ? Date.now() : dayEnd.getTime()))
+      .filter((p) => p.createdAt >= day.getTime() && p.createdAt < (i === 6 ? Date.now() : dayEnd.getTime()))
       .reduce((s, p) => s + p.total, 0);
     return { day: format(day, 'EEE'), sales: daySales };
   });
-
-  // Average table turnover
-  const paidOrders = orders.filter(o => o.status === 'paid' && o.createdAt >= today);
 
   const stats = [
     { label: "Today's Sales", value: `Rs. ${todaySales}`, icon: <DollarSign size={20} />, color: 'text-accent' },
@@ -164,7 +161,6 @@ const DashboardSection = () => {
         ))}
       </div>
 
-      {/* Weekly Chart */}
       <div className="bg-card rounded-xl border border-border p-4">
         <h3 className="font-bold text-foreground mb-4">Weekly Sales</h3>
         <ResponsiveContainer width="100%" height={200}>
@@ -178,7 +174,6 @@ const DashboardSection = () => {
         </ResponsiveContainer>
       </div>
 
-      {/* Top Items */}
       <div className="bg-card rounded-xl border border-border p-4">
         <h3 className="font-bold text-foreground mb-3">Top Selling Items</h3>
         {topItems.length === 0 && <p className="text-sm text-muted-foreground">No sales today yet.</p>}
@@ -199,7 +194,15 @@ const DashboardSection = () => {
 
 // ====== MENU MANAGEMENT ======
 const MenuSection = () => {
-  const { categories, menuItems, addCategory, updateCategory, deleteCategory, addMenuItem, updateMenuItem, deleteMenuItem } = usePOS();
+  const categories = usePOSStore((s) => s.categories);
+  const menuItems = usePOSStore((s) => s.menuItems);
+  const addCategory = usePOSStore((s) => s.addCategory);
+  const updateCategory = usePOSStore((s) => s.updateCategory);
+  const deleteCategory = usePOSStore((s) => s.deleteCategory);
+  const addMenuItem = usePOSStore((s) => s.addMenuItem);
+  const updateMenuItem = usePOSStore((s) => s.updateMenuItem);
+  const deleteMenuItem = usePOSStore((s) => s.deleteMenuItem);
+
   const [newCat, setNewCat] = useState('');
   const [editCat, setEditCat] = useState<string | null>(null);
   const [editCatName, setEditCatName] = useState('');
@@ -211,11 +214,10 @@ const MenuSection = () => {
   const [editItemName, setEditItemName] = useState('');
   const [editItemPrice, setEditItemPrice] = useState('');
 
-  const catItems = menuItems.filter(i => i.categoryId === selectedCat);
+  const catItems = menuItems.filter((i) => i.categoryId === selectedCat);
 
   return (
     <div className="space-y-4">
-      {/* Categories */}
       <div className="bg-card rounded-xl border border-border p-4 space-y-3">
         <h3 className="font-bold text-foreground">Categories</h3>
         <div className="flex gap-2">
@@ -223,21 +225,31 @@ const MenuSection = () => {
             value={newCat}
             onChange={(e) => setNewCat(e.target.value)}
             placeholder="New category"
+            data-testid="input-new-category"
             className="flex-1 px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
           />
           <button
-            onClick={() => { if (newCat.trim()) { addCategory(newCat.trim()); setNewCat(''); }}}
+            onClick={() => { if (newCat.trim()) { addCategory(newCat.trim()); setNewCat(''); } }}
+            data-testid="button-add-category"
             className="px-4 py-2 rounded-lg bg-accent text-accent-foreground text-sm font-medium"
           >
             <Plus size={16} />
           </button>
         </div>
         <div className="flex flex-wrap gap-2">
-          {categories.map(c => (
-            <div key={c.id} className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm cursor-pointer transition-all ${selectedCat === c.id ? 'bg-accent text-accent-foreground' : 'bg-secondary text-secondary-foreground'}`}>
+          {categories.map((c) => (
+            <div
+              key={c.id}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm cursor-pointer transition-all ${selectedCat === c.id ? 'bg-accent text-accent-foreground' : 'bg-secondary text-secondary-foreground'}`}
+            >
               {editCat === c.id ? (
                 <>
-                  <input value={editCatName} onChange={(e) => setEditCatName(e.target.value)} className="bg-transparent border-b border-accent-foreground text-sm w-20 focus:outline-none" autoFocus />
+                  <input
+                    value={editCatName}
+                    onChange={(e) => setEditCatName(e.target.value)}
+                    className="bg-transparent border-b border-accent-foreground text-sm w-20 focus:outline-none"
+                    autoFocus
+                  />
                   <button onClick={() => { updateCategory(c.id, { name: editCatName }); setEditCat(null); }}><Save size={12} /></button>
                   <button onClick={() => setEditCat(null)}><X size={12} /></button>
                 </>
@@ -253,12 +265,12 @@ const MenuSection = () => {
         </div>
       </div>
 
-      {/* Menu Items */}
       <div className="bg-card rounded-xl border border-border p-4 space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-foreground">Menu Items</h3>
           <button
             onClick={() => setShowAddItem(!showAddItem)}
+            data-testid="button-toggle-add-item"
             className="px-3 py-1.5 rounded-lg bg-accent text-accent-foreground text-sm font-medium flex items-center gap-1"
           >
             <Plus size={14} /> Add Item
@@ -267,8 +279,21 @@ const MenuSection = () => {
 
         {showAddItem && (
           <div className="flex gap-2 p-3 bg-secondary/50 rounded-lg">
-            <input value={itemName} onChange={(e) => setItemName(e.target.value)} placeholder="Item name" className="flex-1 px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
-            <input value={itemPrice} onChange={(e) => setItemPrice(e.target.value)} placeholder="Price" type="number" className="w-24 px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
+            <input
+              value={itemName}
+              onChange={(e) => setItemName(e.target.value)}
+              placeholder="Item name"
+              data-testid="input-item-name"
+              className="flex-1 px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+            />
+            <input
+              value={itemPrice}
+              onChange={(e) => setItemPrice(e.target.value)}
+              placeholder="Price"
+              type="number"
+              data-testid="input-item-price"
+              className="w-24 px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+            />
             <button
               onClick={() => {
                 if (itemName.trim() && Number(itemPrice) > 0 && selectedCat) {
@@ -276,14 +301,15 @@ const MenuSection = () => {
                   setItemName(''); setItemPrice(''); setShowAddItem(false);
                 }
               }}
+              data-testid="button-add-item-confirm"
               className="px-4 py-2 rounded-lg bg-accent text-accent-foreground text-sm font-medium"
             >Add</button>
           </div>
         )}
 
         <div className="space-y-2">
-          {catItems.map(item => (
-            <div key={item.id} className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
+          {catItems.map((item) => (
+            <div key={item.id} className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg" data-testid={`menu-item-row-${item.id}`}>
               {editItem === item.id ? (
                 <>
                   <input value={editItemName} onChange={(e) => setEditItemName(e.target.value)} className="flex-1 px-2 py-1 rounded bg-secondary border border-border text-foreground text-sm focus:outline-none" />
@@ -310,7 +336,9 @@ const MenuSection = () => {
 
 // ====== TABLE MANAGEMENT ======
 const TablesSection = () => {
-  const { tables, addTable, deleteTable } = usePOS();
+  const tables = usePOSStore((s) => s.tables);
+  const addTable = usePOSStore((s) => s.addTable);
+  const deleteTable = usePOSStore((s) => s.deleteTable);
   const [newNum, setNewNum] = useState('');
 
   return (
@@ -322,18 +350,20 @@ const TablesSection = () => {
           onChange={(e) => setNewNum(e.target.value)}
           type="number"
           placeholder="Table number"
+          data-testid="input-table-number"
           className="flex-1 px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
         />
         <button
-          onClick={() => { if (Number(newNum) > 0) { addTable(Number(newNum)); setNewNum(''); }}}
+          onClick={() => { if (Number(newNum) > 0) { addTable(Number(newNum)); setNewNum(''); } }}
+          data-testid="button-add-table"
           className="px-4 py-2 rounded-lg bg-accent text-accent-foreground text-sm font-medium flex items-center gap-1"
         >
           <Plus size={14} /> Add
         </button>
       </div>
       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-        {tables.sort((a, b) => a.number - b.number).map(t => (
-          <div key={t.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
+        {tables.sort((a, b) => a.number - b.number).map((t) => (
+          <div key={t.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg" data-testid={`table-row-${t.id}`}>
             <span className="font-bold text-foreground">Table {t.number}</span>
             <button
               onClick={() => deleteTable(t.id)}
@@ -351,7 +381,9 @@ const TablesSection = () => {
 
 // ====== PAYMENT SETTINGS ======
 const PaymentsSection = () => {
-  const { settings, updateSettings } = usePOS();
+  const settings = usePOSStore((s) => s.settings);
+  const updateSettings = usePOSStore((s) => s.updateSettings);
+
   const [cafeName, setCafeName] = useState(settings.cafeName);
   const [adminPin, setAdminPin] = useState(settings.adminPin);
   const [esewaPhone, setEsewaPhone] = useState(settings.esewaPhone);
@@ -374,47 +406,41 @@ const PaymentsSection = () => {
 
   return (
     <div className="space-y-4">
-      {/* General Settings */}
       <div className="bg-card rounded-xl border border-border p-4 space-y-3">
         <h3 className="font-bold text-foreground">General Settings</h3>
         <div className="space-y-2">
           <div>
             <label className="text-xs text-muted-foreground">Café Name</label>
-            <input value={cafeName} onChange={(e) => setCafeName(e.target.value)} onBlur={() => updateSettings({ cafeName })} className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-accent" />
+            <input value={cafeName} onChange={(e) => setCafeName(e.target.value)} onBlur={() => updateSettings({ cafeName })} data-testid="input-cafe-name" className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-accent" />
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Admin PIN</label>
-            <input value={adminPin} onChange={(e) => setAdminPin(e.target.value)} onBlur={() => updateSettings({ adminPin })} className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-accent" />
+            <input value={adminPin} onChange={(e) => setAdminPin(e.target.value)} onBlur={() => updateSettings({ adminPin })} data-testid="input-admin-pin-change" className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-accent" />
           </div>
         </div>
       </div>
 
-      {/* Wallet Settings */}
       <div className="bg-card rounded-xl border border-border p-4 space-y-3">
         <h3 className="font-bold text-foreground">Digital Wallets</h3>
         <div>
           <label className="text-xs text-muted-foreground">eSewa Phone Number</label>
-          <input value={esewaPhone} onChange={(e) => setEsewaPhone(e.target.value)} onBlur={() => updateSettings({ esewaPhone })} placeholder="98XXXXXXXX" className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
+          <input value={esewaPhone} onChange={(e) => setEsewaPhone(e.target.value)} onBlur={() => updateSettings({ esewaPhone })} placeholder="98XXXXXXXX" data-testid="input-esewa-phone" className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
         </div>
-        {(['esewa', 'khalti', 'fonepay'] as const).map(key => (
+        {(['esewa', 'khalti', 'fonepay'] as const).map((key) => (
           <div key={key} className="p-3 bg-secondary/50 rounded-lg space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-foreground capitalize">{key}</span>
-              <button onClick={() => toggleWallet(key)} className="text-accent">
+              <button onClick={() => toggleWallet(key)} className="text-accent" data-testid={`toggle-wallet-${key}`}>
                 {settings.wallets[key].enabled ? <ToggleRight size={28} /> : <ToggleLeft size={28} className="text-muted-foreground" />}
               </button>
             </div>
-
-            {/* QR Image Upload */}
             {settings.wallets[key].enabled && (
               <div className="space-y-2">
                 {settings.wallets[key].qrImage && (
                   <div className="relative w-32 h-32 mx-auto">
                     <img src={settings.wallets[key].qrImage} alt={`${key} QR`} className="w-full h-full object-contain rounded-lg border border-border bg-foreground p-1" />
                     <button
-                      onClick={() => updateSettings({
-                        wallets: { ...settings.wallets, [key]: { ...settings.wallets[key], qrImage: undefined } }
-                      })}
+                      onClick={() => updateSettings({ wallets: { ...settings.wallets, [key]: { ...settings.wallets[key], qrImage: undefined } } })}
                       className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-danger text-accent-foreground flex items-center justify-center"
                     >
                       <X size={12} />
@@ -432,9 +458,7 @@ const PaymentsSection = () => {
                       if (!file) return;
                       const reader = new FileReader();
                       reader.onload = () => {
-                        updateSettings({
-                          wallets: { ...settings.wallets, [key]: { ...settings.wallets[key], qrImage: reader.result as string } }
-                        });
+                        updateSettings({ wallets: { ...settings.wallets, [key]: { ...settings.wallets[key], qrImage: reader.result as string } } });
                       };
                       reader.readAsDataURL(file);
                     }}
@@ -446,7 +470,6 @@ const PaymentsSection = () => {
         ))}
       </div>
 
-      {/* Printer */}
       <div className="bg-card rounded-xl border border-border p-4 space-y-3">
         <h3 className="font-bold text-foreground">Thermal Printer</h3>
         <p className="text-sm text-muted-foreground">Status: {printerStatus}</p>
@@ -463,7 +486,9 @@ const PaymentsSection = () => {
 
 // ====== BILL DESIGN ======
 const BillDesignSection = () => {
-  const { settings, updateSettings } = usePOS();
+  const settings = usePOSStore((s) => s.settings);
+  const updateSettings = usePOSStore((s) => s.updateSettings);
+
   const [cafeName, setCafeName] = useState(settings.cafeName);
   const [cafeAddress, setCafeAddress] = useState(settings.cafeAddress || '');
   const [cafePhone, setCafePhone] = useState(settings.cafePhone || '');
@@ -492,12 +517,9 @@ const BillDesignSection = () => {
     { menuItemId: '1', name: 'Cappuccino', price: 250, quantity: 2 },
     { menuItemId: '2', name: 'Croissant', price: 180, quantity: 1 },
   ];
-  const sampleSubtotal = 680;
-  const sampleTotal = 680;
 
   return (
     <div className="space-y-4">
-      {/* Logo Upload */}
       <div className="bg-card rounded-xl border border-border p-4 space-y-3">
         <h3 className="font-bold text-foreground">Café Logo</h3>
         <div className="flex items-center gap-4">
@@ -523,7 +545,6 @@ const BillDesignSection = () => {
         </div>
       </div>
 
-      {/* Bill Info */}
       <div className="bg-card rounded-xl border border-border p-4 space-y-3">
         <h3 className="font-bold text-foreground">Bill Information</h3>
         <div className="space-y-2">
@@ -549,12 +570,11 @@ const BillDesignSection = () => {
             <p className="text-xs text-muted-foreground mt-1">Next bill will be #{Number(billCounter) + 1}</p>
           </div>
         </div>
-        <button onClick={saveAll} className="w-full py-3 rounded-xl bg-accent text-accent-foreground font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
+        <button onClick={saveAll} data-testid="button-save-bill-design" className="w-full py-3 rounded-xl bg-accent text-accent-foreground font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
           <Save size={16} /> Save Changes
         </button>
       </div>
 
-      {/* Bill Preview */}
       <div className="bg-card rounded-xl border border-border p-4 space-y-3">
         <h3 className="font-bold text-foreground">Bill Preview</h3>
         <BillPreview
@@ -565,10 +585,10 @@ const BillDesignSection = () => {
           billFooter={billFooter}
           tableNumber={1}
           items={sampleItems}
-          subtotal={sampleSubtotal}
+          subtotal={680}
           discount={0}
           discountType="fixed"
-          total={sampleTotal}
+          total={680}
           billNumber={Number(billCounter) + 1}
           date={Date.now()}
         />
@@ -579,21 +599,24 @@ const BillDesignSection = () => {
 
 // ====== REPORTS ======
 const ReportsSection = () => {
-  const { payments } = usePOS();
+  const payments = usePOSStore((s) => s.payments);
   const [period, setPeriod] = useState<'day' | 'week' | 'month'>('day');
 
   const now = new Date();
-  const periodStart = period === 'day' ? startOfDay(now) : period === 'week' ? startOfWeek(now) : startOfMonth(now);
-  const periodPayments = payments.filter(p => p.createdAt >= periodStart.getTime());
+  const periodStart =
+    period === 'day' ? startOfDay(now) : period === 'week' ? startOfWeek(now) : startOfMonth(now);
+  const periodPayments = payments.filter((p) => p.createdAt >= periodStart.getTime());
   const totalRevenue = periodPayments.reduce((s, p) => s + p.total, 0);
-  const cashTotal = periodPayments.filter(p => p.method === 'cash').reduce((s, p) => s + p.total, 0);
+  const cashTotal = periodPayments.filter((p) => p.method === 'cash').reduce((s, p) => s + p.total, 0);
   const digitalTotal = totalRevenue - cashTotal;
 
   const exportCSV = () => {
     const headers = 'Bill#,Table,Items,Subtotal,Discount,Total,Method,Date\n';
-    const rows = periodPayments.map(p =>
-      `${p.billNumber},${p.tableNumber},"${p.items.map(i => `${i.name}x${i.quantity}`).join('; ')}",${p.subtotal},${p.discount},${p.total},${p.method},${format(p.createdAt, 'yyyy-MM-dd HH:mm')}`
-    ).join('\n');
+    const rows = periodPayments
+      .map((p) =>
+        `${p.billNumber},${p.tableNumber},"${p.items.map((i) => `${i.name}x${i.quantity}`).join('; ')}",${p.subtotal},${p.discount},${p.total},${p.method},${format(p.createdAt, 'yyyy-MM-dd HH:mm')}`
+      )
+      .join('\n');
     const blob = new Blob([headers + rows], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -606,11 +629,14 @@ const ReportsSection = () => {
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
-        {(['day', 'week', 'month'] as const).map(p => (
+        {(['day', 'week', 'month'] as const).map((p) => (
           <button
             key={p}
             onClick={() => setPeriod(p)}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-medium capitalize transition-all ${period === p ? 'bg-accent text-accent-foreground' : 'bg-secondary text-secondary-foreground'}`}
+            data-testid={`button-report-period-${p}`}
+            className={`flex-1 py-2.5 rounded-lg text-sm font-medium capitalize transition-all ${
+              period === p ? 'bg-accent text-accent-foreground' : 'bg-secondary text-secondary-foreground'
+            }`}
           >
             {p === 'day' ? 'Today' : p === 'week' ? 'This Week' : 'This Month'}
           </button>
@@ -638,6 +664,7 @@ const ReportsSection = () => {
 
       <button
         onClick={exportCSV}
+        data-testid="button-export-csv"
         className="w-full py-3 rounded-xl bg-secondary text-secondary-foreground font-medium flex items-center justify-center gap-2 hover:bg-accent/20 transition-colors"
       >
         <Download size={16} /> Export CSV
@@ -648,7 +675,10 @@ const ReportsSection = () => {
 
 // ====== BACKUP ======
 const BackupSection = () => {
-  const { exportData, importData, factoryReset } = usePOS();
+  const exportData = usePOSStore((s) => s.exportData);
+  const importData = usePOSStore((s) => s.importData);
+  const factoryReset = usePOSStore((s) => s.factoryReset);
+
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -685,6 +715,7 @@ const BackupSection = () => {
         <p className="text-sm text-muted-foreground">Export all data as a JSON file for safekeeping.</p>
         <button
           onClick={handleExport}
+          data-testid="button-export-backup"
           className="w-full py-3 rounded-xl bg-accent text-accent-foreground font-medium flex items-center justify-center gap-2"
         >
           <Download size={16} /> Export Backup
@@ -697,19 +728,20 @@ const BackupSection = () => {
         <input ref={fileRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
         <button
           onClick={() => fileRef.current?.click()}
+          data-testid="button-import-backup"
           className="w-full py-3 rounded-xl bg-secondary text-secondary-foreground font-medium flex items-center justify-center gap-2 hover:bg-accent/20 transition-colors"
         >
           <Upload size={16} /> Import Backup
         </button>
       </div>
 
-      {/* Factory Reset */}
       <div className="bg-card rounded-xl border-2 border-destructive/30 p-4 space-y-3">
         <h3 className="font-bold text-destructive">Factory Reset</h3>
         <p className="text-sm text-muted-foreground">Delete all data and restore default settings. This cannot be undone.</p>
         {!showResetConfirm ? (
           <button
             onClick={() => setShowResetConfirm(true)}
+            data-testid="button-factory-reset"
             className="w-full py-3 rounded-xl bg-destructive/10 text-destructive font-medium flex items-center justify-center gap-2 hover:bg-destructive/20 transition-colors"
           >
             <Trash2 size={16} /> Factory Reset
@@ -726,6 +758,7 @@ const BackupSection = () => {
               </button>
               <button
                 onClick={() => { factoryReset(); window.location.reload(); }}
+                data-testid="button-confirm-factory-reset"
                 className="flex-1 py-3 rounded-xl bg-destructive text-destructive-foreground font-bold"
               >
                 Confirm Reset

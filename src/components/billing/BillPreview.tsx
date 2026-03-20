@@ -1,7 +1,7 @@
-import { Payment, OrderItem } from '@/types/pos';
+import { OrderItem } from '@/types/pos';
 import { format } from 'date-fns';
 
-interface Props {
+interface BillPreviewProps {
   cafeName: string;
   cafeLogo?: string;
   cafeAddress?: string;
@@ -18,15 +18,31 @@ interface Props {
   date?: number;
 }
 
-const BillPreview = ({ cafeName, cafeLogo, cafeAddress, cafePhone, billFooter, tableNumber, items, subtotal, discount, discountType, total, method, billNumber, date }: Props) => {
+const BillPreview = ({
+  cafeName,
+  cafeLogo,
+  cafeAddress,
+  cafePhone,
+  billFooter,
+  tableNumber,
+  items,
+  subtotal,
+  discount,
+  discountType,
+  total,
+  method,
+  billNumber,
+  date,
+}: BillPreviewProps) => {
   const dateStr = format(date || Date.now(), 'yyyy-MM-dd HH:mm');
   const discountDisplay = discountType === 'percent' ? `${discount}%` : `Rs. ${discount}`;
 
   return (
-    <div className="bg-card border border-border rounded-xl p-6 max-w-md mx-auto">
-      {/* Header */}
+    <div className="bg-card border border-border rounded-xl p-6 max-w-md mx-auto" data-testid="bill-preview">
       <div className="text-center mb-4">
-        {cafeLogo && <img src={cafeLogo} alt="Logo" className="w-16 h-16 object-contain mx-auto mb-2 rounded-lg" />}
+        {cafeLogo && (
+          <img src={cafeLogo} alt="Logo" className="w-16 h-16 object-contain mx-auto mb-2 rounded-lg" />
+        )}
         <h2 className="text-xl font-bold text-accent">{cafeName}</h2>
         {cafeAddress && <p className="text-xs text-muted-foreground">{cafeAddress}</p>}
         {cafePhone && <p className="text-xs text-muted-foreground">{cafePhone}</p>}
@@ -39,7 +55,6 @@ const BillPreview = ({ cafeName, cafeLogo, cafeAddress, cafePhone, billFooter, t
 
       <div className="border-t border-dashed border-border my-3" />
 
-      {/* Items */}
       <div className="space-y-2">
         <div className="flex items-center text-xs text-muted-foreground font-medium">
           <span className="flex-1">Item</span>
@@ -59,7 +74,6 @@ const BillPreview = ({ cafeName, cafeLogo, cafeAddress, cafePhone, billFooter, t
 
       <div className="border-t border-dashed border-border my-3" />
 
-      {/* Totals */}
       <div className="space-y-1.5">
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Subtotal</span>

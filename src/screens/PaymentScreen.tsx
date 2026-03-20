@@ -1,26 +1,39 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { usePOS } from '@/context/POSContext';
-import { TopBar } from '@/components/pos/Navigation';
-import QRDisplay from '@/components/pos/QRDisplay';
-import BillPreview from '@/components/pos/BillPreview';
+import { usePOSStore } from '@/store/usePOSStore';
+import { useOrders } from '@/hooks/useOrders';
+import { useTables } from '@/hooks/useTables';
+import { TopBar } from '@/components/ui/Navigation';
+import QRDisplay from '@/components/payment/QRDisplay';
+import BillPreview from '@/components/billing/BillPreview';
 import { Banknote, Smartphone, CheckCircle2, RotateCcw, Home } from 'lucide-react';
 import { printer, formatReceipt } from '@/utils/printer';
 import { format } from 'date-fns';
-import { Order, OrderItem } from '@/types/pos';
+import { OrderItem } from '@/types/pos';
 
 const PaymentScreen = () => {
   const { tableId } = useParams<{ tableId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { tables, settings, getActiveOrder, updateOrderStatus, addPayment, resetTable, getNextBillNumber } = usePOS();
 
-  const rawState = location.state as { discount?: number; discountType?: 'percent' | 'fixed'; total?: number; subtotal?: number; discountAmount?: number } | null;
+  const { tables } = useTables();
+  const { getActiveOrder, updateOrderStatus, addPayment } = useOrders();
+  const resetTable = usePOSStore((s) => s.resetTable);
+  const getNextBillNumber = usePOSStore((s) => s.getNextBillNumber);
+  const settings = usePOSStore((s) => s.settings);
+
+  const rawState = location.state as {
+    discount?: number;
+    discountType?: 'percent' | 'fixed';
+    total?: number;
+    subtotal?: number;
+    discountAmount?: number;
+  } | null;
   const state = rawState || {};
-  const table = tables.find(t => t.id === tableId);
+
+  const table = tables.find((t) => t.id === tableId);
   const order = tableId ? getActiveOrder(tableId) : undefined;
 
-  // Snapshot order data so it survives status changes
   const orderSnapshot = useRef<{ id: string; items: OrderItem[]; tableNumber: number } | null>(null);
   useEffect(() => {
     if (order && !orderSnapshot.current) {
@@ -60,9 +73,8 @@ const PaymentScreen = () => {
     ...(settings.wallets.fonepay.enabled ? [{ id: 'fonepay', label: 'Fonepay', icon: Smartphone }] : []),
   ];
 
-  const generateEsewaQR = () => {
-    return `eSewa://pay?eSewaID=${settings.esewaPhone || settings.esewaId}&amount=${total}&table=${snap.tableNumber}&ref=${reference}`;
-  };
+  const generateEsewaQR = () =>
+    `eSewa://pay?eSewaID=${settings.esewaPhone || settings.esewaId}&amount=${total}&table=${snap.tableNumber}&ref=${reference}`;
 
   const handleConfirmPayment = async () => {
     if (!selectedMethod) return;
@@ -88,17 +100,19 @@ const PaymentScreen = () => {
     setPaid(true);
 
     if (printer.isConnected) {
-      await printer.print(formatReceipt({
-        cafeName: settings.cafeName,
-        tableNumber: snap.tableNumber,
-        items: snap.items,
-        subtotal,
-        discount: discountAmt,
-        total,
-        method: selectedMethod,
-        date: format(Date.now(), 'yyyy-MM-dd HH:mm'),
-        billNumber: bn,
-      }));
+      await printer.print(
+        formatReceipt({
+          cafeName: settings.cafeName,
+          tableNumber: snap.tableNumber,
+          items: snap.items,
+          subtotal,
+          discount: discountAmt,
+          total,
+          method: selectedMethod,
+          date: format(Date.now(), 'yyyy-MM-dd HH:mm'),
+          billNumber: bn,
+        })
+      );
     }
   };
 
@@ -137,6 +151,7 @@ const PaymentScreen = () => {
 
           <button
             onClick={handleReset}
+            data-testid="button-reset-table"
             className="w-full py-4 rounded-xl bg-success text-accent-foreground font-bold text-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
           >
             <RotateCcw size={20} /> Reset Table & Go Home
@@ -144,6 +159,7 @@ const PaymentScreen = () => {
 
           <button
             onClick={() => navigate('/', { replace: true })}
+            data-testid="button-back-home"
             className="w-full py-3 rounded-xl bg-secondary text-secondary-foreground font-medium flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
           >
             <Home size={18} /> Back to Tables
@@ -155,7 +171,11 @@ const PaymentScreen = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <TopBar title={`Payment — Table ${snap.tableNumber}`} showBack onBack={() => navigate(`/billing/${tableId}`, { replace: true })} />
+      <TopBar
+        title={`Payment — Table ${snap.tableNumber}`}
+        showBack
+        onBack={() => navigate(`/billing/${tableId}`, { replace: true })}
+      />
       <div className="max-w-lg mx-auto p-4 space-y-4">
         <div className="bg-card rounded-xl border border-border p-4 text-center">
           <p className="text-muted-foreground text-sm">Amount Due</p>
@@ -169,6 +189,7 @@ const PaymentScreen = () => {
               <button
                 key={id}
                 onClick={() => setSelectedMethod(id)}
+                data-testid={`button-payment-method-${id}`}
                 className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
                   selectedMethod === id
                     ? 'border-accent bg-accent/10'
@@ -176,24 +197,28 @@ const PaymentScreen = () => {
                 }`}
               >
                 <Icon size={24} className={selectedMethod === id ? 'text-accent' : 'text-muted-foreground'} />
-                <span className={`font-medium ${selectedMethod === id ? 'text-accent' : 'text-foreground'}`}>{label}</span>
+                <span className={`font-medium ${selectedMethod === id ? 'text-accent' : 'text-foreground'}`}>
+                  {label}
+                </span>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Show uploaded QR or generated QR for digital wallets */}
         {selectedMethod && selectedMethod !== 'cash' && (() => {
           const walletKey = selectedMethod as 'esewa' | 'khalti' | 'fonepay';
           const wallet = settings.wallets[walletKey];
           const label = selectedMethod.charAt(0).toUpperCase() + selectedMethod.slice(1);
 
-          // If admin uploaded a QR image, show that instead
           if (wallet?.qrImage) {
             return (
               <div className="flex flex-col items-center gap-4 p-6 bg-card rounded-xl border border-border">
                 <h3 className="text-lg font-bold text-foreground">{label} Payment</h3>
-                <img src={wallet.qrImage} alt={`${label} QR`} className="w-56 h-56 object-contain rounded-xl border border-border bg-foreground p-2" />
+                <img
+                  src={wallet.qrImage}
+                  alt={`${label} QR`}
+                  className="w-56 h-56 object-contain rounded-xl border border-border bg-foreground p-2"
+                />
                 <p className="text-2xl font-bold text-accent">Rs. {total}</p>
                 <p className="text-xs text-muted-foreground font-mono">{reference}</p>
                 <p className="text-sm text-muted-foreground text-center">Scan with {label} app to pay</p>
@@ -201,16 +226,17 @@ const PaymentScreen = () => {
             );
           }
 
-          // Otherwise generate QR
-          const data = selectedMethod === 'esewa'
-            ? generateEsewaQR()
-            : `pay://${selectedMethod}?amount=${total}&ref=${reference}`;
+          const data =
+            selectedMethod === 'esewa'
+              ? generateEsewaQR()
+              : `pay://${selectedMethod}?amount=${total}&ref=${reference}`;
           return <QRDisplay data={data} label={`${label} Payment`} amount={total} reference={reference} />;
         })()}
 
         <button
           onClick={handleConfirmPayment}
           disabled={!selectedMethod}
+          data-testid="button-confirm-payment"
           className="w-full py-4 rounded-xl bg-accent text-accent-foreground font-bold text-lg transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110"
         >
           Confirm Payment

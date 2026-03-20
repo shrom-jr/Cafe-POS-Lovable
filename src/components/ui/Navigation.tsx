@@ -20,6 +20,7 @@ const Navigation = () => {
             <button
               key={path}
               onClick={() => navigate(path)}
+              data-testid={`nav-${label.toLowerCase()}`}
               className={`flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-lg transition-all ${
                 active ? 'text-accent' : 'text-muted-foreground hover:text-foreground'
               }`}
@@ -34,10 +35,18 @@ const Navigation = () => {
   );
 };
 
-export const TopBar = ({ title, showBack, onBack }: { title: string; showBack?: boolean; onBack?: () => void }) => (
+export const TopBar = ({
+  title,
+  showBack,
+  onBack,
+}: {
+  title: string;
+  showBack?: boolean;
+  onBack?: () => void;
+}) => (
   <header className="sticky top-0 z-40 bg-card/95 backdrop-blur border-b border-border px-4 py-3 flex items-center gap-3">
     {showBack && (
-      <button onClick={onBack} className="text-muted-foreground hover:text-foreground p-1">
+      <button onClick={onBack} className="text-muted-foreground hover:text-foreground p-1" data-testid="button-back">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>

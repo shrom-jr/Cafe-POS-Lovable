@@ -1,13 +1,14 @@
 import { MenuItem } from '@/types/pos';
 
-interface Props {
+interface MenuItemCardProps {
   item: MenuItem;
   onAdd: () => void;
 }
 
-const MenuItemCard = ({ item, onAdd }: Props) => (
+const MenuItemCard = ({ item, onAdd }: MenuItemCardProps) => (
   <button
     onClick={onAdd}
+    data-testid={`menu-item-${item.id}`}
     className="flex flex-col items-center justify-center p-3 rounded-xl bg-card border border-border hover:border-accent/50 hover:pos-glow transition-all active:scale-95 min-h-[90px]"
   >
     {item.image ? (
