@@ -15,7 +15,7 @@ A professional Café Point of Sale (POS) system built with React, TypeScript, Vi
 ```
 src/
   store/
-    usePOSStore.ts        ← Zustand global store (all state + actions, incl. clearOrder)
+    usePOSStore.ts        ← Zustand global store (all state + actions)
   hooks/
     useOrders.ts          ← Order store selectors/actions (incl. clearOrder, addPayment)
     useTables.ts          ← Table store selectors/actions
@@ -25,73 +25,72 @@ src/
     ui/                   ← shadcn/ui + Navigation, TopBar
     tables/               ← TableCard (timer, item count, running total)
     orders/               ← MenuItemCard (qty badge, flash anim), OrderPanel (Clear + Repeat)
-    billing/              ← BillPreview (polished, large total)
     payment/              ← QRDisplay component
+    ReceiptPreview.tsx    ← Polished receipt card (used in BillHistory + AdminPanel)
   screens/
-    TableOverview.tsx     ← / (smart nav: billing→payment, else→order)
-    OrderScreen.tsx       ← /order/:tableId (sounds, clear order, repeat last)
-    BillingScreen.tsx     ← /billing/:tableId (print placeholder)
-    PaymentScreen.tsx     ← /payment/:tableId (success sound, print placeholder)
+    TableOverview.tsx     ← / (all tables → /order/:tableId)
+    OrderScreen.tsx       ← /order/:tableId (calculates bill, navigates directly to payment)
+    PaymentScreen.tsx     ← /payment/:tableId (reads all financials from nav state)
     BillHistory.tsx       ← /history
     AdminPanel.tsx        ← /admin (PIN-protected)
   types/
-    pos.ts                ← All TypeScript types
+    pos.ts                ← All TypeScript types (Payment includes vatAmount/vatRate/vatMode/vatEnabled)
   storage/
     db.ts                 ← localStorage helpers + seed data
   utils/
     sounds.ts             ← Web Audio API: playClick, playSuccess, playError
     printer.ts            ← Bluetooth thermal printer utility
+    calcBill.ts           ← Shared bill calculation (subtotal, discount, VAT, total)
 ```
 
-## Features (All Phases)
+## Payment Flow
+**Order Screen → Payment Screen** (BillingScreen removed)
+1. Cashier adds items in OrderScreen
+2. Taps Pay → `calcBill()` computes subtotal, discountAmount, vatAmount, total
+3. Navigates to `/payment/:tableId` with full financial state in `location.state`
+4. PaymentScreen reads all values from nav state (no recalculation)
+5. On confirm: saves Payment record, resets table, shows success
 
-### Phase 1 — Table Cards
-- Table number, status badge (Available/Active/Billing) with green/yellow/red colors
+## VAT System
+- `vatEnabled` (bool), `vatRate` (default 0.13 = 13%), `vatMode` ('excluded'|'included')
+- Stored in `Settings` type; defaults always merged in `db.getSettings()`
+- `calcBill()` in `src/utils/calcBill.ts` is the single source of truth
+- All Payment records store `vatAmount`, `vatRate`, `vatMode`, `vatEnabled` (optional for old records)
+
+## Features
+
+### Tables
+- Table number, status badge (Available/Active) with green/yellow colors
 - Live timer since order start, item count, running total
-- Hover scale + status-colored glow shadow
+- All table clicks navigate to Order Screen
 
-### Phase 2 — Smart Navigation
-- Billing tables → Payment Screen directly
-- Free/Active tables → Order Screen
+### Order Screen
+- Instant item add with click sound + flash animation
+- Qty badge on MenuItemCards
+- "Clear Order" button — clears all items, resets table
+- "Repeat Last Order" button — re-adds items from last payment for this table
+- Pay button → calculates bill using shared utility → navigates directly to Payment
 
-### Phase 3 — Order Screen
-- Instant item add with click sound
-- Qty badge on MenuItemCards showing count in current order
-- Flash animation on item add
-- "Clear Order" button — clears all items, resets table to free
-- "Repeat Last Order" button — re-adds items from the most recent payment for this table
+### Payment Screen
+- Cash / eSewa / Khalti / Fonepay / custom wallet support
+- QR code display for digital wallets
+- VAT display (if enabled in settings)
+- Discount display (from nav state)
+- Bluetooth thermal printer support
 
-### Phase 4 — Billing Screen
-- Polished BillPreview with large total (Rs. XXX), dashed separators
-- Percentage + fixed discount with quick-select buttons
-- Print Bill button (placeholder — shows instructions for Bluetooth printer)
+### Bill History
+- Expandable receipt view per payment (ReceiptPreview component)
+- VAT shown on historical records that have vatEnabled
+- Reprint receipt button if printer connected
+- Filter by today/all + search + method filter
 
-### Phase 5 — QR Payment
-- Dynamic eSewa QR from ID + amount
-- Large amount display, payment method selection
-- "Confirm Payment" updates label to selected method
-
-### Phase 6 — Backup & Restore
-- Export/Import JSON in AdminPanel
-
-### Phase 7 — Sound & Feedback
-- `playClick()` on item add
-- `playSuccess()` on payment confirmed
-- `playError()` available for error states
-- Flash animation on MenuItemCard, slide-up animation on cart panel
-
-### Phase 8 — UI Polish
-- Card gradients, soft shadows on all cards
-- `hover:scale` + `active:scale` on all interactive elements
-- Consistent rounded-2xl, shadow-lg treatment
-
-### Phase 9 — Performance
-- Granular Zustand selectors (minimal re-renders)
-- `useMemo` for derived data (order qty map, table order data, filtered items)
-
-### Phase 10 — Print Preparation
-- Print Bill button in BillingScreen and PaymentScreen
-- Calls printer utility if connected, shows setup instructions otherwise
+### Admin Panel
+- PIN-protected settings
+- Menu item and category management
+- Bill design preview (ReceiptPreview with sample data)
+- Wallet QR image upload
+- Data export/import (JSON backup)
+- Sales chart
 
 ## Running the App
 Port 5000 via `npm run dev`. Server: `host: "0.0.0.0"`, `allowedHosts: true`.
@@ -102,5 +101,4 @@ Port 5000 via `npm run dev`. Server: `host: "0.0.0.0"`, `allowedHosts: true`.
 - Tailwind CSS + shadcn/ui (Radix UI)
 - **Zustand** (global state)
 - React Router v6
-- date-fns
-- lucide-react icons
+- date-fns, lucide-react, recharts, qrcode.react

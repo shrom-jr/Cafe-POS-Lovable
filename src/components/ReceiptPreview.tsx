@@ -1,7 +1,7 @@
 import { OrderItem } from '@/types/pos';
 import { format } from 'date-fns';
 
-interface BillPreviewProps {
+interface ReceiptPreviewProps {
   cafeName: string;
   cafeLogo?: string;
   cafeAddress?: string;
@@ -21,7 +21,7 @@ interface BillPreviewProps {
   date?: number;
 }
 
-const BillPreview = ({
+const ReceiptPreview = ({
   cafeName,
   cafeLogo,
   cafeAddress,
@@ -39,7 +39,7 @@ const BillPreview = ({
   method,
   billNumber,
   date,
-}: BillPreviewProps) => {
+}: ReceiptPreviewProps) => {
   const dateStr = format(date || Date.now(), 'yyyy-MM-dd HH:mm');
   const discountAmount =
     discountType === 'percent' ? Math.round((subtotal * discount) / 100) : discount;
@@ -49,7 +49,7 @@ const BillPreview = ({
   return (
     <div
       className="bg-card border border-border/60 rounded-2xl p-5 max-w-md mx-auto shadow-[0_4px_24px_-4px_rgba(0,0,0,0.5)]"
-      data-testid="bill-preview"
+      data-testid="receipt-preview"
     >
       <div className="text-center mb-4">
         {cafeLogo && (
@@ -144,4 +144,4 @@ const BillPreview = ({
   );
 };
 
-export default BillPreview;
+export default ReceiptPreview;

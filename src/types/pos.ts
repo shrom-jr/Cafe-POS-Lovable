@@ -47,6 +47,7 @@ export interface Payment {
   vatAmount: number;
   vatRate: number;
   vatMode: 'excluded' | 'included';
+  vatEnabled?: boolean;
   total: number;
   method: string;
   reference: string;

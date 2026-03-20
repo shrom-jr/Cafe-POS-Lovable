@@ -26,11 +26,7 @@ const TableOverview = () => {
   }, [orders]);
 
   const handleTableClick = (table: CafeTable) => {
-    if (table.status === 'billing') {
-      navigate(`/billing/${table.id}`);
-    } else {
-      navigate(`/order/${table.id}`);
-    }
+    navigate(`/order/${table.id}`);
   };
 
   return (

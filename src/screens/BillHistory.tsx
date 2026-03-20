@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { usePOSStore } from '@/store/usePOSStore';
 import Navigation, { TopBar } from '@/components/ui/Navigation';
-import BillPreview from '@/components/billing/BillPreview';
+import ReceiptPreview from '@/components/ReceiptPreview';
 import { Search, ChevronDown, ChevronUp, Printer, TrendingUp, Receipt, Calendar } from 'lucide-react';
 import { format, isToday } from 'date-fns';
 import { printer, formatReceipt } from '@/utils/printer';
@@ -220,13 +220,16 @@ const BillHistory = () => {
 
                 {expandedId === p.id && (
                   <div className="border-t border-border p-4 space-y-3 bg-background/30">
-                    <BillPreview
+                    <ReceiptPreview
                       cafeName={p.cafeName}
                       tableNumber={p.tableNumber}
                       items={p.items}
                       subtotal={p.subtotal}
                       discount={p.discount}
                       discountType={p.discountType}
+                      vatAmount={p.vatAmount}
+                      vatRate={p.vatRate}
+                      vatEnabled={p.vatEnabled}
                       total={p.total}
                       method={p.method}
                       billNumber={p.billNumber}

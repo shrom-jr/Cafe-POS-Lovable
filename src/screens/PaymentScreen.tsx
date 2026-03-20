@@ -57,7 +57,7 @@ const PaymentScreen = () => {
   const [paidMethod, setPaidMethod] = useState<string>('');
   const [printing, setPrinting] = useState(false);
 
-  // All financial values come from BillingScreen — no recalculation here
+  // All financial values come from OrderScreen via navigation state — no recalculation here
   const subtotal = rawState?.subtotal ?? 0;
   const discountAmount = rawState?.discountAmount ?? 0;
   const discountValue = rawState?.discount ?? 0;
@@ -71,12 +71,12 @@ const PaymentScreen = () => {
   if (!table || !snap || !rawState?.total) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
-        <p className="text-foreground">Please review the bill before proceeding to payment.</p>
+        <p className="text-foreground">Please start an order before proceeding to payment.</p>
         <button
-          onClick={() => navigate(tableId ? `/billing/${tableId}` : '/')}
+          onClick={() => navigate(tableId ? `/order/${tableId}` : '/')}
           className="px-6 py-3 rounded-xl bg-success text-white font-bold flex items-center gap-2 transition-all active:scale-95"
         >
-          <Home size={18} /> Go to Billing
+          <Home size={18} /> Go to Order
         </button>
       </div>
     );
@@ -122,6 +122,7 @@ const PaymentScreen = () => {
       vatAmount,
       vatRate,
       vatMode,
+      vatEnabled,
       total: finalTotal,
       method,
       reference,

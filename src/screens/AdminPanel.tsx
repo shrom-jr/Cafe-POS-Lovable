@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { usePOSStore } from '@/store/usePOSStore';
 import Navigation, { TopBar } from '@/components/ui/Navigation';
-import BillPreview from '@/components/billing/BillPreview';
+import ReceiptPreview from '@/components/ReceiptPreview';
 import { printer } from '@/utils/printer';
 import {
   BarChart3, Coffee, UtensilsCrossed, CreditCard, Table2, TrendingUp, FileDown,
@@ -577,7 +577,7 @@ const BillDesignSection = () => {
 
       <div className="bg-card rounded-xl border border-border p-4 space-y-3">
         <h3 className="font-bold text-foreground">Bill Preview</h3>
-        <BillPreview
+        <ReceiptPreview
           cafeName={cafeName}
           cafeLogo={settings.cafeLogo}
           cafeAddress={cafeAddress}
