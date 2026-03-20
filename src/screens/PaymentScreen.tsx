@@ -98,6 +98,7 @@ const PaymentScreen = () => {
     });
 
     updateOrderStatus(snap.id, 'paid');
+    if (tableId) resetTable(tableId);
     playSuccess();
     setPaid(true);
 
