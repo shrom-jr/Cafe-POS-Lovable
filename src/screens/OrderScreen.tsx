@@ -75,7 +75,7 @@ const OrderScreen = () => {
 
   const handlePay = () => {
     if (!order || order.items.length === 0) return;
-    navigate(`/payment/${tableId}`);
+    navigate(`/billing/${tableId}`);
   };
 
   const handleAddItem = (item: typeof menuItems[0]) => {

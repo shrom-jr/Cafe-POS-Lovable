@@ -68,15 +68,15 @@ const PaymentScreen = () => {
   const vatEnabled = rawState?.vatEnabled ?? false;
   const finalTotal = rawState?.total ?? 0;
 
-  if (!table || !snap) {
+  if (!table || !snap || !rawState?.total) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
-        <p className="text-foreground">No active order for this table.</p>
+        <p className="text-foreground">Please review the bill before proceeding to payment.</p>
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate(tableId ? `/billing/${tableId}` : '/')}
           className="px-6 py-3 rounded-xl bg-success text-white font-bold flex items-center gap-2 transition-all active:scale-95"
         >
-          <Home size={18} /> Go to Tables
+          <Home size={18} /> Go to Billing
         </button>
       </div>
     );
