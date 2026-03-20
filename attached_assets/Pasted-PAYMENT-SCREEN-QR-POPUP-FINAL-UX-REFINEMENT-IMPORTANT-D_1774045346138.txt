@@ -1,0 +1,177 @@
+PAYMENT SCREEN + QR POPUP — FINAL UX REFINEMENT
+
+IMPORTANT:
+
+* Do NOT change core logic or flow
+* Do NOT add new features (no split payment, no complex forms)
+* Keep implementation simple (optimize for free credits)
+* Only improve clarity, speed, and usability
+
+---
+
+PAYMENT SCREEN
+
+---
+
+STRUCTURE
+
+* Keep current layout:
+
+  * Total at top
+  * Payment methods grid below
+
+---
+
+REMOVE UNUSED UI
+
+* Remove:
+  "Select a payment method above"
+
+This text is unnecessary and adds clutter.
+
+---
+
+PAYMENT METHODS
+
+* Methods:
+  Cash, eSewa, Khalti, Fonepay
+
+---
+
+PAYMENT BEHAVIOR
+
+CASH:
+
+* On tap:
+
+  * Complete payment immediately
+  * Trigger print
+  * Show success state briefly
+  * Navigate back automatically
+
+QR METHODS (eSewa, Khalti, Fonepay):
+
+* On tap:
+
+  * Open QR popup
+  * Do NOT complete payment immediately
+
+---
+
+BUTTON FEEDBACK
+
+* Add tap feedback for all methods:
+
+  * Slight scale down on press
+  * Subtle highlight when active
+
+---
+
+VISUAL PRIORITY
+
+* Make Cash slightly more prominent (since it's most used)
+* Keep others equal but slightly secondary
+
+---
+
+---
+
+QR PAYMENT POPUP
+
+---
+
+STRUCTURE
+
+* Centered modal
+* Contains:
+
+  * Title (e.g., "eSewa Payment")
+  * Amount
+  * QR Code
+  * Instruction text
+  * Confirm button
+
+---
+
+AMOUNT DISPLAY
+
+* Show clearly:
+  Rs. XXXX
+* Large and readable
+* Do NOT repeat amount in button
+
+---
+
+QR CODE
+
+* Make QR visually dominant
+* Centered
+* Slightly larger than current
+* Optional: subtle border or soft glow
+
+---
+
+INSTRUCTION TEXT
+
+Replace:
+"Scan with eSewa app"
+
+WITH:
+"Scan QR and confirm after payment"
+
+This removes confusion about the next step.
+
+---
+
+CONFIRM BUTTON
+
+* Text:
+  "Confirm Payment"
+
+* On click:
+
+  * Change to "Processing..."
+  * Disable button
+
+---
+
+SUCCESS FLOW
+
+After confirmation:
+
+* Show:
+  "Payment Successful"
+  "Printing receipt..."
+
+* Then:
+
+  * Close popup
+  * Navigate back to main screen
+
+---
+
+INTERACTION RULES
+
+* No instant payment for QR
+* User must manually confirm after scanning
+
+---
+
+STYLE
+
+* Keep design clean and minimal
+* Avoid adding extra elements
+* Focus on clarity and speed
+
+---
+
+GOAL
+
+Create a payment experience that is:
+
+* Simple
+* Fast
+* Clear
+* Suitable for real café usage in Nepal
+
+No confusion, no extra steps, no overengineering
