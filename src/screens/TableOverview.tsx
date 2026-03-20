@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePOSStore } from '@/store/usePOSStore';
 import { useTables } from '@/hooks/useTables';
@@ -69,6 +69,17 @@ const TableOverview = () => {
     navigate(`/order/${table.id}`);
   };
 
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [spotlight, setSpotlight] = useState<{ x: number; y: number } | null>(null);
+
+  const handlePanelMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = panelRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setSpotlight({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+  };
+
+  const handlePanelMouseLeave = () => setSpotlight(null);
+
   const headerRight = (
     <>
       <span className="text-sm font-semibold">
@@ -93,7 +104,10 @@ const TableOverview = () => {
           </div>
         ) : (
           <div
-            className="rounded-2xl border border-white/[0.07] p-5"
+            ref={panelRef}
+            onMouseMove={handlePanelMouseMove}
+            onMouseLeave={handlePanelMouseLeave}
+            className="relative rounded-2xl border border-white/[0.07] p-5 overflow-hidden"
             style={{
               background:
                 'radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 70%), rgba(255,255,255,0.03)',
@@ -101,6 +115,17 @@ const TableOverview = () => {
                 '0 8px 40px -8px rgba(0,0,0,0.5), 0 2px 8px -2px rgba(0,0,0,0.3), inset 0 1px 0 0 rgba(255,255,255,0.06)',
             }}
           >
+            {/* Spotlight overlay */}
+            <div
+              className="pointer-events-none absolute inset-0 rounded-2xl"
+              style={{
+                opacity: spotlight ? 1 : 0,
+                transition: 'opacity 0.4s ease',
+                background: spotlight
+                  ? `radial-gradient(400px circle at ${spotlight.x}px ${spotlight.y}px, rgba(255,255,255,0.055) 0%, transparent 70%)`
+                  : 'none',
+              }}
+            />
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
               {tables
                 .sort((a, b) => a.number - b.number)
