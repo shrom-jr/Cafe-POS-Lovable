@@ -36,7 +36,7 @@ const BillingScreen = () => {
         <p className="text-foreground">No active order for this table.</p>
         <button
           onClick={() => navigate('/')}
-          className="px-6 py-3 rounded-xl bg-accent text-accent-foreground font-bold flex items-center gap-2 transition-all active:scale-95"
+          className="px-6 py-3 rounded-xl bg-success text-white font-bold flex items-center gap-2 transition-all active:scale-95"
         >
           Go to Tables
         </button>
@@ -60,7 +60,7 @@ const BillingScreen = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <TopBar title={`Bill — Table ${table.number}`} showBack onBack={() => navigate(`/order/${tableId}`)} />
+      <TopBar title={`View Bill — Table ${table.number}`} showBack onBack={() => navigate(-1)} />
       <div className="max-w-lg mx-auto p-4 space-y-4 pb-8">
         <BillPreview
           cafeName={settings.cafeName}
@@ -76,13 +76,14 @@ const BillingScreen = () => {
           total={total}
         />
 
+        {/* Discount section */}
         <div className="bg-card rounded-2xl border border-border p-4 space-y-3 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.4)]">
           <h3 className="font-bold text-foreground text-sm">Apply Discount</h3>
           <div className="flex gap-2">
             <button
               onClick={() => { setDiscountType('percent'); setDiscountValue(0); }}
               data-testid="button-discount-percent"
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-all active:scale-95 ${
                 discountType === 'percent'
                   ? 'bg-accent text-accent-foreground shadow-[0_2px_8px_-2px_hsl(var(--accent)/0.4)]'
                   : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'
@@ -93,7 +94,7 @@ const BillingScreen = () => {
             <button
               onClick={() => { setDiscountType('fixed'); setDiscountValue(0); }}
               data-testid="button-discount-fixed"
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-all active:scale-95 ${
                 discountType === 'fixed'
                   ? 'bg-accent text-accent-foreground shadow-[0_2px_8px_-2px_hsl(var(--accent)/0.4)]'
                   : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'
@@ -119,7 +120,7 @@ const BillingScreen = () => {
                   key={v}
                   onClick={() => setDiscountValue(v)}
                   data-testid={`button-quick-discount-${v}`}
-                  className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${
+                  className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all active:scale-95 ${
                     discountValue === v
                       ? 'bg-accent/20 text-accent border border-accent/30'
                       : 'bg-primary/70 text-foreground hover:bg-accent/10'
@@ -132,11 +133,12 @@ const BillingScreen = () => {
           )}
         </div>
 
+        {/* Action buttons */}
         <div className="flex gap-3">
           <button
             onClick={handlePrint}
             data-testid="button-print-bill"
-            className="flex items-center justify-center gap-2 px-5 py-4 rounded-2xl border border-border bg-secondary text-foreground font-semibold text-sm transition-all active:scale-[0.97] hover:bg-secondary/70 hover:border-border/80"
+            className="flex items-center justify-center gap-2 px-5 py-4 rounded-2xl border border-border bg-secondary text-foreground font-semibold text-sm transition-all active:scale-[0.97] hover:bg-secondary/70"
           >
             <Printer size={18} />
             Print
@@ -144,7 +146,7 @@ const BillingScreen = () => {
           <button
             onClick={handlePay}
             data-testid="button-pay"
-            className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-accent text-accent-foreground font-black text-lg transition-all active:scale-[0.97] hover:brightness-110 shadow-[0_4px_16px_-4px_hsl(var(--accent)/0.5)]"
+            className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-success text-white font-black text-lg transition-all active:scale-[0.97] hover:brightness-110 shadow-[0_4px_16px_-4px_hsl(var(--success)/0.5)]"
           >
             <CreditCard size={20} />
             Pay Rs. {total}

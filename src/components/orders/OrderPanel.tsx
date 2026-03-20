@@ -1,18 +1,19 @@
 import { Order, OrderItem } from '@/types/pos';
-import { Minus, Plus, Trash2, ShoppingBag, RotateCcw, X } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingBag, RotateCcw, X, CreditCard, Receipt } from 'lucide-react';
 
 interface OrderPanelProps {
   order: Order | null;
   onUpdateQty: (menuItemId: string, delta: number) => void;
   onRemove: (menuItemId: string) => void;
-  onBill: () => void;
+  onPay: () => void;
+  onViewBill?: () => void;
   onClear?: () => void;
   onRepeatLast?: () => void;
   hasLastOrder?: boolean;
   locked?: boolean;
 }
 
-const OrderPanel = ({ order, onUpdateQty, onRemove, onBill, onClear, onRepeatLast, hasLastOrder, locked }: OrderPanelProps) => {
+const OrderPanel = ({ order, onUpdateQty, onRemove, onPay, onViewBill, onClear, onRepeatLast, hasLastOrder, locked }: OrderPanelProps) => {
   const items = order?.items || [];
   const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const itemCount = items.reduce((s, i) => s + i.quantity, 0);
@@ -59,7 +60,8 @@ const OrderPanel = ({ order, onUpdateQty, onRemove, onBill, onClear, onRepeatLas
         {items.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-10">
             <ShoppingBag size={38} className="mb-3 opacity-20" />
-            <p className="text-sm font-medium">Tap items to add</p>
+            <p className="text-sm font-medium text-center">No items yet</p>
+            <p className="text-xs text-muted-foreground/70 mt-1 text-center">Start adding from the menu</p>
             {hasLastOrder && onRepeatLast && (
               <button
                 onClick={onRepeatLast}
@@ -76,20 +78,35 @@ const OrderPanel = ({ order, onUpdateQty, onRemove, onBill, onClear, onRepeatLas
         ))}
       </div>
 
-      <div className="border-t border-border p-4 space-y-3 bg-card/80">
+      <div className="border-t border-border p-4 space-y-2.5 bg-card/80">
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground text-sm font-medium">Total</span>
           <span className="text-2xl font-black text-accent">Rs. {total}</span>
         </div>
         {!locked && (
-          <button
-            onClick={onBill}
-            disabled={items.length === 0}
-            data-testid="button-proceed-to-bill"
-            className="w-full py-3.5 rounded-xl bg-accent text-accent-foreground font-bold text-base transition-all active:scale-[0.97] disabled:opacity-35 disabled:cursor-not-allowed hover:brightness-110 shadow-[0_4px_12px_-2px_hsl(var(--accent)/0.4)]"
-          >
-            Proceed to Bill
-          </button>
+          <div className="flex gap-2">
+            {onViewBill && (
+              <button
+                onClick={onViewBill}
+                disabled={items.length === 0}
+                data-testid="button-view-bill"
+                title="View Bill / Apply Discount"
+                className="flex items-center justify-center gap-1.5 px-3 py-3 rounded-xl border border-border bg-secondary text-muted-foreground font-semibold text-xs transition-all active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-secondary/70 hover:text-foreground"
+              >
+                <Receipt size={15} />
+                View Bill
+              </button>
+            )}
+            <button
+              onClick={onPay}
+              disabled={items.length === 0}
+              data-testid="button-proceed-to-bill"
+              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl bg-success text-white font-black text-base transition-all active:scale-[0.97] disabled:opacity-35 disabled:cursor-not-allowed hover:brightness-110 shadow-[0_4px_12px_-2px_hsl(var(--success)/0.4)]"
+            >
+              <CreditCard size={18} />
+              💳 Pay Rs. {total}
+            </button>
+          </div>
         )}
         {locked && (
           <div className="text-center text-xs text-warning font-medium py-1">

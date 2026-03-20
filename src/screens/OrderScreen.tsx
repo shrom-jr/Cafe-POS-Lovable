@@ -6,7 +6,7 @@ import { useTables } from '@/hooks/useTables';
 import { TopBar } from '@/components/ui/Navigation';
 import MenuItemCard from '@/components/orders/MenuItemCard';
 import OrderPanel from '@/components/orders/OrderPanel';
-import { Search, ShoppingBag, X, Trash2, RotateCcw, Receipt, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Search, ShoppingBag, X, Trash2, RotateCcw, CreditCard, AlertTriangle, ArrowRight } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { playClick } from '@/utils/sounds';
 
@@ -75,7 +75,14 @@ const OrderScreen = () => {
   const runningTotal = order?.items.reduce((s, i) => s + i.price * i.quantity, 0) || 0;
   const hasItems = itemCount > 0;
 
-  const handleBill = () => {
+  const handlePay = () => {
+    if (!order || order.items.length === 0) return;
+    updateOrderStatus(order.id, 'billed');
+    updateTable(tableId, { status: 'billing' });
+    navigate(`/payment/${tableId}`);
+  };
+
+  const handleViewBill = () => {
     if (!order || order.items.length === 0) return;
     updateOrderStatus(order.id, 'billed');
     updateTable(tableId, { status: 'billing' });
@@ -121,7 +128,7 @@ const OrderScreen = () => {
       {/* Billing lock banner */}
       {isBilling && (
         <button
-          onClick={() => navigate(`/billing/${tableId}`)}
+          onClick={() => navigate(`/payment/${tableId}`)}
           className="flex items-center justify-between px-4 py-3 bg-warning/15 border-b border-warning/30 text-warning w-full"
           data-testid="banner-billing-lock"
         >
@@ -169,7 +176,7 @@ const OrderScreen = () => {
                   key={cat.id}
                   onClick={() => setActiveCat(cat.id)}
                   data-testid={`button-category-${cat.id}`}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-all ${
+                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-all active:scale-95 ${
                     activeCat === cat.id
                       ? 'bg-accent text-accent-foreground shadow-[0_2px_8px_-2px_hsl(var(--accent)/0.4)]'
                       : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
@@ -182,7 +189,7 @@ const OrderScreen = () => {
           )}
 
           {/* Items grid */}
-          <div className="flex-1 overflow-y-auto p-3">
+          <div className="flex-1 overflow-y-auto p-3 bg-background/50">
             <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3'} gap-2.5`}>
               {filteredItems.map((item) => (
                 <MenuItemCard
@@ -195,7 +202,11 @@ const OrderScreen = () => {
               ))}
             </div>
             {filteredItems.length === 0 && (
-              <p className="text-center text-muted-foreground py-12 text-sm">No items found</p>
+              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                <ShoppingBag size={36} className="mb-3 opacity-20" />
+                <p className="text-sm font-medium">No items found</p>
+                <p className="text-xs opacity-60 mt-1">Try a different category or search</p>
+              </div>
             )}
           </div>
         </div>
@@ -211,7 +222,8 @@ const OrderScreen = () => {
               onRemove={(menuItemId) =>
                 !isBilling && order && removeItemFromOrder(order.id, menuItemId)
               }
-              onBill={handleBill}
+              onPay={handlePay}
+              onViewBill={handleViewBill}
               onClear={handleClear}
               onRepeatLast={handleRepeatLast}
               hasLastOrder={hasLastOrder}
@@ -223,23 +235,23 @@ const OrderScreen = () => {
 
       {/* ─── QUICK ACTION BAR ────────────────────────────────────── */}
       <div className="flex-shrink-0 border-t border-border bg-card/95 backdrop-blur-sm px-3 py-2.5 flex items-center gap-2 safe-bottom">
-        {/* Clear */}
+        {/* Clear — danger outline */}
         <button
           onClick={handleClear}
           disabled={!hasItems || isBilling}
           data-testid="button-quick-clear"
-          className="flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl bg-secondary text-muted-foreground font-medium text-xs transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-danger/15 hover:text-danger min-w-[52px]"
+          className="flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl border border-danger/40 text-danger/70 font-medium text-xs transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-danger/10 hover:border-danger hover:text-danger min-w-[52px]"
         >
           <Trash2 size={18} />
           <span>Clear</span>
         </button>
 
-        {/* Repeat Last */}
+        {/* Repeat Last — secondary outline */}
         <button
           onClick={handleRepeatLast}
           disabled={!hasLastOrder || isBilling}
           data-testid="button-quick-repeat"
-          className="flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl bg-secondary text-muted-foreground font-medium text-xs transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-accent/15 hover:text-accent min-w-[52px]"
+          className="flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl border border-border text-muted-foreground font-medium text-xs transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-secondary hover:text-foreground min-w-[52px]"
         >
           <RotateCcw size={18} />
           <span>Repeat</span>
@@ -271,7 +283,7 @@ const OrderScreen = () => {
           <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl bg-secondary/40">
             <ShoppingBag size={15} className="text-muted-foreground" />
             <span className="text-sm text-muted-foreground">
-              {hasItems ? `${itemCount} item${itemCount !== 1 ? 's' : ''}` : 'No items added'}
+              {hasItems ? `${itemCount} item${itemCount !== 1 ? 's' : ''}` : 'No items added yet'}
             </span>
             {hasItems && (
               <span className="ml-auto font-bold text-accent text-sm">Rs. {runningTotal}</span>
@@ -279,25 +291,25 @@ const OrderScreen = () => {
           </div>
         )}
 
-        {/* Proceed to Billing */}
+        {/* Pay — solid green primary */}
         {isBilling ? (
           <button
-            onClick={() => navigate(`/billing/${tableId}`)}
+            onClick={() => navigate(`/payment/${tableId}`)}
             data-testid="button-go-billing"
-            className="flex flex-col items-center justify-center gap-0.5 px-4 py-2 rounded-xl bg-warning text-black font-bold text-xs transition-all active:scale-95 min-w-[72px]"
+            className="flex flex-col items-center justify-center gap-0.5 px-4 py-2 rounded-xl bg-success text-white font-bold text-xs transition-all active:scale-95 min-w-[72px] shadow-[0_2px_12px_-4px_hsl(var(--success)/0.5)]"
           >
-            <Receipt size={18} />
+            <CreditCard size={18} />
             <span>Payment</span>
           </button>
         ) : (
           <button
-            onClick={handleBill}
+            onClick={handlePay}
             disabled={!hasItems}
             data-testid="button-quick-bill"
-            className="flex flex-col items-center justify-center gap-0.5 px-4 py-2 rounded-xl bg-accent text-accent-foreground font-bold text-xs transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed hover:brightness-110 shadow-[0_2px_12px_-4px_hsl(var(--accent)/0.5)] min-w-[72px]"
+            className="flex flex-col items-center justify-center gap-0.5 px-4 py-2 rounded-xl bg-success text-white font-bold text-xs transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed hover:brightness-110 shadow-[0_2px_12px_-4px_hsl(var(--success)/0.5)] min-w-[72px]"
           >
-            <Receipt size={18} />
-            <span>Bill</span>
+            <CreditCard size={18} />
+            <span>{hasItems ? `Rs.${runningTotal}` : 'Pay'}</span>
           </button>
         )}
       </div>
@@ -331,7 +343,8 @@ const OrderScreen = () => {
                 onRemove={(menuItemId) =>
                   !isBilling && order && removeItemFromOrder(order.id, menuItemId)
                 }
-                onBill={() => { setShowCart(false); handleBill(); }}
+                onPay={() => { setShowCart(false); handlePay(); }}
+                onViewBill={() => { setShowCart(false); handleViewBill(); }}
                 onClear={() => { setShowCart(false); handleClear(); }}
                 onRepeatLast={handleRepeatLast}
                 hasLastOrder={hasLastOrder}

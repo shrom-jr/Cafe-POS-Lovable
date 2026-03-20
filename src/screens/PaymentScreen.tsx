@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { usePOSStore } from '@/store/usePOSStore';
 import { useOrders } from '@/hooks/useOrders';
 import { useTables } from '@/hooks/useTables';
 import { TopBar } from '@/components/ui/Navigation';
 import QRDisplay from '@/components/payment/QRDisplay';
 import BillPreview from '@/components/billing/BillPreview';
-import { Banknote, Smartphone, CheckCircle2, RotateCcw, Home, Printer } from 'lucide-react';
+import { Banknote, Smartphone, CheckCircle2, Home, Printer } from 'lucide-react';
 import { printer, formatReceipt } from '@/utils/printer';
 import { format } from 'date-fns';
 import { OrderItem } from '@/types/pos';
@@ -45,7 +46,6 @@ const PaymentScreen = () => {
   const snap = orderSnapshot.current || (order ? { id: order.id, items: order.items, tableNumber: order.tableNumber } : null);
 
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
-  const [confirming, setConfirming] = useState(false);
   const [paid, setPaid] = useState(false);
   const [billNum, setBillNum] = useState<number>(0);
 
@@ -55,7 +55,7 @@ const PaymentScreen = () => {
         <p className="text-foreground">No active order for this table.</p>
         <button
           onClick={() => navigate('/')}
-          className="px-6 py-3 rounded-xl bg-accent text-accent-foreground font-bold flex items-center gap-2 transition-all active:scale-95"
+          className="px-6 py-3 rounded-xl bg-success text-white font-bold flex items-center gap-2 transition-all active:scale-95"
         >
           <Home size={18} /> Go to Tables
         </button>
@@ -80,7 +80,6 @@ const PaymentScreen = () => {
 
   const handleConfirmPayment = async () => {
     if (!selectedMethod) return;
-    if (!confirming) { setConfirming(true); return; }
     const bn = getNextBillNumber();
     setBillNum(bn);
 
@@ -119,11 +118,6 @@ const PaymentScreen = () => {
         })
       );
     }
-  };
-
-  const handleReset = () => {
-    if (tableId) resetTable(tableId);
-    navigate('/', { replace: true });
   };
 
   const handlePrint = () => {
@@ -177,21 +171,13 @@ const PaymentScreen = () => {
               Print
             </button>
             <button
-              onClick={handleReset}
-              data-testid="button-reset-table"
+              onClick={() => navigate('/', { replace: true })}
+              data-testid="button-back-home"
               className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-success text-white font-black text-base transition-all active:scale-[0.97] hover:brightness-110 shadow-[0_4px_16px_-4px_hsl(var(--success)/0.4)]"
             >
-              <RotateCcw size={20} /> Reset Table
+              <Home size={20} /> Back to Tables
             </button>
           </div>
-
-          <button
-            onClick={() => navigate('/', { replace: true })}
-            data-testid="button-back-home"
-            className="w-full py-3.5 rounded-2xl bg-secondary text-secondary-foreground font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.97] hover:bg-secondary/70"
-          >
-            <Home size={18} /> Back to Tables
-          </button>
         </div>
       </div>
     );
@@ -202,40 +188,43 @@ const PaymentScreen = () => {
       <TopBar
         title={`Payment — Table ${snap.tableNumber}`}
         showBack
-        onBack={() => navigate(`/billing/${tableId}`, { replace: true })}
+        onBack={() => navigate(-1)}
       />
       <div className="max-w-lg mx-auto p-4 space-y-4 pb-8">
+        {/* Large amount display */}
         <div className="bg-gradient-to-b from-card to-card/80 rounded-2xl border border-border p-6 text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4)]">
-          <p className="text-muted-foreground text-sm font-medium">Amount Due</p>
-          <p className="text-5xl font-black text-accent mt-2 tracking-tight">Rs. {total}</p>
+          <p className="text-muted-foreground text-sm font-medium uppercase tracking-wide">Amount Due</p>
+          <p className="text-6xl font-black text-success mt-2 tracking-tight">Rs. {total}</p>
           {discountAmt > 0 && (
-            <p className="text-xs text-success mt-1 font-medium">
+            <p className="text-xs text-success mt-2 font-medium bg-success/10 inline-block px-3 py-1 rounded-full">
               Saved Rs. {discountAmt}
             </p>
           )}
+          <p className="text-xs text-muted-foreground mt-3 font-mono">Table {snap.tableNumber}</p>
         </div>
 
+        {/* Payment methods */}
         <div className="space-y-2">
           <h3 className="font-bold text-foreground text-sm">Select Payment Method</h3>
           <div className="grid grid-cols-2 gap-2.5">
             {methods.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
-                onClick={() => { setSelectedMethod(id); setConfirming(false); }}
+                onClick={() => setSelectedMethod(id)}
                 data-testid={`button-payment-method-${id}`}
                 className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all active:scale-[0.97] ${
                   selectedMethod === id
-                    ? 'border-accent bg-accent/10 shadow-[0_2px_12px_-4px_hsl(var(--accent)/0.3)]'
-                    : 'border-border bg-card hover:border-accent/30 hover:bg-card/80'
+                    ? 'border-success bg-success/10 shadow-[0_2px_12px_-4px_hsl(var(--success)/0.3)]'
+                    : 'border-border bg-card hover:border-border/80 hover:bg-card/80'
                 }`}
               >
                 <Icon
-                  size={22}
-                  className={selectedMethod === id ? 'text-accent' : 'text-muted-foreground'}
+                  size={24}
+                  className={selectedMethod === id ? 'text-success' : 'text-muted-foreground'}
                 />
                 <span
                   className={`font-semibold text-sm ${
-                    selectedMethod === id ? 'text-accent' : 'text-foreground'
+                    selectedMethod === id ? 'text-success' : 'text-foreground'
                   }`}
                 >
                   {label}
@@ -245,6 +234,7 @@ const PaymentScreen = () => {
           </div>
         </div>
 
+        {/* QR display for digital wallets */}
         {selectedMethod && selectedMethod !== 'cash' && (() => {
           const walletKey = selectedMethod as 'esewa' | 'khalti' | 'fonepay';
           const wallet = settings.wallets[walletKey];
@@ -259,7 +249,7 @@ const PaymentScreen = () => {
                   alt={`${label} QR`}
                   className="w-56 h-56 object-contain rounded-xl border-2 border-border bg-white p-2"
                 />
-                <p className="text-3xl font-black text-accent">Rs. {total}</p>
+                <p className="text-3xl font-black text-success">Rs. {total}</p>
                 <p className="text-xs text-muted-foreground font-mono">{reference}</p>
                 <p className="text-sm text-muted-foreground text-center">
                   Scan with {label} app to pay
@@ -277,45 +267,17 @@ const PaymentScreen = () => {
           );
         })()}
 
-        {confirming ? (
-          <div className="rounded-2xl border-2 border-accent/50 bg-accent/10 p-4 space-y-3">
-            <p className="text-center text-sm font-semibold text-foreground">
-              Confirm{' '}
-              <span className="text-accent font-black">
-                {selectedMethod!.charAt(0).toUpperCase() + selectedMethod!.slice(1)}
-              </span>{' '}
-              payment of{' '}
-              <span className="text-accent font-black">Rs. {total}</span>?
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setConfirming(false)}
-                data-testid="button-cancel-confirm"
-                className="flex-1 py-3 rounded-xl bg-secondary text-secondary-foreground font-bold text-sm transition-all active:scale-[0.97] hover:bg-secondary/70"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmPayment}
-                data-testid="button-final-confirm"
-                className="flex-1 py-3 rounded-xl bg-accent text-accent-foreground font-black text-sm transition-all active:scale-[0.97] hover:brightness-110 shadow-[0_4px_12px_-4px_hsl(var(--accent)/0.5)]"
-              >
-                Yes, Confirm
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={handleConfirmPayment}
-            disabled={!selectedMethod}
-            data-testid="button-confirm-payment"
-            className="w-full py-4 rounded-2xl bg-accent text-accent-foreground font-black text-lg transition-all active:scale-[0.97] disabled:opacity-35 disabled:cursor-not-allowed hover:brightness-110 shadow-[0_4px_16px_-4px_hsl(var(--accent)/0.5)]"
-          >
-            {selectedMethod
-              ? `Confirm ${selectedMethod.charAt(0).toUpperCase() + selectedMethod.slice(1)} Payment`
-              : 'Select a Payment Method'}
-          </button>
-        )}
+        {/* Single confirm button */}
+        <button
+          onClick={handleConfirmPayment}
+          disabled={!selectedMethod}
+          data-testid="button-confirm-payment"
+          className="w-full py-5 rounded-2xl bg-success text-white font-black text-xl transition-all active:scale-[0.97] disabled:opacity-35 disabled:cursor-not-allowed hover:brightness-110 shadow-[0_4px_16px_-4px_hsl(var(--success)/0.5)]"
+        >
+          {selectedMethod
+            ? `Confirm Payment Rs. ${total}`
+            : 'Select a Payment Method'}
+        </button>
       </div>
     </div>
   );

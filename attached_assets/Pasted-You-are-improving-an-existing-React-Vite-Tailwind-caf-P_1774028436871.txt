@@ -1,0 +1,120 @@
+You are improving an existing React + Vite + Tailwind café POS system using Zustand.
+
+Do NOT redesign from scratch. Do NOT add backend. Keep all logic intact.
+
+Apply ONLY the following improvements:
+
+---
+
+SECTION 1 — FLOW OPTIMIZATION
+
+1. Replace "Proceed to Bill" with a sticky primary button:
+   "💳 Pay Rs. {total}"
+
+* Always visible at bottom
+* Navigates directly to PaymentScreen
+* Disabled if no items
+
+2. Make BillingScreen optional:
+
+* Rename usage to "View Bill"
+* Use only for discounts, print, detailed view
+* Remove automatic navigation to it
+
+3. Simplify Payment:
+
+* Single button:
+  "Confirm Payment Rs. {amount}"
+* On click:
+  → Complete payment
+  → Save bill
+  → Reset table
+  → Navigate to Tables screen
+
+4. Auto reset after payment:
+
+* Clear order
+* Reset table to Available
+
+5. Simplify Quick Action Bar:
+
+* Left: Clear (danger)
+* Center: Repeat Last (secondary)
+* Right: Pay (primary)
+
+---
+
+SECTION 2 — UI/UX IMPROVEMENTS
+
+1. Visual Hierarchy:
+
+* Primary buttons = solid green + larger
+* Secondary = outline
+* Danger = red outline
+
+2. Reduce green overuse:
+
+* Use green ONLY for:
+  → Active states
+  → Primary actions
+* Use gray borders and white text elsewhere
+
+3. TableCard Enhancement:
+
+* Large table number
+* Show:
+  → Status
+  → Timer
+  → Total
+  → Item count
+* Add subtle gradient + soft shadow
+* Add colored status indicator
+
+4. Order Screen Layout:
+
+* Clear separation:
+  → Menu
+  → Order Panel
+* Add subtle background contrast
+* Sticky bottom Pay bar
+
+5. Payment Screen Upgrade:
+
+* Large total amount (text-5xl+)
+* Big payment method buttons
+* Add icons (cash, QR, etc.)
+
+6. Micro-interactions:
+
+* Button press scale animation
+* Item add flash/bounce
+* Smooth transitions
+
+7. Empty States:
+
+* Replace plain text with friendly guidance
+  Example:
+  "No items yet — start adding from menu"
+
+8. Consistency:
+
+* Use consistent padding, spacing, and button sizes
+
+---
+
+RULES:
+
+* Do NOT break Zustand store
+* Do NOT change data structure
+* Do NOT remove existing features
+* Keep performance optimized
+
+---
+
+GOAL:
+
+Make the app feel like a fast, real-world POS system:
+
+* Minimal clicks
+* Clear actions
+* Smooth experience
