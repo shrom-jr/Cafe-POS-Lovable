@@ -72,6 +72,9 @@ const defaultSettings: Settings = {
     fonepay: { enabled: false },
   },
   billCounter: 1000,
+  vatEnabled: true,
+  vatRate: 0.13,
+  vatMode: 'excluded',
 };
 
 export const db = {
@@ -90,7 +93,10 @@ export const db = {
   getPayments: (): Payment[] => get(KEYS.payments, []),
   savePayments: (p: Payment[]) => set(KEYS.payments, p),
 
-  getSettings: (): Settings => get(KEYS.settings, defaultSettings),
+  getSettings: (): Settings => {
+    const stored = get<Partial<Settings>>(KEYS.settings, defaultSettings);
+    return { ...defaultSettings, ...stored };
+  },
   saveSettings: (s: Settings) => set(KEYS.settings, s),
 
   exportAll: () => {

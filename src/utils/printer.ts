@@ -74,6 +74,9 @@ export function formatReceipt(data: {
   items: { name: string; quantity: number; price: number }[];
   subtotal: number;
   discount: number;
+  vatAmount?: number;
+  vatRate?: number;
+  vatEnabled?: boolean;
   total: number;
   method: string;
   date: string;
@@ -103,6 +106,10 @@ export function formatReceipt(data: {
   r += dash + '\n';
   r += row('Subtotal:', `Rs.${data.subtotal}`) + '\n';
   if (data.discount > 0) r += row('Discount:', `-Rs.${data.discount}`) + '\n';
+  if (data.vatEnabled && data.vatAmount && data.vatAmount > 0) {
+    const vatPct = Math.round((data.vatRate ?? 0.13) * 100);
+    r += row(`VAT (${vatPct}%):`, `Rs.${data.vatAmount}`) + '\n';
+  }
   r += row('TOTAL:', `Rs.${data.total}`) + '\n';
   r += dash + '\n';
   r += row('Payment:', data.method) + '\n';

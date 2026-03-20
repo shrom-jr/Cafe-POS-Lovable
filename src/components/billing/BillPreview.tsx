@@ -12,6 +12,9 @@ interface BillPreviewProps {
   subtotal: number;
   discount: number;
   discountType: 'percent' | 'fixed';
+  vatAmount?: number;
+  vatRate?: number;
+  vatEnabled?: boolean;
   total: number;
   method?: string;
   billNumber?: number;
@@ -29,6 +32,9 @@ const BillPreview = ({
   subtotal,
   discount,
   discountType,
+  vatAmount = 0,
+  vatRate = 0.13,
+  vatEnabled = false,
   total,
   method,
   billNumber,
@@ -102,6 +108,12 @@ const BillPreview = ({
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Discount ({discountDisplay})</span>
             <span className="font-semibold text-success">-Rs. {discountAmount}</span>
+          </div>
+        )}
+        {vatEnabled && vatAmount > 0 && (
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">VAT ({Math.round(vatRate * 100)}%)</span>
+            <span className="font-medium text-foreground">Rs. {vatAmount}</span>
           </div>
         )}
         <div className="border-t border-border/50 pt-3 mt-1">

@@ -28,7 +28,17 @@ const BillingScreen = () => {
 
   const discountAmount =
     discountType === 'percent' ? Math.round((subtotal * discountValue) / 100) : discountValue;
-  const total = Math.max(0, subtotal - discountAmount);
+  const afterDiscount = Math.max(0, subtotal - discountAmount);
+
+  const vatEnabled = settings.vatEnabled ?? false;
+  const vatRate = settings.vatRate ?? 0.13;
+  const vatMode = settings.vatMode ?? 'excluded';
+  const vatAmount = vatEnabled
+    ? vatMode === 'excluded'
+      ? Math.round(afterDiscount * vatRate)
+      : Math.round(afterDiscount * vatRate / (1 + vatRate))
+    : 0;
+  const total = vatEnabled && vatMode === 'excluded' ? afterDiscount + vatAmount : afterDiscount;
 
   if (!table || !order) {
     return (
@@ -46,7 +56,7 @@ const BillingScreen = () => {
 
   const handlePay = () => {
     navigate(`/payment/${tableId}`, {
-      state: { discount: discountValue, discountType, total, subtotal, discountAmount },
+      state: { discount: discountValue, discountType, total, subtotal, discountAmount, vatAmount },
     });
   };
 
@@ -73,6 +83,9 @@ const BillingScreen = () => {
           subtotal={subtotal}
           discount={discountValue}
           discountType={discountType}
+          vatEnabled={vatEnabled}
+          vatAmount={vatAmount}
+          vatRate={vatRate}
           total={total}
         />
 

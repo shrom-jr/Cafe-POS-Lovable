@@ -66,7 +66,20 @@ const PaymentScreen = () => {
     if (discountType === 'percent') return Math.round((subtotalRaw * discountValue) / 100);
     return Math.min(discountValue, subtotalRaw);
   }, [subtotalRaw, discountType, discountValue]);
-  const finalTotalRaw = Math.max(0, subtotalRaw - discountAmount);
+  const afterDiscount = Math.max(0, subtotalRaw - discountAmount);
+
+  const vatEnabled = settings.vatEnabled ?? false;
+  const vatRate = settings.vatRate ?? 0.13;
+  const vatMode = settings.vatMode ?? 'excluded';
+  const vatAmount = useMemo(() => {
+    if (!vatEnabled) return 0;
+    return vatMode === 'excluded'
+      ? Math.round(afterDiscount * vatRate)
+      : Math.round(afterDiscount * vatRate / (1 + vatRate));
+  }, [vatEnabled, vatMode, vatRate, afterDiscount]);
+  const finalTotalRaw = vatEnabled && vatMode === 'excluded'
+    ? afterDiscount + vatAmount
+    : afterDiscount;
 
   if (!table || !snap) {
     return (
@@ -121,6 +134,9 @@ const PaymentScreen = () => {
       subtotal,
       discount: discountValue,
       discountType,
+      vatAmount,
+      vatRate,
+      vatMode,
       total: finalTotal,
       method,
       reference,
@@ -150,6 +166,9 @@ const PaymentScreen = () => {
           items: snap.items,
           subtotal,
           discount: discountAmount,
+          vatAmount,
+          vatRate,
+          vatEnabled,
           total: finalTotal,
           method,
           date: format(Date.now(), 'yyyy-MM-dd HH:mm'),
@@ -205,14 +224,17 @@ const PaymentScreen = () => {
           <div style={{ borderTop: '1px dashed #000', margin: '6px 0' }} />
 
           {/* Totals */}
-          {discountAmount > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#000' }}>
-              <span>Subtotal</span><span>Rs. {subtotal}</span>
-            </div>
-          )}
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#000' }}>
+            <span>Subtotal</span><span>Rs. {subtotal}</span>
+          </div>
           {discountAmount > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#000' }}>
               <span>Discount</span><span>-Rs. {discountAmount}</span>
+            </div>
+          )}
+          {vatEnabled && vatAmount > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#000' }}>
+              <span>VAT ({Math.round(vatRate * 100)}%)</span><span>Rs. {vatAmount}</span>
             </div>
           )}
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 900, marginTop: 4, color: '#000' }}>
@@ -316,20 +338,32 @@ const PaymentScreen = () => {
       <div className="max-w-lg mx-auto p-4 space-y-4 pb-8">
 
         {/* Total amount card */}
-        <div className="rounded-2xl border border-border bg-gradient-to-b from-card to-card/70 p-5 text-center shadow-[0_4px_24px_-4px_rgba(0,0,0,0.5)]">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Amount Due</p>
-          <p className="text-6xl font-black text-foreground mt-1 tracking-tight">
+        <div className="rounded-2xl border border-border bg-gradient-to-b from-card to-card/70 p-5 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.5)]">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest text-center">Amount Due</p>
+          <p className="text-6xl font-black text-foreground mt-1 tracking-tight text-center">
             Rs. {finalTotal}
           </p>
-          {discountAmount > 0 && (
-            <div className="flex items-center justify-center gap-2 mt-2">
-              <span className="text-xs text-muted-foreground line-through">Rs. {subtotal}</span>
-              <span className="px-2.5 py-0.5 rounded-full bg-success/15 text-success text-xs font-semibold">
-                Saved Rs. {discountAmount}
-              </span>
+          <p className="text-xs text-muted-foreground mt-1 font-mono text-center">Table {snap.tableNumber}</p>
+
+          {/* Breakdown */}
+          <div className="mt-4 pt-3 border-t border-border/40 space-y-1.5">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Subtotal</span>
+              <span className="text-foreground font-medium">Rs. {subtotal}</span>
             </div>
-          )}
-          <p className="text-xs text-muted-foreground mt-2 font-mono">Table {snap.tableNumber}</p>
+            {discountAmount > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Discount</span>
+                <span className="text-success font-semibold">-Rs. {discountAmount}</span>
+              </div>
+            )}
+            {vatEnabled && vatAmount > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">VAT ({Math.round(vatRate * 100)}%)</span>
+                <span className="text-foreground font-medium">Rs. {vatAmount}</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Discount section */}

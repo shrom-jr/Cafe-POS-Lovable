@@ -44,6 +44,9 @@ export interface Payment {
   subtotal: number;
   discount: number;
   discountType: 'percent' | 'fixed';
+  vatAmount: number;
+  vatRate: number;
+  vatMode: 'excluded' | 'included';
   total: number;
   method: string;
   reference: string;
@@ -73,4 +76,7 @@ export interface Settings {
   };
   printerAddress?: string;
   billCounter: number;
+  vatEnabled: boolean;
+  vatRate: number;
+  vatMode: 'excluded' | 'included';
 }
