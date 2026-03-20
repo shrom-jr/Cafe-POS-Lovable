@@ -1,0 +1,198 @@
+FINAL POS FLOW REFINEMENT (NO BACKEND, FRONTEND ONLY)
+
+Do not reintroduce removed features. Do not duplicate logic. Keep everything consistent with current updates.
+
+---
+
+FLOW (FINAL)
+
+Order Panel → Review Screen → Payment Screen → Auto Print → Done
+
+---
+
+ORDER PANEL (KEEP CLEAN)
+
+* Show items and total
+
+* Small buttons inside panel:
+
+  * Clear
+  * Repeat
+
+* Primary button:
+
+  "💳 Pay Rs. {total}"
+
+* Remove:
+
+  * Bottom sticky bar (already removed, do not re-add)
+  * Discount inputs
+  * VAT controls
+
+---
+
+ON CLICK PAY
+
+* Compute full bill using existing calc utility:
+
+  * subtotal
+  * discount (default 0)
+  * VAT (from settings)
+  * final total
+
+* Navigate to Review Screen
+
+* Pass ALL computed values via navigation state (no recalculation later)
+
+---
+
+REVIEW SCREEN (IMPORTANT)
+
+Purpose: Fast confirmation + discount editing
+
+---
+
+UI RULES
+
+* Must fit fully on screen (NO SCROLL)
+* Compact layout only
+* No unnecessary headers
+* No print button
+
+---
+
+CONTENT
+
+* Item list (compact)
+* Subtotal
+* Discount (editable)
+* VAT
+* Total
+
+---
+
+DISCOUNT SYSTEM
+
+Add BOTH:
+
+1. Quick buttons:
+   0%, 5%, 10%, 15%
+
+2. Manual edit option:
+
+   * Rs amount OR %
+
+---
+
+BEHAVIOR
+
+* Tap % → instantly apply
+* Highlight selected %
+* Manual input updates instantly
+* NO "Apply" button
+
+---
+
+DISPLAY
+
+* Always show:
+
+  Discount: -Rs. X
+
+---
+
+ACTIONS
+
+* Primary:
+
+  "💳 Pay Rs. {finalTotal}"
+
+* Secondary:
+
+  Back (returns to Order Panel)
+
+---
+
+NAVIGATION TO PAYMENT
+
+* Pass FINAL values only:
+  subtotal
+  discountAmount
+  vatAmount
+  vatRate
+  vatMode
+  vatEnabled
+  total
+
+* DO NOT recompute anything in PaymentScreen
+
+---
+
+PAYMENT SCREEN (SIMPLIFIED)
+
+* No discount UI
+
+* No VAT calculation
+
+* No recalculation at all
+
+* Only display:
+
+  Subtotal
+  Discount
+  VAT
+  Total
+
+---
+
+PAYMENT ACTION
+
+* On confirm:
+  → Save payment
+  → Trigger window.print()
+
+---
+
+PRINT SYSTEM (KEEP CURRENT FIX)
+
+* Use portal-based receipt (already implemented)
+* Receipt rendered outside #root
+* Print CSS shows only receipt
+
+---
+
+RECEIPT REQUIREMENTS
+
+* Clean white background
+* Black text only
+* Thermal width (80mm)
+* Include:
+
+  Shop name
+  Items
+  Subtotal
+  Discount
+  VAT
+  Total
+  Date/time
+
+---
+
+IMPORTANT RULES
+
+* No duplicate calculations across screens
+* BillingScreen must NOT return
+* No scrolling in Review or Payment success state
+* No blank print screen
+* No extra steps in checkout
+
+---
+
+GOAL
+
+Create a fast, clean, professional POS flow:
+
+* Minimal taps
+* Zero confusion
+* Consistent totals across all screens
+* Real café-like experience

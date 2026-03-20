@@ -25,7 +25,7 @@ const PaymentScreen = () => {
   const settings = usePOSStore((s) => s.settings);
 
   const rawState = location.state as {
-    discount?: number;
+    discountValue?: number;
     discountType?: 'percent' | 'fixed';
     subtotal?: number;
     discountAmount?: number;
@@ -57,10 +57,10 @@ const PaymentScreen = () => {
   const [paidMethod, setPaidMethod] = useState<string>('');
   const [printing, setPrinting] = useState(false);
 
-  // All financial values come from OrderScreen via navigation state — no recalculation here
+  // All financial values come from ReviewScreen via navigation state — no recalculation here
   const subtotal = rawState?.subtotal ?? 0;
   const discountAmount = rawState?.discountAmount ?? 0;
-  const discountValue = rawState?.discount ?? 0;
+  const discountValue = rawState?.discountValue ?? 0;
   const discountType = rawState?.discountType ?? 'percent';
   const vatAmount = rawState?.vatAmount ?? 0;
   const vatRate = rawState?.vatRate ?? 0.13;
@@ -319,7 +319,7 @@ const PaymentScreen = () => {
   /* ── PAYMENT SCREEN ─────────────────────────────────────── */
   return (
     <div className="min-h-screen bg-background">
-      <TopBar title={`Payment — Table ${snap.tableNumber}`} showBack onBack={() => navigate(-1)} />
+      <TopBar title={`Payment — Table ${snap.tableNumber}`} showBack onBack={() => navigate(`/review/${tableId}`)} />
 
       <div className="max-w-lg mx-auto p-4 space-y-4 pb-8">
 

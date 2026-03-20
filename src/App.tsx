@@ -3,6 +3,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import TableOverview from '@/screens/TableOverview';
 import OrderScreen from '@/screens/OrderScreen';
+import ReviewScreen from '@/screens/ReviewScreen';
 import PaymentScreen from '@/screens/PaymentScreen';
 import BillHistory from '@/screens/BillHistory';
 import AdminPanel from '@/screens/AdminPanel';
@@ -15,6 +16,7 @@ const App = () => (
       <Routes>
         <Route path="/" element={<TableOverview />} />
         <Route path="/order/:tableId" element={<OrderScreen />} />
+        <Route path="/review/:tableId" element={<ReviewScreen />} />
         <Route path="/payment/:tableId" element={<PaymentScreen />} />
         <Route path="/history" element={<BillHistory />} />
         <Route path="/admin" element={<AdminPanel />} />

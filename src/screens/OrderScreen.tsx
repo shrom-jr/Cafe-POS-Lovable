@@ -9,7 +9,6 @@ import OrderPanel from '@/components/orders/OrderPanel';
 import { Search, ShoppingBag, X, Info } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { playClick } from '@/utils/sounds';
-import { calcBill } from '@/utils/calcBill';
 
 const OrderScreen = () => {
   const { tableId } = useParams<{ tableId: string }>();
@@ -77,20 +76,7 @@ const OrderScreen = () => {
 
   const handlePay = () => {
     if (!order || order.items.length === 0) return;
-    const bill = calcBill(order.items, settings);
-    navigate(`/payment/${tableId}`, {
-      state: {
-        subtotal: bill.subtotal,
-        discount: 0,
-        discountType: 'percent' as const,
-        discountAmount: bill.discountAmount,
-        vatAmount: bill.vatAmount,
-        vatRate: bill.vatRate,
-        vatMode: bill.vatMode,
-        vatEnabled: bill.vatEnabled,
-        total: bill.total,
-      },
-    });
+    navigate(`/review/${tableId}`);
   };
 
   const handleAddItem = (item: typeof menuItems[0]) => {
