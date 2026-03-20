@@ -63,7 +63,6 @@ const TableOverview = () => {
   const counts = useMemo(() => ({
     available: tables.filter((t) => t.status === 'free').length,
     active:    tables.filter((t) => t.status === 'occupied').length,
-    billing:   tables.filter((t) => t.status === 'billing').length,
   }), [tables]);
 
   const handleTableClick = (table: CafeTable) => {
@@ -72,11 +71,11 @@ const TableOverview = () => {
 
   const headerRight = (
     <>
-      <div className="flex items-center gap-2">
-        <StatusPill label="Available" count={counts.available} color="success" />
-        <StatusPill label="Active"    count={counts.active}    color="warning" />
-        <StatusPill label="Billing"   count={counts.billing}   color="danger"  />
-      </div>
+      <span className="text-sm font-semibold">
+        <span className="text-success">{counts.available} Available</span>
+        <span className="text-muted-foreground/50 mx-2">•</span>
+        <span className="text-warning">{counts.active} Active</span>
+      </span>
       <div className="h-6 w-px bg-white/10" />
       <span className="font-mono text-sm font-semibold text-muted-foreground tabular-nums min-w-[76px] text-right">
         {clock}
