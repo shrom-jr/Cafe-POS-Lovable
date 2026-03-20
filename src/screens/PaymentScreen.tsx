@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { usePOSStore } from '@/store/usePOSStore';
 import { useOrders } from '@/hooks/useOrders';
@@ -158,50 +159,80 @@ const PaymentScreen = () => {
     }
   };
 
-  /* ── PRINTABLE RECEIPT (hidden in UI, shown on print) ─── */
-  const PrintableReceipt = () => {
-    const dateStr = format(Date.now(), 'dd MMM yyyy, HH:mm');
-    return (
-      <div id="printable-receipt">
-        <div style={{ textAlign: 'center', marginBottom: 8 }}>
-          <div style={{ fontSize: 16, fontWeight: 900 }}>{settings.cafeName}</div>
-          {settings.cafeAddress && <div style={{ fontSize: 11 }}>{settings.cafeAddress}</div>}
-          {settings.cafePhone && <div style={{ fontSize: 11 }}>{settings.cafePhone}</div>}
-          <div style={{ fontSize: 11, marginTop: 4 }}>
-            #{billNum} · Table {snap.tableNumber} · {dateStr}
+  /* ── PORTAL RECEIPT (rendered directly on <body>, outside #root) ─── */
+  const receiptPortal = paid
+    ? createPortal(
+        <div
+          id="print-receipt"
+          style={{
+            display: 'none', // hidden in UI; @media print overrides to block
+            fontFamily: "'Courier New', Courier, monospace",
+            fontSize: 12,
+            lineHeight: 1.5,
+            color: '#000',
+            background: '#fff',
+            padding: '6mm',
+            width: '80mm',
+          }}
+        >
+          {/* Header */}
+          <div style={{ textAlign: 'center', marginBottom: 8 }}>
+            <div style={{ fontSize: 16, fontWeight: 900, color: '#000' }}>{settings.cafeName}</div>
+            {settings.cafeAddress && (
+              <div style={{ fontSize: 11, color: '#000' }}>{settings.cafeAddress}</div>
+            )}
+            {settings.cafePhone && (
+              <div style={{ fontSize: 11, color: '#000' }}>{settings.cafePhone}</div>
+            )}
+            <div style={{ fontSize: 11, color: '#000', marginTop: 4 }}>
+              #{billNum} · Table {snap.tableNumber} · {format(Date.now(), 'dd MMM yyyy, HH:mm')}
+            </div>
           </div>
-        </div>
-        <div style={{ borderTop: '1px dashed #000', margin: '6px 0' }} />
-        {snap.items.map((item) => (
-          <div key={item.menuItemId} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 3 }}>
-            <span>{item.name} x{item.quantity}</span>
-            <span>Rs. {item.price * item.quantity}</span>
+
+          <div style={{ borderTop: '1px dashed #000', margin: '6px 0' }} />
+
+          {/* Items */}
+          {snap.items.map((item) => (
+            <div
+              key={item.menuItemId}
+              style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 3, color: '#000' }}
+            >
+              <span>{item.name} x{item.quantity}</span>
+              <span>Rs. {item.price * item.quantity}</span>
+            </div>
+          ))}
+
+          <div style={{ borderTop: '1px dashed #000', margin: '6px 0' }} />
+
+          {/* Totals */}
+          {discountAmount > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#000' }}>
+              <span>Subtotal</span><span>Rs. {subtotal}</span>
+            </div>
+          )}
+          {discountAmount > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#000' }}>
+              <span>Discount</span><span>-Rs. {discountAmount}</span>
+            </div>
+          )}
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 900, marginTop: 4, color: '#000' }}>
+            <span>TOTAL</span><span>Rs. {finalTotal}</span>
           </div>
-        ))}
-        <div style={{ borderTop: '1px dashed #000', margin: '6px 0' }} />
-        {discountAmount > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-            <span>Subtotal</span><span>Rs. {subtotal}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginTop: 2, color: '#000' }}>
+            <span>Payment</span>
+            <span style={{ textTransform: 'uppercase' }}>{paidMethod}</span>
           </div>
-        )}
-        {discountAmount > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-            <span>Discount</span><span>-Rs. {discountAmount}</span>
+
+          <div style={{ borderTop: '1px dashed #000', margin: '6px 0' }} />
+
+          {/* Footer */}
+          <div style={{ textAlign: 'center', fontSize: 11, color: '#000' }}>
+            {settings.billFooter || 'Thank you for visiting! ☕'}
           </div>
-        )}
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 900, marginTop: 4 }}>
-          <span>TOTAL</span><span>Rs. {finalTotal}</span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginTop: 2 }}>
-          <span>Payment</span><span style={{ textTransform: 'uppercase' }}>{paidMethod}</span>
-        </div>
-        <div style={{ borderTop: '1px dashed #000', margin: '6px 0' }} />
-        <div style={{ textAlign: 'center', fontSize: 11 }}>
-          {settings.billFooter || 'Thank you for visiting! ☕'}
-        </div>
-      </div>
-    );
-  };
+        </div>,
+        document.body
+      )
+    : null;
 
   /* ── SUCCESS SCREEN ─────────────────────────────────────── */
   if (paid) {
@@ -209,13 +240,10 @@ const PaymentScreen = () => {
     const extraCount = snap.items.length - displayItems.length;
 
     return (
-      <div className="h-screen bg-background flex flex-col overflow-hidden">
-        {/* Hidden printable receipt */}
-        <div className="hidden print:block">
-          <PrintableReceipt />
-        </div>
-
-        <div className="flex-1 flex flex-col items-center justify-center p-5 gap-4 overflow-hidden non-print">
+      <>
+        {receiptPortal}
+        <div className="h-screen bg-background flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col items-center justify-center p-5 gap-4 overflow-hidden">
           {/* Success icon + amount */}
           <div className="flex flex-col items-center gap-2">
             <div className="w-16 h-16 rounded-full bg-success/15 flex items-center justify-center shadow-[0_0_32px_-4px_hsl(var(--success)/0.4)]">
@@ -275,7 +303,8 @@ const PaymentScreen = () => {
             <Home size={20} /> Back to Tables
           </button>
         </div>
-      </div>
+        </div>
+      </>
     );
   }
 

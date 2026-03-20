@@ -142,31 +142,48 @@
 
 /* ── PRINT STYLES ─────────────────────────────────────── */
 @media print {
-  * {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+  @page {
+    margin: 0;
+    size: 80mm auto;
   }
 
-  /* Hide everything by default */
-  body > * {
+  /* Force white background everywhere, override dark theme */
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  /* Hide the entire React app */
+  #root {
     display: none !important;
   }
 
-  /* Show only the printable receipt */
-  #printable-receipt {
+  /* Show only the portal receipt — portaled directly onto <body> */
+  #print-receipt {
     display: block !important;
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 12px;
-    color: #000;
-    background: #fff;
-    width: 80mm;
-    max-width: 80mm;
-    margin: 0 auto;
-    padding: 4mm;
+    visibility: visible !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: 'Courier New', Courier, monospace !important;
+    font-size: 12px !important;
+    line-height: 1.5 !important;
+    width: 80mm !important;
+    max-width: 80mm !important;
+    margin: 0 auto !important;
+    padding: 6mm !important;
+    /* Reset any inherited dark-mode vars */
+    --tw-bg-opacity: 1;
   }
 
-  /* Also hide the non-print div */
-  .non-print {
-    display: none !important;
+  /* Ensure all text inside receipt is black */
+  #print-receipt * {
+    color: #000000 !important;
+    background: transparent !important;
+    border-color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
