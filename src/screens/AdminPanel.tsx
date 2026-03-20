@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { usePOSStore } from '@/store/usePOSStore';
-import Navigation, { TopBar } from '@/components/ui/Navigation';
+import AppLayout from '@/components/ui/AppLayout';
 import ReceiptPreview from '@/components/ReceiptPreview';
 import { printer } from '@/utils/printer';
 import {
@@ -33,9 +33,8 @@ const AdminPanel = () => {
 
   if (!authenticated) {
     return (
-      <div className="min-h-screen bg-background pb-20">
-        <TopBar title="Admin" />
-        <div className="flex items-center justify-center p-8">
+      <AppLayout title="Admin Panel">
+        <div className="flex-1 overflow-y-auto flex items-center justify-center p-8">
           <div className="bg-card rounded-xl border border-border p-8 w-full max-w-sm space-y-4">
             <div className="text-center">
               <Lock size={40} className="mx-auto text-accent mb-3" />
@@ -64,8 +63,7 @@ const AdminPanel = () => {
             <p className="text-xs text-muted-foreground text-center">Default PIN: 1234</p>
           </div>
         </div>
-        <Navigation />
-      </div>
+      </AppLayout>
     );
   }
 
@@ -80,9 +78,8 @@ const AdminPanel = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <TopBar title="Admin Panel" />
-      <div className="flex gap-1 p-3 overflow-x-auto border-b border-border">
+    <AppLayout title="Admin Panel">
+      <div className="flex-shrink-0 flex gap-1 p-3 overflow-x-auto border-b border-border bg-black/10">
         {tabs.map((t) => (
           <button
             key={t.id}
@@ -96,18 +93,18 @@ const AdminPanel = () => {
           </button>
         ))}
       </div>
-
-      <div className="p-4 max-w-4xl mx-auto">
-        {activeTab === 'dashboard' && <DashboardSection />}
-        {activeTab === 'menu' && <MenuSection />}
-        {activeTab === 'tables' && <TablesSection />}
-        {activeTab === 'payments' && <PaymentsSection />}
-        {activeTab === 'bill' && <BillDesignSection />}
-        {activeTab === 'reports' && <ReportsSection />}
-        {activeTab === 'backup' && <BackupSection />}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4 max-w-4xl mx-auto">
+          {activeTab === 'dashboard' && <DashboardSection />}
+          {activeTab === 'menu' && <MenuSection />}
+          {activeTab === 'tables' && <TablesSection />}
+          {activeTab === 'payments' && <PaymentsSection />}
+          {activeTab === 'bill' && <BillDesignSection />}
+          {activeTab === 'reports' && <ReportsSection />}
+          {activeTab === 'backup' && <BackupSection />}
+        </div>
       </div>
-      <Navigation />
-    </div>
+    </AppLayout>
   );
 };
 
