@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePOSStore } from '@/store/usePOSStore';
 import { useTables } from '@/hooks/useTables';
@@ -16,37 +16,13 @@ function useClock() {
   return time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
-const colorMap = {
-  success: { dot: 'bg-success', text: 'text-success', bg: 'bg-success/10' },
-  warning: { dot: 'bg-warning', text: 'text-warning', bg: 'bg-warning/10' },
-  danger:  { dot: 'bg-danger',  text: 'text-danger',  bg: 'bg-danger/10'  },
-};
-
-const StatusPill = ({
-  label,
-  count,
-  color,
-}: {
-  label: string;
-  count: number;
-  color: 'success' | 'warning' | 'danger';
-}) => {
-  const c = colorMap[color];
-  return (
-    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${c.bg}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
-      <span className={`text-xs font-semibold ${c.text}`}>{count}</span>
-      <span className="text-xs text-muted-foreground font-medium">{label}</span>
-    </div>
-  );
-};
-
 const TableOverview = () => {
   const { tables } = useTables();
   const { orders } = useOrders();
   const settings = usePOSStore((s) => s.settings);
   const navigate = useNavigate();
   const clock = useClock();
+  const [panelHovered, setPanelHovered] = useState(false);
 
   const tableOrderData = useMemo(() => {
     const map: Record<string, { itemCount: number; runningTotal: number }> = {};
@@ -68,17 +44,6 @@ const TableOverview = () => {
   const handleTableClick = (table: CafeTable) => {
     navigate(`/order/${table.id}`);
   };
-
-  const panelRef = useRef<HTMLDivElement>(null);
-  const [spotlight, setSpotlight] = useState<{ x: number; y: number } | null>(null);
-
-  const handlePanelMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = panelRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    setSpotlight({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-  };
-
-  const handlePanelMouseLeave = () => setSpotlight(null);
 
   const headerRight = (
     <>
@@ -104,28 +69,17 @@ const TableOverview = () => {
           </div>
         ) : (
           <div
-            ref={panelRef}
-            onMouseMove={handlePanelMouseMove}
-            onMouseLeave={handlePanelMouseLeave}
-            className="relative rounded-2xl border border-white/[0.07] p-5 overflow-hidden"
+            onMouseEnter={() => setPanelHovered(true)}
+            onMouseLeave={() => setPanelHovered(false)}
+            className="rounded-2xl border border-white/[0.07] p-5 transition-all duration-500"
             style={{
               background:
                 'radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 70%), rgba(255,255,255,0.03)',
               boxShadow:
                 '0 8px 40px -8px rgba(0,0,0,0.5), 0 2px 8px -2px rgba(0,0,0,0.3), inset 0 1px 0 0 rgba(255,255,255,0.06)',
+              filter: panelHovered ? 'brightness(1.015)' : 'brightness(1)',
             }}
           >
-            {/* Spotlight overlay */}
-            <div
-              className="pointer-events-none absolute inset-0 rounded-2xl"
-              style={{
-                opacity: spotlight ? 1 : 0,
-                transition: 'opacity 0.4s ease',
-                background: spotlight
-                  ? `radial-gradient(400px circle at ${spotlight.x}px ${spotlight.y}px, rgba(255,255,255,0.055) 0%, transparent 70%)`
-                  : 'none',
-              }}
-            />
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
               {tables
                 .sort((a, b) => a.number - b.number)
