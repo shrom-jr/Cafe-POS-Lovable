@@ -1,5 +1,5 @@
 import { Order, OrderItem } from '@/types/pos';
-import { Minus, Plus, Trash2, ShoppingBag, RotateCcw, CreditCard } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingBag, RotateCcw } from 'lucide-react';
 
 interface OrderPanelProps {
   order: Order | null;
@@ -104,8 +104,7 @@ const OrderPanel = ({
           data-testid="button-proceed-to-bill"
           className="w-full py-4 rounded-xl bg-success text-white font-black text-lg flex items-center justify-center gap-2 transition-all active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed hover:brightness-110 shadow-[0_4px_16px_-4px_hsl(var(--success)/0.45)]"
         >
-          <CreditCard size={20} />
-          {items.length > 0 ? `💳 Pay Rs. ${total}` : 'Add items to pay'}
+          {items.length > 0 ? 'Review Order →' : 'Add items to order'}
         </button>
       </div>
     </div>

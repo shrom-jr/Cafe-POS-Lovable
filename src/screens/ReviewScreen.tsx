@@ -291,7 +291,7 @@ const ReviewScreen = () => {
             boxShadow: '0 4px 20px -4px hsl(var(--success) / 0.45), 0 1px 4px rgba(0,0,0,0.3)',
           }}
         >
-          Pay Rs. {bill.total}
+          Proceed to Payment →
         </button>
       </div>
     </div>
