@@ -1,31 +1,51 @@
 import { useEffect, useState } from 'react';
 import { CafeTable } from '@/types/pos';
-import { Clock, ShoppingBag } from 'lucide-react';
 
 const statusConfig = {
   free: {
-    border: 'border-success/40',
-    bg: 'bg-gradient-to-b from-success/10 to-success/5',
-    dot: 'bg-success',
+    border: 'border-success/30',
+    bg: 'from-success/10 via-success/5 to-transparent',
+    innerGlow: 'shadow-[inset_0_1px_0_0_hsl(var(--success)/0.2)]',
+    outerGlow: '',
+    hoverGlow: 'hover:shadow-[0_8px_32px_-4px_hsl(var(--success)/0.3),inset_0_1px_0_0_hsl(var(--success)/0.25)]',
+    dot: 'bg-success shadow-[0_0_6px_2px_hsl(var(--success)/0.5)]',
+    dotPulse: false,
     label: 'Available',
     labelColor: 'text-success',
-    glow: '',
+    labelBg: 'bg-success/10',
+    numberColor: 'text-foreground',
+    totalColor: 'text-success',
+    metaColor: 'text-success/60',
   },
   occupied: {
-    border: 'border-warning/50',
-    bg: 'bg-gradient-to-b from-warning/12 to-warning/5',
-    dot: 'bg-warning',
+    border: 'border-warning/40',
+    bg: 'from-warning/12 via-warning/6 to-transparent',
+    innerGlow: 'shadow-[inset_0_1px_0_0_hsl(var(--warning)/0.25)]',
+    outerGlow: 'shadow-[0_4px_20px_-4px_hsl(var(--warning)/0.2)]',
+    hoverGlow: 'hover:shadow-[0_8px_32px_-4px_hsl(var(--warning)/0.4),inset_0_1px_0_0_hsl(var(--warning)/0.3)]',
+    dot: 'bg-warning shadow-[0_0_6px_2px_hsl(var(--warning)/0.5)]',
+    dotPulse: true,
     label: 'Active',
     labelColor: 'text-warning',
-    glow: 'hover:shadow-[0_0_24px_-4px_hsl(var(--warning)/0.35)]',
+    labelBg: 'bg-warning/10',
+    numberColor: 'text-foreground',
+    totalColor: 'text-warning',
+    metaColor: 'text-warning/60',
   },
   billing: {
-    border: 'border-danger/50',
-    bg: 'bg-gradient-to-b from-danger/12 to-danger/5',
-    dot: 'bg-danger',
+    border: 'border-danger/40',
+    bg: 'from-danger/12 via-danger/6 to-transparent',
+    innerGlow: 'shadow-[inset_0_1px_0_0_hsl(var(--danger)/0.25)]',
+    outerGlow: 'shadow-[0_4px_20px_-4px_hsl(var(--danger)/0.25)]',
+    hoverGlow: 'hover:shadow-[0_8px_32px_-4px_hsl(var(--danger)/0.45),inset_0_1px_0_0_hsl(var(--danger)/0.3)]',
+    dot: 'bg-danger shadow-[0_0_6px_2px_hsl(var(--danger)/0.5)]',
+    dotPulse: true,
     label: 'Billing',
     labelColor: 'text-danger',
-    glow: 'hover:shadow-[0_0_24px_-4px_hsl(var(--danger)/0.35)]',
+    labelBg: 'bg-danger/10',
+    numberColor: 'text-foreground',
+    totalColor: 'text-danger',
+    metaColor: 'text-danger/60',
   },
 };
 
@@ -68,40 +88,52 @@ const TableCard = ({ table, itemCount = 0, runningTotal = 0, onClick }: TableCar
       onClick={onClick}
       data-testid={`table-card-${table.id}`}
       className={`
-        relative flex flex-col items-center justify-center p-4 rounded-2xl border-2
-        transition-all duration-200 active:scale-95 hover:scale-[1.02] hover:-translate-y-0.5
-        shadow-[0_4px_16px_-4px_rgba(0,0,0,0.5)] hover:shadow-[0_8px_24px_-4px_rgba(0,0,0,0.6)]
-        min-h-[130px] w-full
-        ${cfg.border} ${cfg.bg} ${cfg.glow}
+        relative flex flex-col items-center justify-center
+        p-5 rounded-2xl border-2 w-full
+        bg-gradient-to-b ${cfg.bg}
+        ${cfg.border}
+        ${cfg.innerGlow}
+        ${isActive ? cfg.outerGlow : ''}
+        ${cfg.hoverGlow}
+        transition-all duration-200
+        hover:scale-[1.02] hover:-translate-y-0.5
+        active:scale-[0.97] active:translate-y-0
+        min-h-[150px]
+        backdrop-blur-sm
       `}
+      style={{ background: undefined }}
     >
+      {/* Subtle card surface overlay */}
+      <div className="absolute inset-0 rounded-2xl bg-white/[0.02] pointer-events-none" />
+
+      {/* Status dot */}
       <div
-        className={`absolute top-3 right-3 w-2.5 h-2.5 rounded-full ${cfg.dot} ${
-          isActive ? 'animate-pulse' : ''
-        } shadow-[0_0_6px_1px_currentColor]`}
+        className={`
+          absolute top-3.5 right-3.5 w-2.5 h-2.5 rounded-full
+          ${cfg.dot}
+          ${cfg.dotPulse ? 'animate-pulse' : ''}
+        `}
       />
 
-      <span className="text-4xl font-black text-foreground tracking-tight">{table.number}</span>
+      {/* Table number */}
+      <span className={`text-5xl font-black tracking-tight leading-none ${cfg.numberColor}`}>
+        {table.number}
+      </span>
 
-      <span className={`text-xs font-bold mt-1 px-2 py-0.5 rounded-full bg-black/20 ${cfg.labelColor}`}>
+      {/* Status badge */}
+      <span className={`mt-2 text-[11px] font-bold px-2.5 py-0.5 rounded-full ${cfg.labelBg} ${cfg.labelColor}`}>
         {cfg.label}
       </span>
 
+      {/* Active/Billing details */}
       {isActive && (
-        <div className="flex flex-col items-center gap-1 mt-2 w-full">
-          {timer && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Clock size={10} />
-              <span className="font-mono">{timer}</span>
-            </div>
-          )}
-          <div className="flex items-center justify-between w-full mt-1 px-1">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <ShoppingBag size={10} />
-              <span>{itemCount}</span>
-            </div>
-            <span className="text-sm font-bold text-accent">Rs. {runningTotal}</span>
-          </div>
+        <div className="mt-3 flex flex-col items-center gap-1 w-full">
+          <span className={`text-lg font-black ${cfg.totalColor}`}>
+            Rs. {runningTotal}
+          </span>
+          <span className={`text-[11px] font-medium tabular-nums ${cfg.metaColor}`}>
+            {itemCount} item{itemCount !== 1 ? 's' : ''}{timer ? ` • ${timer}` : ''}
+          </span>
         </div>
       )}
     </button>
