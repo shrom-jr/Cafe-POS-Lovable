@@ -4,7 +4,7 @@ import { usePOSStore } from '@/store/usePOSStore';
 import { useOrders } from '@/hooks/useOrders';
 import { useTables } from '@/hooks/useTables';
 import { calcBill } from '@/utils/calcBill';
-import { ChevronLeft, Tag } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 
 const PRESETS = [0, 5, 10, 15];
 
@@ -90,34 +90,44 @@ const ReviewScreen = () => {
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
 
-      {/* Top bar */}
-      <div className="flex items-center gap-3 px-3 py-2.5 border-b border-border bg-card flex-shrink-0">
+      {/* Header — floating glass */}
+      <div
+        className="flex-shrink-0 flex items-center gap-3 px-4 py-3 border-b"
+        style={{
+          background: 'rgba(var(--card-rgb, 20 20 20) / 0.75)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          borderColor: 'rgba(255,255,255,0.07)',
+        }}
+      >
         <button
           onClick={() => navigate(`/order/${tableId}`)}
-          className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors active:scale-90"
+          className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground transition-all active:scale-90 hover:text-foreground"
+          style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
         >
-          <ChevronLeft size={18} />
+          <ChevronLeft size={17} />
         </button>
         <div className="flex-1 min-w-0">
-          <p className="font-black text-foreground text-sm leading-tight">Review Order</p>
-          <p className="text-[11px] text-muted-foreground leading-tight">Table {table.number}</p>
+          <p className="font-black text-foreground text-[13px] leading-tight tracking-wide">Review Order</p>
+          <p className="text-[11px] text-muted-foreground/70 leading-tight">Table {table.number}</p>
         </div>
       </div>
 
-      {/* Item list — capped, scrollable */}
-      <div className="overflow-y-auto px-3 pt-2 pb-1" style={{ maxHeight: '52vh' }}>
+      {/* Item list — scrollable, max ~50% screen */}
+      <div className="overflow-y-auto px-4 py-2" style={{ maxHeight: '50vh' }}>
         {items.map((item) => (
           <div
             key={item.menuItemId}
-            className="flex items-center justify-between py-1.5 border-b border-border/20 last:border-0"
+            className="flex items-center justify-between px-2 py-2 rounded-xl transition-colors hover:bg-white/[0.04] active:bg-white/[0.06]"
+            style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
           >
             <div className="flex-1 min-w-0 pr-3">
               <p className="text-[13px] font-semibold text-foreground truncate leading-snug">{item.name}</p>
-              <p className="text-[11px] text-muted-foreground/70 leading-snug">
+              <p className="text-[11px] text-muted-foreground/60 leading-snug mt-0.5">
                 Rs. {item.price} × {item.quantity}
               </p>
             </div>
-            <p className="text-[13px] font-bold text-foreground whitespace-nowrap">
+            <p className="text-[13px] font-bold text-foreground/90 whitespace-nowrap tabular-nums">
               Rs. {item.price * item.quantity}
             </p>
           </div>
@@ -127,108 +137,158 @@ const ReviewScreen = () => {
       {/* Flex spacer */}
       <div className="flex-1" />
 
-      {/* Bottom action panel */}
-      <div className="flex-shrink-0 bg-card border-t border-border/60 shadow-[0_-8px_28px_-4px_rgba(0,0,0,0.4)] px-4 pt-3 pb-4 space-y-2">
+      {/* Bottom panel — glass */}
+      <div
+        className="flex-shrink-0 px-4 pt-4 pb-5 space-y-3"
+        style={{
+          background: 'rgba(var(--card-rgb, 18 18 18) / 0.85)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderTop: '1px solid rgba(255,255,255,0.08)',
+          boxShadow: '0 -12px 40px -8px rgba(0,0,0,0.6)',
+        }}
+      >
 
-        {/* Summary rows: Subtotal / Discount / VAT */}
-        <div className="space-y-1">
-          <div className="flex justify-between items-center">
-            <span className="text-[12px] text-muted-foreground/80">Subtotal</span>
-            <span className="text-[12px] font-medium text-foreground/80">Rs. {bill.subtotal}</span>
+        {/* Bill summary — glass card */}
+        <div
+          className="rounded-2xl px-4 py-3 space-y-2"
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+        >
+          {/* Breakdown rows */}
+          <div className="space-y-1.5">
+            <div className="flex justify-between items-center">
+              <span className="text-[12px] text-muted-foreground/70">Subtotal</span>
+              <span className="text-[12px] font-medium text-foreground/75 tabular-nums">Rs. {bill.subtotal}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-[12px] text-muted-foreground/90 font-semibold">Discount</span>
+              <span
+                className="text-[12px] font-bold tabular-nums"
+                style={{ color: bill.discountAmount > 0 ? 'hsl(var(--success))' : 'rgba(255,255,255,0.25)' }}
+              >
+                −Rs. {bill.discountAmount}
+              </span>
+            </div>
+            {bill.vatEnabled && (
+              <div className="flex justify-between items-center">
+                <span className="text-[12px] text-muted-foreground/70">
+                  VAT ({Math.round(bill.vatRate * 100)}%)
+                </span>
+                <span className="text-[12px] font-medium text-foreground/70 tabular-nums">Rs. {bill.vatAmount}</span>
+              </div>
+            )}
           </div>
-          <div className="flex justify-between items-center">
-            <span className="text-[12px] text-muted-foreground font-medium">Discount</span>
-            <span className={`text-[12px] font-bold ${bill.discountAmount > 0 ? 'text-success' : 'text-muted-foreground/50'}`}>
-              −Rs. {bill.discountAmount}
+
+          {/* Divider */}
+          <div style={{ height: 1, background: 'rgba(255,255,255,0.08)' }} />
+
+          {/* Total — hero */}
+          <div className="flex justify-between items-end">
+            <span className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/60 leading-none mb-0.5">
+              Total
+            </span>
+            <span
+              className="text-[32px] font-black tracking-tight leading-none tabular-nums"
+              style={{
+                color: '#fff',
+                textShadow: '0 0 24px hsl(var(--success) / 0.35)',
+              }}
+            >
+              Rs. {bill.total}
             </span>
           </div>
-          {bill.vatEnabled && (
-            <div className="flex justify-between items-center">
-              <span className="text-[12px] text-muted-foreground/80">
-                VAT ({Math.round(bill.vatRate * 100)}%)
-              </span>
-              <span className="text-[12px] font-medium text-foreground/70">Rs. {bill.vatAmount}</span>
-            </div>
-          )}
         </div>
 
-        {/* Total — hero block */}
-        <div className="flex justify-between items-end pt-2 border-t border-border/50">
-          <span className="text-[11px] font-black uppercase tracking-widest text-muted-foreground leading-none pb-1">
-            Total
-          </span>
-          <span className="text-3xl font-black text-foreground tracking-tight leading-none">
-            Rs. {bill.total}
-          </span>
-        </div>
-
-        {/* Discount controls */}
-        <div className="space-y-1.5 pt-0.5">
-          {/* Preset % buttons */}
-          <div className="flex gap-1.5 items-center">
-            <Tag size={11} className="text-muted-foreground/60 flex-shrink-0" />
-            <div className="flex gap-1.5 flex-1">
-              {PRESETS.map((pct) => (
+        {/* Discount section */}
+        <div className="space-y-2">
+          {/* Preset pill buttons */}
+          <div className="flex gap-2">
+            {PRESETS.map((pct) => {
+              const isActive = activePreset === pct && discountMode === 'percent';
+              return (
                 <button
                   key={pct}
                   onClick={() => handlePreset(pct)}
-                  className={`flex-1 py-1 rounded-lg text-[11px] font-bold transition-all active:scale-95 ${
-                    activePreset === pct && discountMode === 'percent'
-                      ? 'bg-accent text-accent-foreground shadow-[0_2px_8px_-2px_hsl(var(--accent)/0.35)]'
-                      : 'bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80'
-                  }`}
+                  className="flex-1 py-1.5 rounded-full text-[11px] font-bold transition-all active:scale-95"
+                  style={
+                    isActive
+                      ? {
+                          background: 'hsl(var(--success))',
+                          color: '#fff',
+                          boxShadow: '0 0 12px -2px hsl(var(--success) / 0.55)',
+                          border: '1px solid hsl(var(--success))',
+                        }
+                      : {
+                          background: 'rgba(255,255,255,0.05)',
+                          color: 'rgba(255,255,255,0.5)',
+                          border: '1px solid rgba(255,255,255,0.12)',
+                        }
+                  }
                 >
                   {pct}%
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
 
-          {/* Manual discount input with mode toggle */}
-          <div className="flex gap-1.5 items-center">
-            {/* Mode toggle — clearly labelled */}
-            <div className="flex rounded-lg overflow-hidden border border-border flex-shrink-0 text-[11px] font-black">
+          {/* Mode toggle + input row */}
+          <div className="flex gap-2 items-center">
+            {/* Segmented control */}
+            <div
+              className="flex rounded-full overflow-hidden flex-shrink-0 text-[11px] font-black"
+              style={{ border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)' }}
+            >
               <button
                 onClick={() => handleModeToggle('percent')}
-                className={`px-3 py-1.5 transition-colors ${
+                className="px-3 py-1.5 transition-colors"
+                style={
                   discountMode === 'percent'
-                    ? 'bg-accent text-accent-foreground'
-                    : 'bg-secondary text-muted-foreground hover:text-foreground'
-                }`}
+                    ? { background: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }
+                    : { color: 'rgba(255,255,255,0.4)' }
+                }
               >
                 %
               </button>
               <button
                 onClick={() => handleModeToggle('fixed')}
-                className={`px-3 py-1.5 transition-colors border-l border-border ${
+                className="px-3 py-1.5 transition-colors"
+                style={
                   discountMode === 'fixed'
-                    ? 'bg-accent text-accent-foreground'
-                    : 'bg-secondary text-muted-foreground hover:text-foreground'
-                }`}
+                    ? { background: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }
+                    : { color: 'rgba(255,255,255,0.4)', borderLeft: '1px solid rgba(255,255,255,0.1)' }
+                }
               >
                 Rs
               </button>
             </div>
+
+            {/* Input */}
             <input
               type="number"
               min="0"
               inputMode="decimal"
-              placeholder={discountMode === 'percent' ? 'Enter % discount' : 'Enter Rs. amount'}
+              placeholder={discountMode === 'percent' ? 'Custom %' : 'Custom Rs.'}
               value={discountInput}
               onChange={(e) => handleInputChange(e.target.value)}
-              className="flex-1 px-3 py-1.5 rounded-lg bg-secondary border border-border text-foreground text-[13px] placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-accent"
+              className="flex-1 px-3 py-1.5 rounded-full text-[13px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none transition-all"
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.12)',
+              }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = 'hsl(var(--accent) / 0.6)'; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; }}
             />
           </div>
         </div>
 
-        {/* Pay button — gradient, no icon */}
+        {/* Pay button */}
         <button
           onClick={handlePay}
           disabled={items.length === 0}
-          className="w-full py-3.5 rounded-xl text-white font-black text-[17px] tracking-wide transition-all active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-full py-4 rounded-xl text-white font-black text-[17px] tracking-wide transition-all active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
           style={{
-            background: 'linear-gradient(135deg, hsl(var(--success)) 0%, hsl(var(--success) / 0.8) 100%)',
-            boxShadow: '0 4px 18px -4px hsl(var(--success) / 0.5), 0 1px 3px rgba(0,0,0,0.2)',
+            background: 'linear-gradient(135deg, hsl(var(--success)) 0%, hsl(142 60% 35%) 100%)',
+            boxShadow: '0 4px 20px -4px hsl(var(--success) / 0.45), 0 1px 4px rgba(0,0,0,0.3)',
           }}
         >
           Pay Rs. {bill.total}
