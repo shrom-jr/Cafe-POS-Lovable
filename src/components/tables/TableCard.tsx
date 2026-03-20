@@ -1,23 +1,32 @@
 import { useEffect, useState } from 'react';
 import { CafeTable } from '@/types/pos';
-import { Clock } from 'lucide-react';
+import { Clock, ShoppingBag } from 'lucide-react';
 
-const statusColors = {
-  free: 'border-success/50 bg-success/10',
-  occupied: 'border-warning/50 bg-warning/10',
-  billing: 'border-danger/50 bg-danger/10',
-};
-
-const statusDots = {
-  free: 'bg-success',
-  occupied: 'bg-warning',
-  billing: 'bg-danger',
-};
-
-const statusLabels = {
-  free: 'Available',
-  occupied: 'Occupied',
-  billing: 'Billing',
+const statusConfig = {
+  free: {
+    border: 'border-success/40',
+    bg: 'bg-gradient-to-b from-success/10 to-success/5',
+    dot: 'bg-success',
+    label: 'Available',
+    labelColor: 'text-success',
+    glow: '',
+  },
+  occupied: {
+    border: 'border-warning/50',
+    bg: 'bg-gradient-to-b from-warning/12 to-warning/5',
+    dot: 'bg-warning',
+    label: 'Active',
+    labelColor: 'text-warning',
+    glow: 'hover:shadow-[0_0_24px_-4px_hsl(var(--warning)/0.35)]',
+  },
+  billing: {
+    border: 'border-danger/50',
+    bg: 'bg-gradient-to-b from-danger/12 to-danger/5',
+    dot: 'bg-danger',
+    label: 'Billing',
+    labelColor: 'text-danger',
+    glow: 'hover:shadow-[0_0_24px_-4px_hsl(var(--danger)/0.35)]',
+  },
 };
 
 function useTimer(startTime?: number) {
@@ -44,29 +53,55 @@ function useTimer(startTime?: number) {
 
 interface TableCardProps {
   table: CafeTable;
+  itemCount?: number;
+  runningTotal?: number;
   onClick: () => void;
 }
 
-const TableCard = ({ table, onClick }: TableCardProps) => {
+const TableCard = ({ table, itemCount = 0, runningTotal = 0, onClick }: TableCardProps) => {
   const timer = useTimer(table.orderStartTime);
+  const cfg = statusConfig[table.status];
+  const isActive = table.status !== 'free';
 
   return (
     <button
       onClick={onClick}
       data-testid={`table-card-${table.id}`}
-      className={`relative flex flex-col items-center justify-center p-5 rounded-xl border-2 transition-all active:scale-95 ${statusColors[table.status]} hover:pos-glow min-h-[120px]`}
+      className={`
+        relative flex flex-col items-center justify-center p-4 rounded-2xl border-2
+        transition-all duration-200 active:scale-95 hover:scale-[1.02] hover:-translate-y-0.5
+        shadow-[0_4px_16px_-4px_rgba(0,0,0,0.5)] hover:shadow-[0_8px_24px_-4px_rgba(0,0,0,0.6)]
+        min-h-[130px] w-full
+        ${cfg.border} ${cfg.bg} ${cfg.glow}
+      `}
     >
       <div
-        className={`absolute top-3 right-3 w-3 h-3 rounded-full ${statusDots[table.status]} ${
-          table.status !== 'free' ? 'animate-pulse-soft' : ''
-        }`}
+        className={`absolute top-3 right-3 w-2.5 h-2.5 rounded-full ${cfg.dot} ${
+          isActive ? 'animate-pulse' : ''
+        } shadow-[0_0_6px_1px_currentColor]`}
       />
-      <span className="text-3xl font-bold text-foreground">{table.number}</span>
-      <span className="text-xs font-medium text-muted-foreground mt-1">{statusLabels[table.status]}</span>
-      {timer && (
-        <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-          <Clock size={12} />
-          <span className="font-mono">{timer}</span>
+
+      <span className="text-4xl font-black text-foreground tracking-tight">{table.number}</span>
+
+      <span className={`text-xs font-bold mt-1 px-2 py-0.5 rounded-full bg-black/20 ${cfg.labelColor}`}>
+        {cfg.label}
+      </span>
+
+      {isActive && (
+        <div className="flex flex-col items-center gap-1 mt-2 w-full">
+          {timer && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Clock size={10} />
+              <span className="font-mono">{timer}</span>
+            </div>
+          )}
+          <div className="flex items-center justify-between w-full mt-1 px-1">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <ShoppingBag size={10} />
+              <span>{itemCount}</span>
+            </div>
+            <span className="text-sm font-bold text-accent">Rs. {runningTotal}</span>
+          </div>
         </div>
       )}
     </button>

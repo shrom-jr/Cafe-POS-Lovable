@@ -5,7 +5,7 @@ import { useOrders } from '@/hooks/useOrders';
 import { useTables } from '@/hooks/useTables';
 import { TopBar } from '@/components/ui/Navigation';
 import BillPreview from '@/components/billing/BillPreview';
-import { Percent, DollarSign } from 'lucide-react';
+import { Percent, DollarSign, Printer, CreditCard } from 'lucide-react';
 
 const BillingScreen = () => {
   const { tableId } = useParams<{ tableId: string }>();
@@ -27,7 +27,7 @@ const BillingScreen = () => {
   );
 
   const discountAmount =
-    discountType === 'percent' ? Math.round(subtotal * discountValue / 100) : discountValue;
+    discountType === 'percent' ? Math.round((subtotal * discountValue) / 100) : discountValue;
   const total = Math.max(0, subtotal - discountAmount);
 
   if (!table || !order) {
@@ -50,10 +50,18 @@ const BillingScreen = () => {
     });
   };
 
+  const handlePrint = () => {
+    if (settings.printerAddress) {
+      alert('Printing via Bluetooth... (printer feature coming soon)');
+    } else {
+      alert('No printer configured. Go to Admin → Settings to set up a Bluetooth printer.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <TopBar title={`Bill — Table ${table.number}`} showBack onBack={() => navigate(`/order/${tableId}`)} />
-      <div className="max-w-lg mx-auto p-4 space-y-4">
+      <div className="max-w-lg mx-auto p-4 space-y-4 pb-8">
         <BillPreview
           cafeName={settings.cafeName}
           cafeLogo={settings.cafeLogo}
@@ -68,31 +76,30 @@ const BillingScreen = () => {
           total={total}
         />
 
-        {/* Discount Controls */}
-        <div className="bg-card rounded-xl border border-border p-4 space-y-3">
-          <h3 className="font-bold text-foreground">Discount</h3>
+        <div className="bg-card rounded-2xl border border-border p-4 space-y-3 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.4)]">
+          <h3 className="font-bold text-foreground text-sm">Apply Discount</h3>
           <div className="flex gap-2">
             <button
-              onClick={() => setDiscountType('percent')}
+              onClick={() => { setDiscountType('percent'); setDiscountValue(0); }}
               data-testid="button-discount-percent"
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium text-sm transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-all ${
                 discountType === 'percent'
-                  ? 'bg-accent text-accent-foreground'
-                  : 'bg-secondary text-secondary-foreground'
+                  ? 'bg-accent text-accent-foreground shadow-[0_2px_8px_-2px_hsl(var(--accent)/0.4)]'
+                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'
               }`}
             >
-              <Percent size={16} /> Percentage
+              <Percent size={15} /> Percentage
             </button>
             <button
-              onClick={() => setDiscountType('fixed')}
+              onClick={() => { setDiscountType('fixed'); setDiscountValue(0); }}
               data-testid="button-discount-fixed"
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium text-sm transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-all ${
                 discountType === 'fixed'
-                  ? 'bg-accent text-accent-foreground'
-                  : 'bg-secondary text-secondary-foreground'
+                  ? 'bg-accent text-accent-foreground shadow-[0_2px_8px_-2px_hsl(var(--accent)/0.4)]'
+                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'
               }`}
             >
-              <DollarSign size={16} /> Fixed
+              <DollarSign size={15} /> Fixed
             </button>
           </div>
           <input
@@ -101,31 +108,48 @@ const BillingScreen = () => {
             max={discountType === 'percent' ? 100 : subtotal}
             value={discountValue || ''}
             onChange={(e) => setDiscountValue(Number(e.target.value) || 0)}
-            placeholder={discountType === 'percent' ? 'Enter %' : 'Enter amount'}
+            placeholder={discountType === 'percent' ? 'Enter % discount' : 'Enter amount off'}
             data-testid="input-discount-value"
-            className="w-full px-4 py-2.5 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+            className="w-full px-4 py-2.5 rounded-xl bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
           />
-          <div className="flex gap-2">
-            {[5, 10, 15, 20].map((v) => (
-              <button
-                key={v}
-                onClick={() => { setDiscountType('percent'); setDiscountValue(v); }}
-                data-testid={`button-quick-discount-${v}`}
-                className="flex-1 py-2 rounded-lg bg-primary text-foreground text-sm font-medium hover:bg-accent/20 transition-colors"
-              >
-                {v}%
-              </button>
-            ))}
-          </div>
+          {discountType === 'percent' && (
+            <div className="flex gap-2">
+              {[5, 10, 15, 20].map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setDiscountValue(v)}
+                  data-testid={`button-quick-discount-${v}`}
+                  className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${
+                    discountValue === v
+                      ? 'bg-accent/20 text-accent border border-accent/30'
+                      : 'bg-primary/70 text-foreground hover:bg-accent/10'
+                  }`}
+                >
+                  {v}%
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        <button
-          onClick={handlePay}
-          data-testid="button-pay"
-          className="w-full py-4 rounded-xl bg-accent text-accent-foreground font-bold text-lg transition-all active:scale-[0.98] hover:brightness-110"
-        >
-          Pay Rs. {total}
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={handlePrint}
+            data-testid="button-print-bill"
+            className="flex items-center justify-center gap-2 px-5 py-4 rounded-2xl border border-border bg-secondary text-foreground font-semibold text-sm transition-all active:scale-[0.97] hover:bg-secondary/70 hover:border-border/80"
+          >
+            <Printer size={18} />
+            Print
+          </button>
+          <button
+            onClick={handlePay}
+            data-testid="button-pay"
+            className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-accent text-accent-foreground font-black text-lg transition-all active:scale-[0.97] hover:brightness-110 shadow-[0_4px_16px_-4px_hsl(var(--accent)/0.5)]"
+          >
+            <CreditCard size={20} />
+            Pay Rs. {total}
+          </button>
+        </div>
       </div>
     </div>
   );

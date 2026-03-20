@@ -7,61 +7,94 @@ A professional Café Point of Sale (POS) system built with React, TypeScript, Vi
 - **Frontend only**: Pure React SPA, no backend
 - **State management**: Zustand (`src/store/usePOSStore.ts`) with localStorage persistence via `src/storage/db.ts`
 - **Routing**: React Router v6
-- **UI**: shadcn/ui components + custom Tailwind CSS dark theme
-- **PWA**: Progressive Web App via vite-plugin-pwa
+- **UI**: shadcn/ui components + custom Tailwind CSS dark café theme
+- **Sound**: Web Audio API synthetic sounds in `src/utils/sounds.ts`
 
 ## Project Structure
 
 ```
 src/
   store/
-    usePOSStore.ts        ← Zustand global store (all state + actions)
+    usePOSStore.ts        ← Zustand global store (all state + actions, incl. clearOrder)
   hooks/
-    useOrders.ts          ← Order-related store selectors/actions
-    useTables.ts          ← Table-related store selectors/actions
+    useOrders.ts          ← Order store selectors/actions (incl. clearOrder, addPayment)
+    useTables.ts          ← Table store selectors/actions
     use-mobile.tsx        ← Mobile detection hook
     use-toast.ts          ← Toast notification hook
   components/
     ui/                   ← shadcn/ui + Navigation, TopBar
-    tables/               ← TableCard component
-    orders/               ← MenuItemCard, OrderPanel components
-    billing/              ← BillPreview component
+    tables/               ← TableCard (timer, item count, running total)
+    orders/               ← MenuItemCard (qty badge, flash anim), OrderPanel (Clear + Repeat)
+    billing/              ← BillPreview (polished, large total)
     payment/              ← QRDisplay component
   screens/
-    TableOverview.tsx     ← / (table grid)
-    OrderScreen.tsx       ← /order/:tableId
-    BillingScreen.tsx     ← /billing/:tableId
-    PaymentScreen.tsx     ← /payment/:tableId
+    TableOverview.tsx     ← / (smart nav: billing→payment, else→order)
+    OrderScreen.tsx       ← /order/:tableId (sounds, clear order, repeat last)
+    BillingScreen.tsx     ← /billing/:tableId (print placeholder)
+    PaymentScreen.tsx     ← /payment/:tableId (success sound, print placeholder)
     BillHistory.tsx       ← /history
-    AdminPanel.tsx        ← /admin
+    AdminPanel.tsx        ← /admin (PIN-protected)
   types/
     pos.ts                ← All TypeScript types
   storage/
     db.ts                 ← localStorage helpers + seed data
   utils/
+    sounds.ts             ← Web Audio API: playClick, playSuccess, playError
     printer.ts            ← Bluetooth thermal printer utility
 ```
 
-## Key Screens
-- `/` — Table Overview (café table grid with status)
-- `/order/:tableId` — Order Screen (menu + order panel, split view)
-- `/billing/:tableId` — Billing Screen (bill preview + discount)
-- `/payment/:tableId` — Payment Screen (cash/eSewa/Khalti/Fonepay + QR)
-- `/history` — Bill History (searchable, filterable)
-- `/admin` — Admin Panel (PIN-protected: dashboard, menu, tables, payments, reports, backup)
+## Features (All Phases)
 
-## State Management (Zustand)
-All state lives in `usePOSStore`:
-- `tables` — café table list and statuses
-- `categories` / `menuItems` — menu management
-- `orders` — active and completed orders
-- `payments` — payment records
-- `settings` — café info, admin PIN, wallet config, bill design
+### Phase 1 — Table Cards
+- Table number, status badge (Available/Active/Billing) with green/yellow/red colors
+- Live timer since order start, item count, running total
+- Hover scale + status-colored glow shadow
 
-Changes are immediately persisted to localStorage via the `db` utility.
+### Phase 2 — Smart Navigation
+- Billing tables → Payment Screen directly
+- Free/Active tables → Order Screen
+
+### Phase 3 — Order Screen
+- Instant item add with click sound
+- Qty badge on MenuItemCards showing count in current order
+- Flash animation on item add
+- "Clear Order" button — clears all items, resets table to free
+- "Repeat Last Order" button — re-adds items from the most recent payment for this table
+
+### Phase 4 — Billing Screen
+- Polished BillPreview with large total (Rs. XXX), dashed separators
+- Percentage + fixed discount with quick-select buttons
+- Print Bill button (placeholder — shows instructions for Bluetooth printer)
+
+### Phase 5 — QR Payment
+- Dynamic eSewa QR from ID + amount
+- Large amount display, payment method selection
+- "Confirm Payment" updates label to selected method
+
+### Phase 6 — Backup & Restore
+- Export/Import JSON in AdminPanel
+
+### Phase 7 — Sound & Feedback
+- `playClick()` on item add
+- `playSuccess()` on payment confirmed
+- `playError()` available for error states
+- Flash animation on MenuItemCard, slide-up animation on cart panel
+
+### Phase 8 — UI Polish
+- Card gradients, soft shadows on all cards
+- `hover:scale` + `active:scale` on all interactive elements
+- Consistent rounded-2xl, shadow-lg treatment
+
+### Phase 9 — Performance
+- Granular Zustand selectors (minimal re-renders)
+- `useMemo` for derived data (order qty map, table order data, filtered items)
+
+### Phase 10 — Print Preparation
+- Print Bill button in BillingScreen and PaymentScreen
+- Calls printer utility if connected, shows setup instructions otherwise
 
 ## Running the App
-The app runs on port 5000 via `npm run dev`.
+Port 5000 via `npm run dev`. Server: `host: "0.0.0.0"`, `allowedHosts: true`.
 
 ## Tech Stack
 - React 18 + TypeScript
@@ -69,11 +102,5 @@ The app runs on port 5000 via `npm run dev`.
 - Tailwind CSS + shadcn/ui (Radix UI)
 - **Zustand** (global state)
 - React Router v6
-- TanStack Query v5
-- vite-plugin-pwa
-
-## Notes
-- Migrated from Lovable to Replit
-- Migrated from React Context API to Zustand for better performance and scalability
-- Removed `lovable-tagger` plugin from vite.config.ts
-- Server: `host: "0.0.0.0"`, `port: 5000`, `allowedHosts: true`
+- date-fns
+- lucide-react icons

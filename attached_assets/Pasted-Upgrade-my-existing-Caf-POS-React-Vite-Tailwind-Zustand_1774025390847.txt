@@ -1,0 +1,176 @@
+Upgrade my existing Café POS React (Vite + Tailwind + Zustand) application into a **professional, production-level POS system with advanced UX and polished behavior**.
+
+IMPORTANT:
+
+* Keep current architecture (Zustand store, hooks, component folders)
+* Do NOT restructure again
+* Do NOT add backend
+* Only enhance UI, UX, and behavior
+
+---
+
+PHASE 1 — TABLE UI (REAL POS LEVEL)
+
+Enhance TableCard component:
+
+Display:
+• Table number
+• Status (Available / Active / Billing)
+• Status color:
+
+* Green → Available
+* Yellow → Active
+* Red → Billing
+
+• Timer (auto-running since order start)
+• Item count
+• Running total amount
+
+Behavior:
+• Smooth hover/tap animation (scale + glow)
+• Visual elevation using shadow
+• Click feedback
+
+---
+
+PHASE 2 — SMART TABLE NAVIGATION
+
+Implement smart routing:
+
+• Empty table → Order Screen
+• Active table → Order Screen (with items loaded)
+• Billing → Payment Screen
+
+No extra clicks.
+
+---
+
+PHASE 3 — ORDER SCREEN (FAST POS UX)
+
+Improve ordering experience:
+
+• Clicking menu item adds instantly
+• Quantity +/− updates instantly
+• Remove item option
+• Real-time total calculation
+
+Add:
+
+• "Repeat Last Order" button
+• "Clear Order" button
+
+Ensure:
+• No lag
+• Minimal re-renders
+
+---
+
+PHASE 4 — BILLING SCREEN (PROFESSIONAL DESIGN)
+
+Enhance BillPreview:
+
+• Clean layout
+• Clear item rows
+• Subtotal, discount, final total
+
+Discount system:
+• Percentage discount
+• Fixed amount discount
+
+UI:
+• Highlight final total prominently
+• Use larger typography
+
+---
+
+PHASE 5 — QR PAYMENT (PERFECT FLOW)
+
+Enhance QRDisplay:
+
+• Generate dynamic eSewa QR using:
+
+* eSewa ID
+* exact bill amount
+
+• QR updates instantly when total changes
+
+Payment flow:
+• Select wallet (eSewa, Khalti, Fonepay)
+• Show large QR
+• "Confirm Payment" button
+
+Store:
+• payment method
+• amount
+• timestamp
+
+---
+
+PHASE 6 — BACKUP & RESTORE (DATA SAFETY)
+
+Add Backup system:
+
+• Export all data as JSON file
+• Import JSON file to restore
+
+Include:
+• tables
+• orders
+• payments
+• menu
+
+Add buttons in Admin Panel:
+• Export Backup
+• Import Backup
+
+---
+
+PHASE 7 — SOUND & FEEDBACK
+
+Add optional sound feedback:
+
+• Item added → click sound
+• Payment success → success sound
+
+Also add:
+• subtle UI animations
+• smooth transitions
+
+---
+
+PHASE 8 — UI POLISH (PREMIUM FEEL)
+
+Improve overall design:
+
+• Card gradients (dark subtle)
+• Soft shadows
+• Better spacing
+• Smooth hover effects
+
+Use Tailwind:
+
+• rounded-xl
+• shadow-lg
+• transition-all
+
+---
+
+PHASE 9 — PERFORMANCE OPTIMIZATION
+
+• Use Zustand selectors properly
+• Prevent unnecessary re-renders
+• Memoize heavy components
+
+---
+
+PHASE 10 — PRINT PREPARATION
+
+Add "Print Bill" button in billing/payment screen.
+
+Do NOT implement Bluetooth logic yet, only UI and function placeholder.
+
+---
+
+END GOAL
+
+A fast, smooth, visually polished café POS system that feels like a real commercial POS, optimized for daily usage in a real café.

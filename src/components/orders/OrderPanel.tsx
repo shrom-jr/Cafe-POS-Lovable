@@ -1,34 +1,73 @@
 import { Order, OrderItem } from '@/types/pos';
-import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingBag, RotateCcw, X } from 'lucide-react';
 
 interface OrderPanelProps {
   order: Order | null;
   onUpdateQty: (menuItemId: string, delta: number) => void;
   onRemove: (menuItemId: string) => void;
   onBill: () => void;
+  onClear?: () => void;
+  onRepeatLast?: () => void;
+  hasLastOrder?: boolean;
 }
 
-const OrderPanel = ({ order, onUpdateQty, onRemove, onBill }: OrderPanelProps) => {
+const OrderPanel = ({ order, onUpdateQty, onRemove, onBill, onClear, onRepeatLast, hasLastOrder }: OrderPanelProps) => {
   const items = order?.items || [];
   const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const itemCount = items.reduce((s, i) => s + i.quantity, 0);
 
   return (
-    <div className="flex flex-col h-full bg-card rounded-xl border border-border">
-      <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-        <ShoppingBag size={18} className="text-accent" />
-        <h3 className="font-bold text-foreground">
+    <div className="flex flex-col h-full bg-card rounded-xl border border-border shadow-[0_4px_20px_-4px_rgba(0,0,0,0.5)] overflow-hidden">
+      <div className="px-4 py-3 border-b border-border flex items-center gap-2 bg-card/80">
+        <ShoppingBag size={17} className="text-accent" />
+        <h3 className="font-bold text-foreground text-sm">
           {order ? `Table ${order.tableNumber}` : 'Order'}
         </h3>
-        <span className="ml-auto text-sm text-muted-foreground">
-          {items.length} {items.length === 1 ? 'item' : 'items'}
-        </span>
+        {itemCount > 0 && (
+          <span className="ml-1 px-2 py-0.5 rounded-full bg-accent/15 text-accent text-xs font-bold">
+            {itemCount}
+          </span>
+        )}
+        <div className="ml-auto flex items-center gap-1">
+          {hasLastOrder && onRepeatLast && (
+            <button
+              onClick={onRepeatLast}
+              data-testid="button-repeat-last"
+              title="Repeat Last Order"
+              className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-accent hover:bg-accent/10 transition-colors"
+            >
+              <RotateCcw size={13} />
+              <span className="hidden sm:inline">Repeat</span>
+            </button>
+          )}
+          {items.length > 0 && onClear && (
+            <button
+              onClick={onClear}
+              data-testid="button-clear-order"
+              title="Clear Order"
+              className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-danger hover:bg-danger/10 transition-colors"
+            >
+              <X size={13} />
+              <span className="hidden sm:inline">Clear</span>
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+      <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
         {items.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-8">
-            <ShoppingBag size={40} className="mb-2 opacity-30" />
-            <p className="text-sm">Tap items to add</p>
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-10">
+            <ShoppingBag size={38} className="mb-3 opacity-20" />
+            <p className="text-sm font-medium">Tap items to add</p>
+            {hasLastOrder && onRepeatLast && (
+              <button
+                onClick={onRepeatLast}
+                className="mt-3 flex items-center gap-1.5 px-3 py-2 rounded-lg bg-secondary text-secondary-foreground text-xs font-medium hover:bg-accent/10 hover:text-accent transition-colors"
+              >
+                <RotateCcw size={12} />
+                Repeat Last Order
+              </button>
+            )}
           </div>
         )}
         {items.map((item) => (
@@ -36,16 +75,16 @@ const OrderPanel = ({ order, onUpdateQty, onRemove, onBill }: OrderPanelProps) =
         ))}
       </div>
 
-      <div className="border-t border-border p-4 space-y-3">
+      <div className="border-t border-border p-4 space-y-3 bg-card/80">
         <div className="flex items-center justify-between">
-          <span className="text-muted-foreground font-medium">Total</span>
-          <span className="text-2xl font-bold text-accent">Rs. {total}</span>
+          <span className="text-muted-foreground text-sm font-medium">Total</span>
+          <span className="text-2xl font-black text-accent">Rs. {total}</span>
         </div>
         <button
           onClick={onBill}
           disabled={items.length === 0}
           data-testid="button-proceed-to-bill"
-          className="w-full py-3.5 rounded-xl bg-accent text-accent-foreground font-bold text-lg transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110"
+          className="w-full py-3.5 rounded-xl bg-accent text-accent-foreground font-bold text-base transition-all active:scale-[0.97] disabled:opacity-35 disabled:cursor-not-allowed hover:brightness-110 shadow-[0_4px_12px_-2px_hsl(var(--accent)/0.4)]"
         >
           Proceed to Bill
         </button>
@@ -61,35 +100,38 @@ interface OrderItemRowProps {
 }
 
 const OrderItemRow = ({ item, onUpdateQty, onRemove }: OrderItemRowProps) => (
-  <div className="flex items-center gap-2 bg-secondary/50 rounded-lg p-2.5" data-testid={`order-item-${item.menuItemId}`}>
+  <div
+    className="flex items-center gap-2 bg-secondary/40 hover:bg-secondary/70 rounded-xl p-2.5 transition-colors"
+    data-testid={`order-item-${item.menuItemId}`}
+  >
     <div className="flex-1 min-w-0">
-      <p className="text-sm font-medium text-foreground truncate">{item.name}</p>
-      <p className="text-xs text-muted-foreground">Rs. {item.price} each</p>
+      <p className="text-sm font-semibold text-foreground truncate">{item.name}</p>
+      <p className="text-xs text-muted-foreground">Rs. {item.price}</p>
     </div>
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-1">
       <button
         onClick={() => onUpdateQty(item.menuItemId, -1)}
         data-testid={`button-decrease-${item.menuItemId}`}
-        className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-foreground hover:bg-accent/20 transition-colors"
+        className="w-7 h-7 rounded-lg bg-primary/80 flex items-center justify-center text-foreground hover:bg-danger/20 hover:text-danger transition-colors active:scale-90"
       >
-        <Minus size={14} />
+        <Minus size={13} />
       </button>
-      <span className="w-8 text-center font-bold text-foreground">{item.quantity}</span>
+      <span className="w-7 text-center font-black text-foreground text-sm">{item.quantity}</span>
       <button
         onClick={() => onUpdateQty(item.menuItemId, 1)}
         data-testid={`button-increase-${item.menuItemId}`}
-        className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-foreground hover:bg-accent/20 transition-colors"
+        className="w-7 h-7 rounded-lg bg-primary/80 flex items-center justify-center text-foreground hover:bg-accent/20 hover:text-accent transition-colors active:scale-90"
       >
-        <Plus size={14} />
+        <Plus size={13} />
       </button>
     </div>
     <p className="w-16 text-right text-sm font-bold text-foreground">Rs. {item.price * item.quantity}</p>
     <button
       onClick={() => onRemove(item.menuItemId)}
       data-testid={`button-remove-${item.menuItemId}`}
-      className="w-8 h-8 rounded-lg flex items-center justify-center text-danger hover:bg-danger/20 transition-colors"
+      className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-danger hover:bg-danger/10 transition-colors active:scale-90"
     >
-      <Trash2 size={14} />
+      <Trash2 size={13} />
     </button>
   </div>
 );

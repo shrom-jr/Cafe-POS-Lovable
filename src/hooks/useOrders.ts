@@ -8,6 +8,8 @@ export const useOrders = () => {
   const updateItemQuantity = usePOSStore((s) => s.updateItemQuantity);
   const removeItemFromOrder = usePOSStore((s) => s.removeItemFromOrder);
   const updateOrderStatus = usePOSStore((s) => s.updateOrderStatus);
+  const clearOrder = usePOSStore((s) => s.clearOrder);
+  const addPayment = usePOSStore((s) => s.addPayment);
 
   return {
     orders,
@@ -17,5 +19,7 @@ export const useOrders = () => {
     updateItemQuantity,
     removeItemFromOrder,
     updateOrderStatus,
+    clearOrder,
+    addPayment,
   };
 };

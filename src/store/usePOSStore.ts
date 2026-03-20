@@ -32,6 +32,8 @@ interface POSState {
   removeItemFromOrder: (orderId: string, menuItemId: string) => void;
   updateOrderStatus: (orderId: string, status: Order['status']) => void;
 
+  clearOrder: (orderId: string) => void;
+
   addPayment: (payment: Omit<Payment, 'id'>) => void;
 
   updateSettings: (updates: Partial<Settings>) => void;
@@ -253,6 +255,22 @@ export const usePOSStore = create<POSState>((set, get) => ({
       const orders = state.orders.map((o) => (o.id === orderId ? { ...o, status } : o));
       db.saveOrders(orders);
       return { orders };
+    });
+  },
+
+  clearOrder: (orderId) => {
+    set((state) => {
+      const order = state.orders.find((o) => o.id === orderId);
+      if (!order) return {};
+      const orders = state.orders.filter((o) => o.id !== orderId);
+      const tables = state.tables.map((t) =>
+        t.id === order.tableId
+          ? { ...t, status: 'free' as const, orderId: undefined, orderStartTime: undefined }
+          : t
+      );
+      db.saveOrders(orders);
+      db.saveTables(tables);
+      return { orders, tables };
     });
   },
 
