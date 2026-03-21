@@ -66,6 +66,7 @@ export interface Settings {
   cafeLogo?: string;
   cafeAddress?: string;
   cafePhone?: string;
+  cafePan?: string;
   billFooter?: string;
   adminPin: string;
   esewaId: string;

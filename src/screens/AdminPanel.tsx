@@ -632,6 +632,7 @@ const BillDesignSection = () => {
   const [cafeName, setCafeName] = useState(settings.cafeName);
   const [cafeAddress, setCafeAddress] = useState(settings.cafeAddress || '');
   const [cafePhone, setCafePhone] = useState(settings.cafePhone || '');
+  const [cafePan, setCafePan] = useState(settings.cafePan || '');
   const [billFooter, setBillFooter] = useState(settings.billFooter || 'Thank you for visiting!');
   const [billCounter, setBillCounter] = useState(String(settings.billCounter));
 
@@ -648,6 +649,7 @@ const BillDesignSection = () => {
       cafeName,
       cafeAddress: cafeAddress || undefined,
       cafePhone: cafePhone || undefined,
+      cafePan: cafePan || undefined,
       billFooter: billFooter || undefined,
       billCounter: Number(billCounter) || settings.billCounter,
     });
@@ -699,6 +701,10 @@ const BillDesignSection = () => {
           <div>
             <label className="text-xs text-muted-foreground">Phone</label>
             <input value={cafePhone} onChange={(e) => setCafePhone(e.target.value)} placeholder="e.g. 01-XXXXXXX" className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">PAN Number <span className="text-muted-foreground/50">(for Tax Invoice)</span></label>
+            <input value={cafePan} onChange={(e) => setCafePan(e.target.value)} placeholder="e.g. 123456789" className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Bill Footer Message</label>

@@ -144,22 +144,20 @@
 @media print {
   @page {
     margin: 0;
-    size: 80mm auto;
+    size: auto;
   }
 
-  /* Force white background everywhere, override dark theme */
   html,
   body {
     background: #ffffff !important;
     color: #000000 !important;
   }
 
-  /* Hide the entire React app */
   #root {
     display: none !important;
   }
 
-  /* Show only the portal receipt — portaled directly onto <body> */
+  /* ── SIMPLE RECEIPT (default) ── */
   #print-receipt {
     display: block !important;
     visibility: visible !important;
@@ -172,17 +170,44 @@
     line-height: 1.5 !important;
     width: 80mm !important;
     max-width: 80mm !important;
-    margin: 0 auto !important;
+    margin: 0 !important;
     padding: 6mm !important;
-    /* Reset any inherited dark-mode vars */
-    --tw-bg-opacity: 1;
   }
 
-  /* Ensure all text inside receipt is black */
   #print-receipt * {
     color: #000000 !important;
     background: transparent !important;
     border-color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* ── FULL TAX INVOICE (hidden by default) ── */
+  #print-invoice {
+    display: none !important;
+  }
+
+  /* When body carries data-print="invoice", swap which one is shown */
+  body[data-print="invoice"] #print-receipt {
+    display: none !important;
+  }
+
+  body[data-print="invoice"] #print-invoice {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: 'Courier New', Courier, monospace !important;
+    font-size: 11px !important;
+    line-height: 1.6 !important;
+    padding: 12mm 14mm !important;
+  }
+
+  body[data-print="invoice"] #print-invoice * {
+    color: #000000 !important;
+    background: transparent !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }

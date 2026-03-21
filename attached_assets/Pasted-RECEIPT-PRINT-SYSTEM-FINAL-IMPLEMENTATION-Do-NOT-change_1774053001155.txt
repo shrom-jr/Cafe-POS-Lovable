@@ -1,0 +1,141 @@
+RECEIPT & PRINT SYSTEM — FINAL IMPLEMENTATION
+
+Do NOT change:
+
+* Payment logic
+* Order calculations
+* VAT logic
+
+Only control printing behavior and receipt formats.
+
+---
+
+AUTO PRINT (CRITICAL)
+
+* On successful payment:
+
+  * Automatically trigger print
+  * Print ONLY the Simple Receipt (not full invoice)
+
+* Do NOT auto print full tax invoice
+
+---
+
+SIMPLE RECEIPT (DEFAULT PRINT)
+
+Design a compact thermal-style receipt:
+
+Include:
+
+* Business name (top, centered)
+
+* Table name / number
+
+* Date & Time
+
+* Item list:
+
+  * Item name
+  * Qty x Price
+  * Line total (right aligned)
+
+* Summary:
+
+  * Subtotal
+  * VAT (optional if already included)
+  * Total (bold, clear)
+
+* Payment method (Cash / QR)
+
+* Footer:
+
+  * "Thank you"
+
+Rules:
+
+* Compact spacing
+* High readability
+* Right-align all amounts
+* No unnecessary details (no PAN, no long invoice fields)
+
+---
+
+FULL TAX INVOICE (MANUAL ONLY)
+
+* Do NOT auto print this
+
+* Triggered only by:
+
+  * "Print Full Invoice" button (manual action)
+
+* Use full Nepali tax invoice format:
+
+Include:
+
+* Business name, address, PAN
+
+* TAX INVOICE title
+
+* Customer details
+
+* Bill number, Date, Miti
+
+* Table name
+
+* Item table (SN, Particulars, Qty, Rate, Amount)
+
+* Multi-line item support (e.g. size below name)
+
+* Summary:
+
+  * Basic Amount
+  * Discount
+  * Taxable Amount
+  * VAT (13%)
+  * Total
+
+* Amount in words
+
+* Cashier and time
+
+* Thank you message
+
+Rules:
+
+* Plain print layout (no UI styling)
+* Perfect column alignment
+* Clean separators
+
+---
+
+SUCCESS SCREEN ACTIONS
+
+After payment success:
+
+* Show:
+
+  * "Payment Successful"
+  * "Printing receipt..." (always visible)
+
+* Provide buttons:
+
+  * "Reprint Receipt" (prints simple receipt)
+  * "Print Full Invoice" (manual)
+  * "Back to Tables"
+
+* Do NOT auto-navigate away
+
+---
+
+REPRINT LOGIC
+
+* "Reprint Receipt" always prints Simple Receipt
+* Full invoice is separate and manual
+
+---
+
+GOAL
+
+* Fast billing experience
+* Professional real-world POS behavior
+* Clear separation between quick receipt and legal invoice
