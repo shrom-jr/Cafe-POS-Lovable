@@ -444,19 +444,25 @@ const MenuSection = () => {
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-3 p-3">
+                <div className="flex items-start gap-3.5 px-3 py-2.5 rounded-xl transition-colors duration-150 hover:bg-white/[0.03] cursor-default">
                   {/* Thumbnail */}
                   {item.image ? (
-                    <img src={item.image} alt={item.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                    <img src={item.image} alt={item.name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
                   ) : (
-                    <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center flex-shrink-0 text-accent font-bold text-base select-none">
+                    <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center flex-shrink-0 text-accent font-bold text-lg select-none">
                       {item.name.charAt(0)}
                     </div>
                   )}
-                  <span className="flex-1 text-sm text-foreground">{item.name}</span>
-                  <span className="text-sm font-bold text-accent">Rs. {item.price}</span>
-                  <button onClick={() => startEdit(item)} className="text-muted-foreground hover:text-foreground"><Edit3 size={16} /></button>
-                  <button onClick={() => deleteMenuItem(item.id)} className="text-danger hover:opacity-80"><Trash2 size={16} /></button>
+                  {/* Text block */}
+                  <div className="flex flex-col gap-[3px] flex-1 min-w-0 pt-0.5">
+                    <span className="text-sm font-medium text-foreground leading-snug truncate">{item.name}</span>
+                    <span className="text-xs text-muted-foreground">Rs. {item.price}</span>
+                  </div>
+                  {/* Actions */}
+                  <div className="flex items-center gap-0.5 pt-0.5">
+                    <button onClick={() => startEdit(item)} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"><Edit3 size={15} /></button>
+                    <button onClick={() => deleteMenuItem(item.id)} className="p-1.5 rounded-lg text-danger/60 hover:text-danger hover:bg-danger/10 transition-colors"><Trash2 size={15} /></button>
+                  </div>
                 </div>
               )}
             </div>
