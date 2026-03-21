@@ -23,42 +23,70 @@ const MenuItemCard = ({ item, quantityInOrder = 0, onAdd, disabled = false }: Me
     <button
       onClick={handleClick}
       data-testid={`menu-item-${item.id}`}
+      disabled={disabled}
       className={`
-        relative flex flex-col items-center justify-center p-3 rounded-xl
-        border transition-all duration-150 min-h-[96px] w-full
+        relative flex flex-col rounded-xl overflow-hidden border w-full text-left
+        transition-all duration-150
         ${disabled
           ? 'opacity-40 cursor-not-allowed border-border bg-card'
           : flash
-            ? 'border-accent/80 bg-accent/15 scale-[0.95] active:scale-[0.93]'
-            : 'border-border bg-card hover:border-accent/40 hover:bg-card/80 hover:scale-[1.02] active:scale-[0.93] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.4)] hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.5)]'
+            ? 'border-accent/70 scale-[0.97] shadow-[0_0_0_2px_hsl(var(--accent)/0.18)]'
+            : 'border-border bg-card hover:border-accent/30 active:scale-[0.97] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.35)] hover:shadow-[0_4px_18px_-4px_rgba(0,0,0,0.5)]'
         }
       `}
     >
-      {quantityInOrder > 0 && (
-        <span className="absolute top-2 right-2 min-w-[20px] h-5 px-1 rounded-full bg-accent text-accent-foreground text-[11px] font-bold flex items-center justify-center leading-none">
-          {quantityInOrder}
-        </span>
-      )}
+      {/* ── Image section ── */}
+      <div className="relative w-full aspect-square overflow-hidden">
+        {item.image ? (
+          <img
+            src={item.image}
+            alt={item.name}
+            className={`w-full h-full object-cover transition-all duration-150 ${flash ? 'brightness-110 scale-[1.03]' : ''}`}
+          />
+        ) : (
+          <div
+            className={`
+              w-full h-full flex items-center justify-center select-none
+              text-accent text-4xl font-bold transition-all duration-150
+              ${flash ? 'bg-accent/20' : 'bg-primary/80'}
+            `}
+          >
+            {item.name.charAt(0)}
+          </div>
+        )}
 
-      {item.image ? (
-        <img src={item.image} alt={item.name} className="w-10 h-10 rounded-lg object-cover mb-2" />
-      ) : (
-        <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center mb-2 text-accent text-lg font-bold select-none">
-          {item.name.charAt(0)}
+        {/* Flash overlay */}
+        {flash && (
+          <div className="absolute inset-0 bg-accent/10 pointer-events-none" />
+        )}
+
+        {/* Quantity badge — top right */}
+        {quantityInOrder > 0 && (
+          <span className="absolute top-2 right-2 min-w-[22px] h-[22px] px-1 rounded-full bg-accent text-accent-foreground text-[11px] font-bold flex items-center justify-center leading-none shadow-[0_2px_6px_rgba(0,0,0,0.35)]">
+            {quantityInOrder}
+          </span>
+        )}
+
+        {/* Plus button — bottom right, frosted glass */}
+        <div className={`
+          absolute bottom-2 right-2 w-7 h-7 rounded-full flex items-center justify-center
+          shadow-[0_2px_8px_rgba(0,0,0,0.4)] transition-all duration-150
+          ${flash
+            ? 'bg-accent text-accent-foreground scale-110'
+            : 'bg-black/40 backdrop-blur-sm text-white/75 hover:bg-black/55'}
+        `}>
+          <Plus size={14} />
         </div>
-      )}
+      </div>
 
-      <span className="text-sm font-semibold text-foreground text-center leading-tight line-clamp-2">
-        {item.name}
-      </span>
-      <span className="text-xs font-bold text-accent mt-1">Rs. {item.price}</span>
-
-      <div className={`
-        absolute bottom-2 right-2 w-6 h-6 rounded-full flex items-center justify-center
-        transition-all duration-150
-        ${flash ? 'bg-accent text-accent-foreground scale-110' : 'bg-accent/10 text-accent/50'}
-      `}>
-        <Plus size={12} />
+      {/* ── Text section ── */}
+      <div className={`px-2.5 py-2 flex flex-col gap-[3px] transition-colors duration-150 ${flash ? 'bg-accent/5' : ''}`}>
+        <span className="text-sm font-medium text-foreground leading-snug line-clamp-2">
+          {item.name}
+        </span>
+        <span className="text-xs text-muted-foreground">
+          Rs. {item.price}
+        </span>
       </div>
     </button>
   );
