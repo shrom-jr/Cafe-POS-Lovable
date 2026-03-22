@@ -121,12 +121,15 @@ const ReviewScreen = () => {
     return custom?.qrImage || null;
   };
 
+  const getMethodLabel = (method: string) =>
+    methods.find((m) => m.id === method)?.label ?? method;
+
   const handleConfirmPayment = async (method: string) => {
     const bn = getNextBillNumber();
     const now = Date.now();
     setBillNum(bn);
     setPaidAt(now);
-    setPaidMethod(method);
+    setPaidMethod(getMethodLabel(method));
 
     addPayment({
       orderId: orderIdRef.current,
