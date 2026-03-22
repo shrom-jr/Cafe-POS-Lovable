@@ -46,24 +46,21 @@ const TableOverview = () => {
 
   const headerRight = (
     <>
-      <div className="flex items-center gap-2 text-xs font-semibold">
+      <div className="flex items-center gap-2 text-xs font-medium">
         <span
-          className="w-2 h-2 rounded-full flex-shrink-0"
-          style={{ background: 'hsl(var(--success))', boxShadow: '0 0 6px 2px hsl(142 71% 40% / 0.6)' }}
+          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+          style={{ background: '#10b981', boxShadow: '0 0 6px 2px rgba(16,185,129,0.55)' }}
         />
-        <span style={{ color: 'hsl(142 60% 60%)' }}>{counts.available} Available</span>
-        <span style={{ color: 'hsl(142 30% 30%)' }}>•</span>
+        <span style={{ color: '#10b981' }}>{counts.available} Available</span>
+        <span className="text-white/20 mx-0.5">•</span>
         <span
-          className="w-2 h-2 rounded-full flex-shrink-0"
-          style={{ background: 'hsl(var(--accent))', boxShadow: '0 0 6px 2px hsl(48 96% 53% / 0.6)' }}
+          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+          style={{ background: 'hsl(var(--warning))', boxShadow: '0 0 6px 2px hsl(32 90% 50% / 0.55)' }}
         />
-        <span style={{ color: 'hsl(48 80% 65%)' }}>{counts.active} Active</span>
+        <span style={{ color: 'hsl(32 90% 65%)' }}>{counts.active} Active</span>
       </div>
-      <div className="h-5 w-px" style={{ background: 'hsl(142 40% 25%)' }} />
-      <span
-        className="font-mono text-xs font-medium tabular-nums min-w-[76px] text-right"
-        style={{ color: 'hsl(142 40% 40%)' }}
-      >
+      <div className="h-5 w-px bg-white/10" />
+      <span className="font-mono text-xs font-medium text-white/35 tabular-nums min-w-[76px] text-right">
         {clock}
       </span>
     </>
@@ -83,10 +80,10 @@ const TableOverview = () => {
             onMouseLeave={() => setPanelHovered(false)}
             className="rounded-2xl p-4 transition-all duration-500"
             style={{
-              background: 'linear-gradient(180deg, rgba(10,30,18,0.7) 0%, rgba(5,15,10,0.6) 100%)',
-              border: '1px solid hsl(142 50% 30% / 0.3)',
-              boxShadow: '0 12px 48px -8px rgba(0,0,0,0.7), inset 0 1px 0 0 hsl(142 60% 40% / 0.1)',
-              filter: panelHovered ? 'brightness(1.04)' : 'brightness(1)',
+              background: 'linear-gradient(180deg, rgba(15,23,42,0.85) 0%, rgba(2,6,23,0.75) 100%)',
+              border: '1px solid rgba(59,130,246,0.12)',
+              boxShadow: '0 12px 48px -8px rgba(0,0,0,0.65), inset 0 1px 0 0 rgba(255,255,255,0.04)',
+              filter: panelHovered ? 'brightness(1.03)' : 'brightness(1)',
             }}
           >
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">

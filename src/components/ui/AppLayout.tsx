@@ -20,24 +20,19 @@ const AppLayout = ({ title, headerRight, children }: AppLayoutProps) => {
   return (
     <div
       className="h-screen flex flex-col overflow-hidden"
-      style={{
-        background: 'linear-gradient(180deg, #0d1f2e 0%, #04100a 100%)',
-      }}
+      style={{ background: 'linear-gradient(180deg, #0f172a 0%, #020617 100%)' }}
     >
       {/* ── Top navigation bar ── */}
       <header
         className="flex-shrink-0 flex items-stretch h-14 px-6"
         style={{
-          background: 'linear-gradient(135deg, #071a10 0%, #091628 100%)',
-          borderBottom: '1px solid hsl(142 71% 36% / 0.35)',
+          background: 'linear-gradient(135deg, #0a1228 0%, #0d1a2e 100%)',
+          borderBottom: '1px solid rgba(59,130,246,0.25)',
         }}
       >
         {/* Left: café / screen name */}
         <div className="flex items-center flex-1 min-w-0">
-          <span
-            className="text-xs font-bold truncate select-none uppercase tracking-[0.16em]"
-            style={{ color: 'hsl(142 60% 55%)' }}
-          >
+          <span className="text-xs font-semibold text-white/50 tracking-[0.14em] uppercase truncate select-none">
             {title}
           </span>
         </div>
@@ -51,22 +46,14 @@ const AppLayout = ({ title, headerRight, children }: AppLayoutProps) => {
                 key={path}
                 onClick={() => navigate(path)}
                 data-testid={`nav-${label.toLowerCase()}`}
-                className={`
-                  relative px-4 my-2 flex items-center text-sm font-bold rounded-md
-                  transition-all duration-200 select-none
-                `}
+                className="relative px-4 my-2 flex items-center text-sm font-semibold rounded-md transition-all duration-200 select-none"
                 style={active ? {
-                  background: 'hsl(var(--accent))',
-                  color: 'hsl(var(--accent-foreground))',
-                  boxShadow: '0 2px 10px -2px hsl(48 96% 53% / 0.45)',
+                  background: 'rgba(59,130,246,0.22)',
+                  color: 'rgba(255,255,255,0.95)',
+                  border: '1px solid rgba(59,130,246,0.35)',
+                  boxShadow: '0 2px 10px -2px rgba(59,130,246,0.3)',
                 } : {
-                  color: 'hsl(142 55% 55% / 0.75)',
-                }}
-                onMouseEnter={(e) => {
-                  if (!active) (e.currentTarget as HTMLButtonElement).style.color = 'hsl(142 60% 65%)';
-                }}
-                onMouseLeave={(e) => {
-                  if (!active) (e.currentTarget as HTMLButtonElement).style.color = 'hsl(142 55% 55% / 0.75)';
+                  color: 'rgba(255,255,255,0.55)',
                 }}
               >
                 {label}

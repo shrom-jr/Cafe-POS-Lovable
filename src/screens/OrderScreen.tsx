@@ -162,13 +162,14 @@ const OrderScreen = () => {
                   data-testid={`button-category-${cat.id}`}
                   className="px-4 py-1.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-all active:scale-95"
                   style={activeCat === cat.id ? {
-                    background: 'hsl(var(--accent))',
-                    color: 'hsl(var(--accent-foreground))',
-                    boxShadow: '0 2px 10px -2px hsl(48 96% 53% / 0.45)',
+                    background: 'rgba(59,130,246,0.22)',
+                    color: 'rgba(255,255,255,0.95)',
+                    border: '1px solid rgba(59,130,246,0.35)',
+                    boxShadow: '0 2px 10px -2px rgba(59,130,246,0.3)',
                   } : {
-                    background: 'hsl(142 35% 12%)',
-                    color: 'hsl(142 40% 55%)',
-                    border: '1px solid hsl(142 40% 20% / 0.5)',
+                    background: 'rgba(15,23,42,0.6)',
+                    color: 'rgba(255,255,255,0.45)',
+                    border: '1px solid rgba(255,255,255,0.08)',
                   }}
                 >
                   {cat.name}
