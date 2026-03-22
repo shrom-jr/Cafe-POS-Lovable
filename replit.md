@@ -41,6 +41,7 @@ src/
     sounds.ts             ← Web Audio API: playClick, playSuccess, playError
     printer.ts            ← Bluetooth thermal printer utility
     calcBill.ts           ← Shared bill calculation (subtotal, discount, VAT, total)
+    format.ts             ← fmt(n) helper: toLocaleString('en-IN') for Indian comma formatting
 ```
 
 ## Payment Flow
@@ -88,9 +89,10 @@ src/
 - PIN-protected settings
 - Menu item and category management
 - Bill design preview (ReceiptPreview with sample data)
-- Wallet QR image upload
+- Wallet logo + QR image upload per wallet (eSewa, Khalti, Fonepay) — logos shown in payment buttons
 - Data export/import (JSON backup)
 - Sales chart
+- Number formatting via fmt() across all monetary displays
 
 ## Running the App
 Port 5000 via `npm run dev`. Server: `host: "0.0.0.0"`, `allowedHosts: true`.

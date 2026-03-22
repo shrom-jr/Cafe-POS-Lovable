@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { usePOSStore } from '@/store/usePOSStore';
+import { fmt } from '@/utils/format';
 import AppLayout from '@/components/ui/AppLayout';
 import ReceiptPreview from '@/components/ReceiptPreview';
 import { Search, ChevronDown, ChevronUp, Printer, TrendingUp, Receipt, Calendar } from 'lucide-react';
@@ -97,7 +98,7 @@ const BillHistory = () => {
                 {dateFilter === 'today' ? "Today's Sales" : 'Total Sales'}
               </div>
               <p className="text-xl font-black text-accent" data-testid="stat-total-sales">
-                Rs. {totalSales}
+                Rs. {fmt(totalSales)}
               </p>
             </div>
             <div className="bg-card rounded-xl border border-border p-3 text-center">
@@ -204,10 +205,10 @@ const BillHistory = () => {
                       </p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="font-black text-accent">Rs. {p.total}</p>
+                      <p className="font-black text-accent">Rs. {fmt(p.total)}</p>
                       {p.discount > 0 && (
                         <p className="text-[10px] text-success">
-                          -{p.discountType === 'percent' ? `${p.discount}%` : `Rs. ${p.discount}`} off
+                          -{p.discountType === 'percent' ? `${p.discount}%` : `Rs. ${fmt(p.discount)}`} off
                         </p>
                       )}
                     </div>

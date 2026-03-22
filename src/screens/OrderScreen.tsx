@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { fmt } from '@/utils/format';
 import { usePOSStore } from '@/store/usePOSStore';
 import { useOrders } from '@/hooks/useOrders';
 import { useTables } from '@/hooks/useTables';
@@ -249,7 +250,7 @@ const OrderScreen = () => {
             {hasItems ? `${itemCount} item${itemCount !== 1 ? 's' : ''} in order` : 'No items yet — tap to add'}
           </span>
           {hasItems && (
-            <span className="font-black text-accent text-base">Rs. {runningTotal}</span>
+            <span className="font-black text-accent text-base">Rs. {fmt(runningTotal)}</span>
           )}
         </button>
       )}

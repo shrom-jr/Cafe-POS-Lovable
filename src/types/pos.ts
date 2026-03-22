@@ -60,6 +60,7 @@ export interface Payment {
 export interface WalletConfig {
   enabled: boolean;
   qrImage?: string;
+  logoImage?: string;
 }
 
 export interface Settings {

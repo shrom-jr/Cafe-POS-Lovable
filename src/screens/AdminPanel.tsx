@@ -2,14 +2,14 @@ import { useState, useRef } from 'react';
 import { usePOSStore } from '@/store/usePOSStore';
 import AppLayout from '@/components/ui/AppLayout';
 import ReceiptPreview from '@/components/ReceiptPreview';
-import { printer } from '@/utils/printer';
 import {
   BarChart3, Coffee, UtensilsCrossed, CreditCard, Table2, TrendingUp, FileDown,
   Plus, Trash2, Edit3, Save, X, Lock, DollarSign, ShoppingCart,
-  Printer, Download, Upload, Bluetooth, Smartphone, ToggleLeft, ToggleRight,
+  Printer, Download, Upload, Smartphone, ToggleLeft, ToggleRight,
   Receipt, ImagePlus, Image,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { fmt } from '@/utils/format';
 import { format, startOfDay, subDays, startOfWeek, startOfMonth } from 'date-fns';
 
 type AdminTab = 'dashboard' | 'menu' | 'tables' | 'payments' | 'bill' | 'reports' | 'backup';
@@ -140,10 +140,10 @@ const DashboardSection = () => {
   });
 
   const stats = [
-    { label: "Today's Sales", value: `Rs. ${todaySales}`, icon: <DollarSign size={20} />, color: 'text-accent' },
+    { label: "Today's Sales", value: `Rs. ${fmt(todaySales)}`, icon: <DollarSign size={20} />, color: 'text-accent' },
     { label: 'Orders', value: todayOrders, icon: <ShoppingCart size={20} />, color: 'text-success' },
-    { label: 'Cash', value: `Rs. ${cashToday}`, icon: <DollarSign size={20} />, color: 'text-highlight' },
-    { label: 'Digital', value: `Rs. ${digitalToday}`, icon: <Smartphone size={20} />, color: 'text-foreground' },
+    { label: 'Cash', value: `Rs. ${fmt(cashToday)}`, icon: <DollarSign size={20} />, color: 'text-highlight' },
+    { label: 'Digital', value: `Rs. ${fmt(digitalToday)}`, icon: <Smartphone size={20} />, color: 'text-foreground' },
   ];
 
   return (
@@ -180,7 +180,7 @@ const DashboardSection = () => {
               <span className="w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-bold">{i + 1}</span>
               <span className="flex-1 text-sm text-foreground">{item.name}</span>
               <span className="text-sm text-muted-foreground">{item.count} sold</span>
-              <span className="text-sm font-medium text-accent">Rs. {item.revenue}</span>
+              <span className="text-sm font-medium text-accent">Rs. {fmt(item.revenue)}</span>
             </div>
           ))}
         </div>
@@ -456,7 +456,7 @@ const MenuSection = () => {
                   {/* Text block */}
                   <div className="flex flex-col gap-[3px] flex-1 min-w-0 pt-0.5">
                     <span className="text-sm font-medium text-foreground leading-snug truncate">{item.name}</span>
-                    <span className="text-xs text-muted-foreground">Rs. {item.price}</span>
+                    <span className="text-xs text-muted-foreground">Rs. {fmt(item.price)}</span>
                   </div>
                   {/* Actions */}
                   <div className="flex items-center gap-0.5 pt-0.5">
@@ -526,8 +526,6 @@ const PaymentsSection = () => {
 
   const [cafeName, setCafeName] = useState(settings.cafeName);
   const [adminPin, setAdminPin] = useState(settings.adminPin);
-  const [esewaPhone, setEsewaPhone] = useState(settings.esewaPhone);
-  const [printerStatus, setPrinterStatus] = useState(printer.isConnected ? printer.deviceName : 'Not connected');
 
   const toggleWallet = (key: 'esewa' | 'khalti' | 'fonepay') => {
     updateSettings({
@@ -538,11 +536,19 @@ const PaymentsSection = () => {
     });
   };
 
-  const connectPrinter = async () => {
-    setPrinterStatus('Connecting...');
-    const ok = await printer.connect();
-    setPrinterStatus(ok ? printer.deviceName : 'Connection failed');
+  const updateWalletImage = (key: 'esewa' | 'khalti' | 'fonepay', field: 'qrImage' | 'logoImage', file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      updateSettings({ wallets: { ...settings.wallets, [key]: { ...settings.wallets[key], [field]: reader.result as string } } });
+    };
+    reader.readAsDataURL(file);
   };
+
+  const clearWalletImage = (key: 'esewa' | 'khalti' | 'fonepay', field: 'qrImage' | 'logoImage') => {
+    updateSettings({ wallets: { ...settings.wallets, [key]: { ...settings.wallets[key], [field]: undefined } } });
+  };
+
+  const walletLabels: Record<string, string> = { esewa: 'eSewa', khalti: 'Khalti', fonepay: 'Fonepay' };
 
   return (
     <div className="space-y-4">
@@ -562,63 +568,67 @@ const PaymentsSection = () => {
 
       <div className="bg-card rounded-xl border border-border p-4 space-y-3">
         <h3 className="font-bold text-foreground">Digital Wallets</h3>
-        <div>
-          <label className="text-xs text-muted-foreground">eSewa Phone Number</label>
-          <input value={esewaPhone} onChange={(e) => setEsewaPhone(e.target.value)} onBlur={() => updateSettings({ esewaPhone })} placeholder="98XXXXXXXX" data-testid="input-esewa-phone" className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
-        </div>
         {(['esewa', 'khalti', 'fonepay'] as const).map((key) => (
-          <div key={key} className="p-3 bg-secondary/50 rounded-lg space-y-2">
+          <div key={key} className="p-3 bg-secondary/50 rounded-lg space-y-3">
+            {/* Header: name + toggle */}
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-foreground capitalize">{key}</span>
+              <span className="text-sm font-semibold text-foreground">{walletLabels[key]}</span>
               <button onClick={() => toggleWallet(key)} className="text-accent" data-testid={`toggle-wallet-${key}`}>
                 {settings.wallets[key].enabled ? <ToggleRight size={28} /> : <ToggleLeft size={28} className="text-muted-foreground" />}
               </button>
             </div>
+
             {settings.wallets[key].enabled && (
-              <div className="space-y-2">
-                {settings.wallets[key].qrImage && (
-                  <div className="relative w-32 h-32 mx-auto">
-                    <img src={settings.wallets[key].qrImage} alt={`${key} QR`} className="w-full h-full object-contain rounded-lg border border-border bg-foreground p-1" />
-                    <button
-                      onClick={() => updateSettings({ wallets: { ...settings.wallets, [key]: { ...settings.wallets[key], qrImage: undefined } } })}
-                      className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-danger text-accent-foreground flex items-center justify-center"
-                    >
-                      <X size={12} />
-                    </button>
+              <div className="space-y-3">
+                {/* Logo upload */}
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">Logo</p>
+                  <div className="flex items-center gap-3">
+                    {settings.wallets[key].logoImage ? (
+                      <div className="relative w-12 h-12 flex-shrink-0">
+                        <img src={settings.wallets[key].logoImage} alt={`${key} logo`} className="w-full h-full object-contain rounded-lg border border-border bg-white/5 p-1" />
+                        <button
+                          onClick={() => clearWalletImage(key, 'logoImage')}
+                          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-danger text-white flex items-center justify-center"
+                        >
+                          <X size={10} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 rounded-lg border-2 border-dashed border-border flex items-center justify-center flex-shrink-0">
+                        <ImagePlus size={16} className="text-muted-foreground" />
+                      </div>
+                    )}
+                    <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-foreground text-xs font-medium cursor-pointer hover:bg-accent/20 transition-colors">
+                      <Upload size={12} /> {settings.wallets[key].logoImage ? 'Replace' : 'Upload'} Logo
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) updateWalletImage(key, 'logoImage', f); }} />
+                    </label>
                   </div>
-                )}
-                <label className="flex items-center justify-center gap-2 w-full py-2 rounded-lg bg-primary text-foreground text-sm font-medium cursor-pointer hover:bg-accent/20 transition-colors">
-                  <Upload size={14} /> {settings.wallets[key].qrImage ? 'Replace' : 'Upload'} QR Image
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      const reader = new FileReader();
-                      reader.onload = () => {
-                        updateSettings({ wallets: { ...settings.wallets, [key]: { ...settings.wallets[key], qrImage: reader.result as string } } });
-                      };
-                      reader.readAsDataURL(file);
-                    }}
-                  />
-                </label>
+                </div>
+
+                {/* QR upload */}
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">QR Image</p>
+                  {settings.wallets[key].qrImage && (
+                    <div className="relative w-32 h-32 mx-auto">
+                      <img src={settings.wallets[key].qrImage} alt={`${key} QR`} className="w-full h-full object-contain rounded-lg border border-border bg-foreground p-1" />
+                      <button
+                        onClick={() => clearWalletImage(key, 'qrImage')}
+                        className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-danger text-white flex items-center justify-center"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  )}
+                  <label className="flex items-center justify-center gap-2 w-full py-2 rounded-lg bg-primary text-foreground text-sm font-medium cursor-pointer hover:bg-accent/20 transition-colors">
+                    <Upload size={14} /> {settings.wallets[key].qrImage ? 'Replace' : 'Upload'} QR Image
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) updateWalletImage(key, 'qrImage', f); }} />
+                  </label>
+                </div>
               </div>
             )}
           </div>
         ))}
-      </div>
-
-      <div className="bg-card rounded-xl border border-border p-4 space-y-3">
-        <h3 className="font-bold text-foreground">Thermal Printer</h3>
-        <p className="text-sm text-muted-foreground">Status: {printerStatus}</p>
-        <button
-          onClick={connectPrinter}
-          className="w-full py-2.5 rounded-lg bg-secondary text-secondary-foreground text-sm font-medium flex items-center justify-center gap-2 hover:bg-accent/20 transition-colors"
-        >
-          <Bluetooth size={16} /> Connect Printer
-        </button>
       </div>
     </div>
   );
@@ -792,7 +802,7 @@ const ReportsSection = () => {
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-card rounded-xl border border-border p-4">
           <p className="text-xs text-muted-foreground">Total Revenue</p>
-          <p className="text-xl font-bold text-accent">Rs. {totalRevenue}</p>
+          <p className="text-xl font-bold text-accent">Rs. {fmt(totalRevenue)}</p>
         </div>
         <div className="bg-card rounded-xl border border-border p-4">
           <p className="text-xs text-muted-foreground">Orders</p>
@@ -800,11 +810,11 @@ const ReportsSection = () => {
         </div>
         <div className="bg-card rounded-xl border border-border p-4">
           <p className="text-xs text-muted-foreground">Cash</p>
-          <p className="text-xl font-bold text-highlight">Rs. {cashTotal}</p>
+          <p className="text-xl font-bold text-highlight">Rs. {fmt(cashTotal)}</p>
         </div>
         <div className="bg-card rounded-xl border border-border p-4">
           <p className="text-xs text-muted-foreground">Digital</p>
-          <p className="text-xl font-bold text-foreground">Rs. {digitalTotal}</p>
+          <p className="text-xl font-bold text-foreground">Rs. {fmt(digitalTotal)}</p>
         </div>
       </div>
 

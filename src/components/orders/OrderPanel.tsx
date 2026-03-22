@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Order, OrderItem } from '@/types/pos';
+import { fmt } from '@/utils/format';
 import { Minus, Plus, Trash2, ShoppingBag, Users } from 'lucide-react';
 import {
   AlertDialog,
@@ -155,7 +156,7 @@ const OrderPanel = ({
             className="text-3xl font-black"
             style={{ color: items.length > 0 ? 'rgba(255,255,255,0.97)' : 'rgba(255,255,255,0.25)' }}
           >
-            Rs. {total}
+            Rs. {fmt(total)}
           </span>
         </div>
 
@@ -220,7 +221,7 @@ const OrderItemRow = ({ item, onUpdateQty, onRemove }: OrderItemRowProps) => (
   >
     <div className="flex-1 min-w-0">
       <p className="text-sm font-bold truncate" style={{ color: 'rgba(255,255,255,0.95)' }}>{item.name}</p>
-      <p className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.42)' }}>Rs. {item.price} each</p>
+      <p className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.42)' }}>Rs. {fmt(item.price)} each</p>
     </div>
     <div className="flex items-center gap-1">
       <button
@@ -242,7 +243,7 @@ const OrderItemRow = ({ item, onUpdateQty, onRemove }: OrderItemRowProps) => (
       </button>
     </div>
     <p className="w-16 text-right text-sm font-bold" style={{ color: 'rgba(255,255,255,0.88)' }}>
-      Rs. {item.price * item.quantity}
+      Rs. {fmt(item.price * item.quantity)}
     </p>
     <button
       onClick={() => onRemove(item.menuItemId)}

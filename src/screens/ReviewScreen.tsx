@@ -5,6 +5,7 @@ import { usePOSStore } from '@/store/usePOSStore';
 import { useOrders } from '@/hooks/useOrders';
 import { useTables } from '@/hooks/useTables';
 import { calcBill } from '@/utils/calcBill';
+import { fmt } from '@/utils/format';
 import { printer, formatReceipt, numberToWords } from '@/utils/printer';
 import { playSuccess } from '@/utils/sounds';
 import { format } from 'date-fns';
@@ -383,13 +384,13 @@ const ReviewScreen = () => {
               </div>
               <h2 className="text-xl font-black text-foreground">Payment Successful</h2>
               <div className="flex items-center gap-2">
-                <span className="text-3xl font-black text-foreground">Rs. {bill.total}</span>
+                <span className="text-3xl font-black text-foreground">Rs. {fmt(bill.total)}</span>
                 <span className="px-2.5 py-0.5 rounded-full bg-success/15 text-success text-xs font-bold uppercase">
                   {paidMethod}
                 </span>
               </div>
               {bill.discountAmount > 0 && (
-                <span className="text-xs text-success font-medium">Saved Rs. {bill.discountAmount}</span>
+                <span className="text-xs text-success font-medium">Saved Rs. {fmt(bill.discountAmount)}</span>
               )}
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Printer size={12} />
@@ -411,7 +412,7 @@ const ReviewScreen = () => {
                       {item.name} <span className="text-foreground font-semibold">×{item.quantity}</span>
                     </span>
                     <span className="font-semibold text-foreground whitespace-nowrap">
-                      Rs. {item.price * item.quantity}
+                      Rs. {fmt(item.price * item.quantity)}
                     </span>
                   </div>
                 ))}
@@ -421,7 +422,7 @@ const ReviewScreen = () => {
               </div>
               <div className="flex justify-between items-center border-t border-dashed border-border/60 pt-2">
                 <span className="text-sm font-semibold text-muted-foreground">Total</span>
-                <span className="text-lg font-black text-foreground">Rs. {bill.total}</span>
+                <span className="text-lg font-black text-foreground">Rs. {fmt(bill.total)}</span>
               </div>
             </div>
 
@@ -531,11 +532,11 @@ const ReviewScreen = () => {
                           {item.name}
                         </p>
                         <p className="text-xs" style={{ color: 'rgba(255,255,255,0.38)' }}>
-                          {item.quantity} × Rs. {item.price}
+                          {item.quantity} × Rs. {fmt(item.price)}
                         </p>
                       </div>
                       <p className="text-sm font-bold tabular-nums whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.88)' }}>
-                        Rs. {item.price * item.quantity}
+                        Rs. {fmt(item.price * item.quantity)}
                       </p>
                     </div>
                   ))}
@@ -563,20 +564,20 @@ const ReviewScreen = () => {
 
                   {/* Subtotal */}
                   <div className="flex justify-between items-center">
-                    <span className="text-xs" style={{ color: 'rgba(255,255,255,0.50)' }}>Subtotal</span>
-                    <span className="text-xs font-semibold tabular-nums" style={{ color: 'rgba(255,255,255,0.80)' }}>
-                      Rs. {bill.subtotal}
+                    <span className="text-xs" style={{ color: 'rgba(255,255,255,0.42)' }}>Subtotal</span>
+                    <span className="text-sm font-semibold tabular-nums" style={{ color: 'rgba(255,255,255,0.94)' }}>
+                      Rs. {fmt(bill.subtotal)}
                     </span>
                   </div>
 
                   {/* Discount row */}
                   <div className="flex justify-between items-center">
-                    <span className="text-xs" style={{ color: 'rgba(255,255,255,0.50)' }}>Discount</span>
+                    <span className="text-xs" style={{ color: 'rgba(255,255,255,0.42)' }}>Discount</span>
                     <span
-                      className="text-xs font-semibold tabular-nums"
-                      style={{ color: bill.discountAmount > 0 ? 'rgba(52,211,153,0.9)' : 'rgba(255,255,255,0.25)' }}
+                      className="text-sm font-semibold tabular-nums"
+                      style={{ color: bill.discountAmount > 0 ? 'rgba(52,211,153,0.9)' : 'rgba(255,255,255,0.22)' }}
                     >
-                      −Rs. {bill.discountAmount}
+                      −Rs. {fmt(bill.discountAmount)}
                     </span>
                   </div>
 
@@ -645,11 +646,11 @@ const ReviewScreen = () => {
                   {/* VAT */}
                   {bill.vatEnabled && (
                     <div className="flex justify-between items-center">
-                      <span className="text-xs" style={{ color: 'rgba(255,255,255,0.50)' }}>
+                      <span className="text-xs" style={{ color: 'rgba(255,255,255,0.42)' }}>
                         VAT ({Math.round(bill.vatRate * 100)}%)
                       </span>
-                      <span className="text-xs font-semibold tabular-nums" style={{ color: 'rgba(255,255,255,0.80)' }}>
-                        Rs. {bill.vatAmount}
+                      <span className="text-sm font-semibold tabular-nums" style={{ color: 'rgba(255,255,255,0.94)' }}>
+                        Rs. {fmt(bill.vatAmount)}
                       </span>
                     </div>
                   )}
@@ -664,7 +665,7 @@ const ReviewScreen = () => {
                     Total
                   </span>
                   <span className="text-[26px] font-black tracking-tight leading-none tabular-nums" style={{ color: '#ffffff' }}>
-                    Rs. {bill.total}
+                    Rs. {fmt(bill.total)}
                   </span>
                 </div>
               </div>
@@ -702,35 +703,47 @@ const ReviewScreen = () => {
                   <p className="font-bold text-sm" style={{ color: 'rgba(255,255,255,0.92)' }}>Cash</p>
                   <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.38)' }}>Tap to complete payment</p>
                 </div>
-                <span className="text-sm font-black text-success tabular-nums">Rs. {bill.total}</span>
+                <span className="text-sm font-black text-success tabular-nums">Rs. {fmt(bill.total)}</span>
               </button>
 
               {/* Digital wallets */}
               {qrMethods.length > 0 && (
                 <div className={`grid gap-1.5 ${qrMethods.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                  {qrMethods.map(({ id, label }) => (
-                    <button
-                      key={id}
-                      onClick={() => { setSelectedMethod(id); setShowQRModal(true); }}
-                      data-testid={`button-payment-method-${id}`}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all active:scale-[0.97]"
-                      style={{
-                        background: 'rgba(255,255,255,0.04)',
-                        border: '1px solid rgba(255,255,255,0.09)',
-                      }}
-                    >
-                      <div
-                        className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                        style={{ background: 'rgba(255,255,255,0.07)' }}
+                  {qrMethods.map(({ id, label }) => {
+                    const walletKey = id as 'esewa' | 'khalti' | 'fonepay';
+                    const logoImage = settings.wallets[walletKey]?.logoImage;
+                    const brandColor =
+                      id === 'esewa' ? '#16a34a' :
+                      id === 'khalti' ? '#7c3aed' :
+                      '#dc2626';
+                    return (
+                      <button
+                        key={id}
+                        onClick={() => { setSelectedMethod(id); setShowQRModal(true); }}
+                        data-testid={`button-payment-method-${id}`}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all active:scale-[0.97]"
+                        style={{
+                          background: 'rgba(255,255,255,0.04)',
+                          border: '1px solid rgba(255,255,255,0.09)',
+                        }}
                       >
-                        <Smartphone size={13} style={{ color: 'rgba(255,255,255,0.5)' }} />
-                      </div>
-                      <div className="text-left min-w-0">
-                        <p className="font-bold text-sm" style={{ color: 'rgba(255,255,255,0.88)' }}>{label}</p>
-                        <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>Scan QR</p>
-                      </div>
-                    </button>
-                  ))}
+                        <div
+                          className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden"
+                          style={{ background: 'rgba(255,255,255,0.07)' }}
+                        >
+                          {logoImage ? (
+                            <img src={logoImage} alt={label} className="w-full h-full object-contain p-0.5" />
+                          ) : (
+                            <Smartphone size={13} style={{ color: 'rgba(255,255,255,0.5)' }} />
+                          )}
+                        </div>
+                        <div className="text-left min-w-0">
+                          <p className="font-bold text-sm" style={{ color: brandColor }}>{label}</p>
+                          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>Scan QR</p>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
               <div className="h-0.5" />
@@ -759,9 +772,9 @@ const ReviewScreen = () => {
             <div className="px-6 pt-5 pb-6 flex flex-col items-center gap-4">
               <div className="text-center">
                 <p className="text-[11px] text-muted-foreground uppercase tracking-widest font-semibold">Amount Due</p>
-                <p className="text-5xl font-black text-foreground mt-1 tabular-nums">Rs. {bill.total}</p>
+                <p className="text-5xl font-black text-foreground mt-1 tabular-nums">Rs. {fmt(bill.total)}</p>
                 {bill.discountAmount > 0 && (
-                  <p className="text-xs text-success font-semibold mt-1">Saved Rs. {bill.discountAmount}</p>
+                  <p className="text-xs text-success font-semibold mt-1">Saved Rs. {fmt(bill.discountAmount)}</p>
                 )}
               </div>
               <div

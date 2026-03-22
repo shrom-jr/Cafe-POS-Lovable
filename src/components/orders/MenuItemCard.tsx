@@ -1,5 +1,6 @@
 import { MenuItem } from '@/types/pos';
 import { Plus } from 'lucide-react';
+import { fmt } from '@/utils/format';
 
 interface MenuItemCardProps {
   item: MenuItem;
@@ -65,7 +66,7 @@ const MenuItemCard = ({ item, quantityInOrder = 0, onAdd, disabled = false }: Me
           {item.name}
         </span>
         <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.65)' }}>
-          Rs. {item.price}
+          Rs. {fmt(item.price)}
         </span>
       </div>
     </button>
