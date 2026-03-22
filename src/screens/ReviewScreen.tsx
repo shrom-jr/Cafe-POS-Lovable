@@ -495,21 +495,20 @@ const ReviewScreen = () => {
           </div>
         </div>
 
-        {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto py-4">
-          <div className="max-w-[460px] mx-auto px-4 flex flex-col gap-3">
+        {/* Body — flex column, items scroll, bottom is fixed */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="max-w-[460px] mx-auto w-full flex flex-col flex-1 min-h-0 px-4 pt-4 pb-3 gap-3">
 
-            {/* ── Main card: items + billing + total ── */}
+            {/* ── Items card (scrollable) ── */}
             <div
-              className="rounded-2xl overflow-hidden"
+              className="flex-1 min-h-0 rounded-2xl overflow-hidden flex flex-col"
               style={{
                 background: 'rgba(255,255,255,0.05)',
                 border: '1px solid rgba(255,255,255,0.09)',
                 boxShadow: '0 8px 32px -8px rgba(0,0,0,0.5)',
               }}
             >
-              {/* Items */}
-              <div>
+              <div className="overflow-y-auto flex-1 min-h-0">
                 {items.map((item, idx) => (
                   <div
                     key={item.menuItemId}
@@ -530,52 +529,56 @@ const ReviewScreen = () => {
                   </div>
                 ))}
               </div>
+            </div>
 
-              {/* Separator */}
-              <div style={{ height: 1, background: 'rgba(255,255,255,0.08)' }} />
+            {/* ── Fixed bottom section ── */}
+            <div className="flex-shrink-0 flex flex-col gap-3">
 
-              {/* Billing summary */}
-              <div className="px-4 py-3 space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>Subtotal</span>
-                  <span className="text-xs font-semibold tabular-nums" style={{ color: 'rgba(255,255,255,0.85)' }}>
-                    Rs. {bill.subtotal}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>Discount</span>
-                  <span
-                    className="text-xs font-semibold tabular-nums"
-                    style={{ color: bill.discountAmount > 0 ? 'rgba(52,211,153,0.9)' : 'rgba(255,255,255,0.28)' }}
-                  >
-                    −Rs. {bill.discountAmount}
-                  </span>
-                </div>
-                {bill.vatEnabled && (
+              {/* Billing summary + total */}
+              <div
+                className="rounded-2xl overflow-hidden"
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.09)',
+                }}
+              >
+                <div className="px-4 py-3 space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                      VAT ({Math.round(bill.vatRate * 100)}%)
-                    </span>
+                    <span className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>Subtotal</span>
                     <span className="text-xs font-semibold tabular-nums" style={{ color: 'rgba(255,255,255,0.85)' }}>
-                      Rs. {bill.vatAmount}
+                      Rs. {bill.subtotal}
                     </span>
                   </div>
-                )}
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>Discount</span>
+                    <span
+                      className="text-xs font-semibold tabular-nums"
+                      style={{ color: bill.discountAmount > 0 ? 'rgba(52,211,153,0.9)' : 'rgba(255,255,255,0.28)' }}
+                    >
+                      −Rs. {bill.discountAmount}
+                    </span>
+                  </div>
+                  {bill.vatEnabled && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                        VAT ({Math.round(bill.vatRate * 100)}%)
+                      </span>
+                      <span className="text-xs font-semibold tabular-nums" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                        Rs. {bill.vatAmount}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', margin: '0 16px' }} />
+                <div className="flex items-center justify-between px-4 py-3">
+                  <span className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                    Total
+                  </span>
+                  <span className="text-[34px] font-black tracking-tight leading-none tabular-nums" style={{ color: '#ffffff' }}>
+                    Rs. {bill.total}
+                  </span>
+                </div>
               </div>
-
-              {/* Separator before total */}
-              <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', margin: '0 16px' }} />
-
-              {/* Total */}
-              <div className="flex items-center justify-between px-4 py-4">
-                <span className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                  Total
-                </span>
-                <span className="text-[34px] font-black tracking-tight leading-none tabular-nums" style={{ color: '#ffffff' }}>
-                  Rs. {bill.total}
-                </span>
-              </div>
-            </div>
 
             {/* ── Discount card ── */}
             <div
@@ -712,9 +715,10 @@ const ReviewScreen = () => {
               )}
             </div>
 
-          </div>
-        </div>
-      </div>
+            </div>{/* end flex-shrink-0 bottom section */}
+          </div>{/* end max-w-[460px] container */}
+        </div>{/* end body */}
+      </div>{/* end main wrapper */}
 
       {/* QR Modal */}
       {showQRModal && selectedMethod && selectedMethod !== 'cash' && (
