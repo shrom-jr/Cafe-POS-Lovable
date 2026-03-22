@@ -67,9 +67,9 @@ const defaultSettings: Settings = {
   esewaId: '',
   esewaPhone: '',
   wallets: {
-    esewa: { enabled: false },
-    khalti: { enabled: false },
-    fonepay: { enabled: false },
+    esewa: { enabled: true },
+    khalti: { enabled: true },
+    fonepay: { enabled: true },
   },
   billCounter: 1000,
   vatEnabled: true,
@@ -95,7 +95,14 @@ export const db = {
 
   getSettings: (): Settings => {
     const stored = get<Partial<Settings>>(KEYS.settings, defaultSettings);
-    return { ...defaultSettings, ...stored };
+    return {
+      ...defaultSettings,
+      ...stored,
+      wallets: {
+        ...defaultSettings.wallets,
+        ...stored?.wallets,
+      },
+    };
   },
   saveSettings: (s: Settings) => set(KEYS.settings, s),
 
