@@ -497,23 +497,23 @@ const ReviewScreen = () => {
 
         {/* Body — flex column, items scroll, bottom is fixed */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="max-w-[460px] mx-auto w-full flex flex-col flex-1 min-h-0 px-4 pt-3 pb-2 gap-2">
+          <div className="max-w-[460px] mx-auto w-full flex flex-col flex-1 min-h-0 px-4 pt-2.5 pb-2 gap-1.5">
 
             {/* ── Items card (scrollable) ── */}
             <div
-              className="flex-1 min-h-0 rounded-2xl overflow-hidden flex flex-col"
+              className="flex-1 min-h-0 rounded-xl overflow-hidden flex flex-col"
               style={{
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.09)',
-                boxShadow: '0 8px 32px -8px rgba(0,0,0,0.5)',
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.06)',
+                boxShadow: '0 4px 16px -8px rgba(0,0,0,0.3)',
               }}
             >
               {/* Items header label */}
               <div
-                className="flex-shrink-0 px-4 py-2 flex items-center"
-                style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+                className="flex-shrink-0 px-3 py-1.5 flex items-center"
+                style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
               >
-                <span className="text-[10px] font-black uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                <span className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.22)' }}>
                   Order Items
                 </span>
               </div>
@@ -521,14 +521,14 @@ const ReviewScreen = () => {
                 {items.map((item, idx) => (
                   <div
                     key={item.menuItemId}
-                    className="flex items-center gap-3 px-4 py-3"
-                    style={idx < items.length - 1 ? { borderBottom: '1px solid rgba(255,255,255,0.05)' } : {}}
+                    className="flex items-center gap-3 px-3 py-2"
+                    style={idx < items.length - 1 ? { borderBottom: '1px solid rgba(255,255,255,0.04)' } : {}}
                   >
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold truncate leading-snug" style={{ color: 'rgba(255,255,255,0.95)' }}>
                         {item.name}
                       </p>
-                      <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.38)' }}>
+                      <p className="text-xs" style={{ color: 'rgba(255,255,255,0.38)' }}>
                         {item.quantity} × Rs. {item.price}
                       </p>
                     </div>
@@ -541,7 +541,7 @@ const ReviewScreen = () => {
             </div>
 
             {/* ── Fixed bottom section ── */}
-            <div className="flex-shrink-0 flex flex-col gap-2">
+            <div className="flex-shrink-0 flex flex-col gap-1.5">
 
               {/* ── Unified bill card: subtotal + discount controls + VAT + total ── */}
               <div
