@@ -26,7 +26,7 @@ const AppLayout = ({ title, headerRight, children }: AppLayoutProps) => {
       }}
     >
       {/* ── Top navigation bar ── */}
-      <header className="flex-shrink-0 flex items-stretch h-14 px-6 border-b border-white/5 bg-black/25 backdrop-blur-md">
+      <header className="flex-shrink-0 flex items-stretch h-14 px-6 border-b border-white/[0.06] bg-black/25 backdrop-blur-md">
 
         {/* Left: café / screen name */}
         <div className="flex items-center flex-1 min-w-0">
@@ -36,7 +36,7 @@ const AppLayout = ({ title, headerRight, children }: AppLayoutProps) => {
         </div>
 
         {/* Center: tab navigation */}
-        <nav className="flex items-center gap-1">
+        <nav className="flex items-stretch">
           {navItems.map(({ path, label }) => {
             const active = location.pathname === path;
             return (
@@ -45,14 +45,17 @@ const AppLayout = ({ title, headerRight, children }: AppLayoutProps) => {
                 onClick={() => navigate(path)}
                 data-testid={`nav-${label.toLowerCase()}`}
                 className={`
-                  px-4 h-8 rounded-md flex items-center text-sm font-semibold
+                  relative px-5 flex items-center text-sm font-semibold
                   transition-colors duration-150 select-none
                   ${active
-                    ? 'bg-white/10 text-white'
-                    : 'text-white/50 hover:text-white/70'}
+                    ? 'text-foreground'
+                    : 'text-muted-foreground hover:text-foreground/70'}
                 `}
               >
                 {label}
+                {active && (
+                  <span className="absolute bottom-0 inset-x-0 h-[2px] bg-accent" />
+                )}
               </button>
             );
           })}
