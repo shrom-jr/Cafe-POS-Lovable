@@ -1,0 +1,146 @@
+PROFESSIONAL UI POLISH — HEADER + DEPTH + COLOR SYSTEM
+
+Do NOT change layout or logic.
+Only improve visual quality and hierarchy.
+
+---
+
+🎯 GOAL
+
+Make UI feel like a real product:
+
+* clean
+* slightly premium
+* calm but alive
+* not flat
+
+---
+
+🧭 HEADER (MAIN FIX)
+
+* Replace flat black with subtle gradient:
+  left: neutral dark
+  right: slightly cool dark (blue/steel tone)
+
+* Add soft bottom border (white/6%)
+
+* Add slight backdrop blur (very low)
+
+---
+
+📍 CAFÉ NAME (LEFT)
+
+* Make slightly dim (not pure white)
+* Add letter spacing (tracking)
+* Feels like system label, not title
+
+---
+
+📍 NAV TABS (Tables / History / Admin)
+
+* Active tab:
+
+  * soft pill background (white/12–15%)
+  * subtle inner highlight (top edge)
+
+* Inactive tabs:
+
+  * muted (white/50%)
+
+* Add smoother hover transition
+
+---
+
+📊 HEADER RIGHT (STATUS)
+
+* Keep: ● 8 Available • ● 0 Active • Time
+
+* Improve:
+
+  * dots slightly glow (soft)
+  * text smaller and cleaner
+  * reduce brightness (not pure white)
+
+---
+
+🪟 MAIN PANEL (TABLE CONTAINER)
+
+* Add slight glass effect:
+
+  * background: dark with ~70–80% opacity
+  * subtle blur (low)
+  * soft border (white/5%)
+
+* Add faint inner highlight at top
+
+---
+
+📦 TABLE CARDS
+
+* Keep current structure
+
+---
+
+🟢 AVAILABLE CARDS
+
+* Reduce green intensity slightly
+* Add subtle neutral base (not pure green tint)
+* Border: softer
+
+---
+
+🟠 ACTIVE CARDS (when active)
+
+* Use warm tone (orange/amber)
+* Slightly stronger contrast than available
+* Should naturally draw attention
+
+---
+
+💡 CARD DEPTH
+
+* Add soft radial highlight in center
+* Add very subtle shadow (not heavy)
+
+---
+
+🔢 TABLE NUMBER
+
+* Keep bold
+* Add very subtle text shadow
+* Avoid pure flat white
+
+---
+
+💡 STATUS DOT
+
+* Keep position
+* Add soft glow (blur effect)
+* Do not increase size
+
+---
+
+🎨 BACKGROUND
+
+* Add vertical gradient:
+  top: dark grey
+  bottom: deeper dark
+
+* Avoid flat black
+
+---
+
+🎯 FINAL RESULT
+
+UI should feel:
+
+* layered (not flat)
+* calm but alive
+* professional POS system
+* easy on eyes for long use
+
+Avoid:
+
+* strong neon colors
+* heavy glow
+* flat surfaces

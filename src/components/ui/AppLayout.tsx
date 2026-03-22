@@ -22,21 +22,27 @@ const AppLayout = ({ title, headerRight, children }: AppLayoutProps) => {
       className="h-screen flex flex-col overflow-hidden"
       style={{
         background:
-          'radial-gradient(ellipse at 20% 0%, hsl(var(--accent)/0.07) 0%, transparent 60%), linear-gradient(180deg, #0e0f11 0%, #111316 100%)',
+          'linear-gradient(180deg, #111214 0%, #0c0d10 100%)',
       }}
     >
       {/* ── Top navigation bar ── */}
-      <header className="flex-shrink-0 flex items-stretch h-14 px-6 border-b border-white/[0.06] bg-black/25 backdrop-blur-md">
+      <header
+        className="flex-shrink-0 flex items-stretch h-14 px-6 border-b border-white/[0.06] backdrop-blur-[6px]"
+        style={{
+          background:
+            'linear-gradient(to right, rgba(13,14,17,0.92) 0%, rgba(13,17,26,0.90) 100%)',
+        }}
+      >
 
         {/* Left: café / screen name */}
         <div className="flex items-center flex-1 min-w-0">
-          <span className="text-sm font-bold text-foreground tracking-tight truncate select-none">
+          <span className="text-xs font-semibold text-white/55 tracking-[0.14em] uppercase truncate select-none">
             {title}
           </span>
         </div>
 
         {/* Center: tab navigation */}
-        <nav className="flex items-stretch">
+        <nav className="flex items-stretch gap-1 px-1">
           {navItems.map(({ path, label }) => {
             const active = location.pathname === path;
             return (
@@ -45,17 +51,18 @@ const AppLayout = ({ title, headerRight, children }: AppLayoutProps) => {
                 onClick={() => navigate(path)}
                 data-testid={`nav-${label.toLowerCase()}`}
                 className={`
-                  relative px-5 flex items-center text-sm font-semibold
-                  transition-colors duration-150 select-none
+                  relative px-4 my-2 flex items-center text-sm font-semibold rounded-md
+                  transition-all duration-200 select-none
                   ${active
-                    ? 'text-foreground'
-                    : 'text-muted-foreground hover:text-foreground/70'}
+                    ? 'text-white/90'
+                    : 'text-white/45 hover:text-white/70'}
                 `}
+                style={active ? {
+                  background: 'rgba(255,255,255,0.12)',
+                  boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.12), 0 1px 3px rgba(0,0,0,0.3)',
+                } : undefined}
               >
                 {label}
-                {active && (
-                  <span className="absolute bottom-0 inset-x-0 h-[2px] bg-accent" />
-                )}
               </button>
             );
           })}

@@ -46,13 +46,21 @@ const TableOverview = () => {
 
   const headerRight = (
     <>
-      <span className="text-sm font-semibold">
-        <span className="text-success">{counts.available} Available</span>
-        <span className="text-muted-foreground/50 mx-2">•</span>
-        <span className="text-warning">{counts.active} Active</span>
-      </span>
-      <div className="h-6 w-px bg-white/10" />
-      <span className="font-mono text-sm font-semibold text-muted-foreground tabular-nums min-w-[76px] text-right">
+      <div className="flex items-center gap-2 text-xs font-medium text-white/55">
+        <span
+          className="w-1.5 h-1.5 rounded-full bg-success flex-shrink-0"
+          style={{ boxShadow: '0 0 5px 1px hsl(var(--success)/0.55)' }}
+        />
+        <span>{counts.available} Available</span>
+        <span className="text-white/20">•</span>
+        <span
+          className="w-1.5 h-1.5 rounded-full bg-warning flex-shrink-0"
+          style={{ boxShadow: '0 0 5px 1px hsl(var(--warning)/0.55)' }}
+        />
+        <span>{counts.active} Active</span>
+      </div>
+      <div className="h-5 w-px bg-white/10" />
+      <span className="font-mono text-xs font-medium text-white/40 tabular-nums min-w-[76px] text-right">
         {clock}
       </span>
     </>
@@ -70,13 +78,14 @@ const TableOverview = () => {
           <div
             onMouseEnter={() => setPanelHovered(true)}
             onMouseLeave={() => setPanelHovered(false)}
-            className="rounded-2xl border border-white/[0.07] p-4 transition-all duration-500"
+            className="rounded-2xl border border-white/[0.06] p-4 transition-all duration-500"
             style={{
               background:
-                'radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 70%), rgba(255,255,255,0.03)',
+                'radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.028) 0%, rgba(255,255,255,0.008) 60%), rgba(255,255,255,0.025)',
+              backdropFilter: 'blur(4px)',
               boxShadow:
-                '0 8px 40px -8px rgba(0,0,0,0.5), 0 2px 8px -2px rgba(0,0,0,0.3), inset 0 1px 0 0 rgba(255,255,255,0.06)',
-              filter: panelHovered ? 'brightness(1.015)' : 'brightness(1)',
+                '0 12px 48px -8px rgba(0,0,0,0.55), 0 2px 8px -2px rgba(0,0,0,0.35), inset 0 1px 0 0 rgba(255,255,255,0.07)',
+              filter: panelHovered ? 'brightness(1.02)' : 'brightness(1)',
             }}
           >
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">

@@ -3,49 +3,55 @@ import { CafeTable } from '@/types/pos';
 
 const statusConfig = {
   free: {
-    border: 'border-success/30',
-    bg: 'from-success/10 via-success/5 to-transparent',
-    innerGlow: 'shadow-[inset_0_1px_0_0_hsl(var(--success)/0.2)]',
+    border: 'border-success/20',
+    bg: 'from-success/7 via-success/3 to-transparent',
+    innerGlow: 'shadow-[inset_0_1px_0_0_rgba(255,255,255,0.07)]',
     outerGlow: '',
-    hoverGlow: 'hover:shadow-[0_8px_32px_-4px_hsl(var(--success)/0.3),inset_0_1px_0_0_hsl(var(--success)/0.25)]',
-    dot: 'bg-success shadow-[0_0_6px_2px_hsl(var(--success)/0.5)]',
+    hoverGlow: 'hover:shadow-[0_8px_28px_-4px_hsl(var(--success)/0.2),inset_0_1px_0_0_rgba(255,255,255,0.09)]',
+    dot: 'bg-success',
+    dotShadow: '0 0 6px 2px hsl(var(--success)/0.45)',
     dotPulse: false,
     label: 'Available',
-    labelColor: 'text-success',
-    labelBg: 'bg-success/10',
-    numberColor: 'text-foreground',
-    totalColor: 'text-success',
-    metaColor: 'text-success/60',
+    labelColor: 'text-success/80',
+    labelBg: 'bg-success/8',
+    numberColor: 'text-white/85',
+    numberShadow: '0 1px 6px rgba(0,0,0,0.5)',
+    totalColor: 'text-success/75',
+    metaColor: 'text-success/45',
   },
   occupied: {
-    border: 'border-warning/40',
-    bg: 'from-warning/12 via-warning/6 to-transparent',
-    innerGlow: 'shadow-[inset_0_1px_0_0_hsl(var(--warning)/0.25)]',
-    outerGlow: 'shadow-[0_4px_20px_-4px_hsl(var(--warning)/0.2)]',
-    hoverGlow: 'hover:shadow-[0_8px_32px_-4px_hsl(var(--warning)/0.4),inset_0_1px_0_0_hsl(var(--warning)/0.3)]',
-    dot: 'bg-warning shadow-[0_0_6px_2px_hsl(var(--warning)/0.5)]',
+    border: 'border-warning/35',
+    bg: 'from-warning/10 via-warning/5 to-transparent',
+    innerGlow: 'shadow-[inset_0_1px_0_0_hsl(var(--warning)/0.2)]',
+    outerGlow: 'shadow-[0_4px_20px_-4px_hsl(var(--warning)/0.25)]',
+    hoverGlow: 'hover:shadow-[0_8px_32px_-4px_hsl(var(--warning)/0.4),inset_0_1px_0_0_hsl(var(--warning)/0.25)]',
+    dot: 'bg-warning',
+    dotShadow: '0 0 6px 2px hsl(var(--warning)/0.5)',
     dotPulse: true,
     label: 'Active',
-    labelColor: 'text-warning',
+    labelColor: 'text-warning/90',
     labelBg: 'bg-warning/10',
-    numberColor: 'text-foreground',
-    totalColor: 'text-warning',
-    metaColor: 'text-warning/60',
+    numberColor: 'text-white/90',
+    numberShadow: '0 1px 6px rgba(0,0,0,0.5)',
+    totalColor: 'text-warning/80',
+    metaColor: 'text-warning/55',
   },
   billing: {
-    border: 'border-danger/40',
-    bg: 'from-danger/12 via-danger/6 to-transparent',
-    innerGlow: 'shadow-[inset_0_1px_0_0_hsl(var(--danger)/0.25)]',
+    border: 'border-danger/35',
+    bg: 'from-danger/10 via-danger/5 to-transparent',
+    innerGlow: 'shadow-[inset_0_1px_0_0_hsl(var(--danger)/0.2)]',
     outerGlow: 'shadow-[0_4px_20px_-4px_hsl(var(--danger)/0.25)]',
-    hoverGlow: 'hover:shadow-[0_8px_32px_-4px_hsl(var(--danger)/0.45),inset_0_1px_0_0_hsl(var(--danger)/0.3)]',
-    dot: 'bg-danger shadow-[0_0_6px_2px_hsl(var(--danger)/0.5)]',
+    hoverGlow: 'hover:shadow-[0_8px_32px_-4px_hsl(var(--danger)/0.4),inset_0_1px_0_0_hsl(var(--danger)/0.25)]',
+    dot: 'bg-danger',
+    dotShadow: '0 0 6px 2px hsl(var(--danger)/0.5)',
     dotPulse: true,
     label: 'Billing',
-    labelColor: 'text-danger',
+    labelColor: 'text-danger/90',
     labelBg: 'bg-danger/10',
-    numberColor: 'text-foreground',
-    totalColor: 'text-danger',
-    metaColor: 'text-danger/60',
+    numberColor: 'text-white/90',
+    numberShadow: '0 1px 6px rgba(0,0,0,0.5)',
+    totalColor: 'text-danger/80',
+    metaColor: 'text-danger/55',
   },
 };
 
@@ -88,7 +94,7 @@ const TableCard = ({ table, itemCount = 0, onClick }: TableCardProps) => {
       data-testid={`table-card-${table.id}`}
       className={`
         relative flex flex-col items-center justify-center
-        p-5 rounded-2xl border-2 w-full
+        p-5 rounded-2xl border w-full
         bg-gradient-to-b ${cfg.bg}
         ${cfg.border}
         ${cfg.innerGlow}
@@ -100,22 +106,36 @@ const TableCard = ({ table, itemCount = 0, onClick }: TableCardProps) => {
         min-h-[150px]
         backdrop-blur-sm
       `}
-      style={{ background: undefined }}
     >
-      {/* Subtle card surface overlay */}
-      <div className="absolute inset-0 rounded-2xl bg-white/[0.02] pointer-events-none" />
+      {/* Subtle surface overlay */}
+      <div className="absolute inset-0 rounded-2xl bg-white/[0.025] pointer-events-none" />
+
+      {/* Radial center highlight */}
+      <div
+        className="absolute inset-0 rounded-2xl pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse at 50% 40%, rgba(255,255,255,0.04) 0%, transparent 65%)',
+        }}
+      />
 
       {/* Status dot */}
       <div
-        className={`
-          absolute top-3.5 right-3.5 w-2.5 h-2.5 rounded-full
-          ${cfg.dot}
-          ${cfg.dotPulse ? 'animate-pulse' : ''}
-        `}
-      />
+        className={`absolute top-3.5 right-3.5 w-2 h-2 rounded-full ${cfg.dot}`}
+        style={{ boxShadow: cfg.dotShadow }}
+      >
+        {cfg.dotPulse && (
+          <div
+            className={`absolute inset-0 rounded-full ${cfg.dot} animate-ping opacity-60`}
+            style={{ animationDuration: '2s' }}
+          />
+        )}
+      </div>
 
       {/* Table number */}
-      <span className={`text-5xl font-black tracking-tight leading-none ${cfg.numberColor}`}>
+      <span
+        className={`text-5xl font-black tracking-tight leading-none ${cfg.numberColor}`}
+        style={{ textShadow: cfg.numberShadow }}
+      >
         {table.number}
       </span>
 
