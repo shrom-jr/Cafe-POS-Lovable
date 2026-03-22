@@ -21,22 +21,21 @@ const AppLayout = ({ title, headerRight, children }: AppLayoutProps) => {
     <div
       className="h-screen flex flex-col overflow-hidden"
       style={{
-        background:
-          'linear-gradient(180deg, #111214 0%, #0c0d10 100%)',
+        background: 'linear-gradient(180deg, #111214 0%, #0c0d10 100%)',
       }}
     >
       {/* ── Top navigation bar ── */}
       <header
-        className="flex-shrink-0 flex items-stretch h-14 px-6 border-b border-white/[0.06] backdrop-blur-[6px]"
+        className="flex-shrink-0 flex items-stretch h-14 px-6 border-b border-white/[0.09] backdrop-blur-[3px]"
         style={{
           background:
-            'linear-gradient(to right, rgba(13,14,17,0.92) 0%, rgba(13,17,26,0.90) 100%)',
+            'linear-gradient(to right, rgba(10,11,14,0.96) 0%, rgba(11,14,22,0.94) 100%)',
         }}
       >
 
         {/* Left: café / screen name */}
         <div className="flex items-center flex-1 min-w-0">
-          <span className="text-xs font-semibold text-white/55 tracking-[0.14em] uppercase truncate select-none">
+          <span className="text-xs font-semibold text-white/50 tracking-[0.14em] uppercase truncate select-none">
             {title}
           </span>
         </div>
@@ -54,12 +53,13 @@ const AppLayout = ({ title, headerRight, children }: AppLayoutProps) => {
                   relative px-4 my-2 flex items-center text-sm font-semibold rounded-md
                   transition-all duration-200 select-none
                   ${active
-                    ? 'text-white/90'
-                    : 'text-white/45 hover:text-white/70'}
+                    ? 'text-white/92'
+                    : 'text-white/40 hover:text-white/65'}
                 `}
                 style={active ? {
-                  background: 'rgba(255,255,255,0.12)',
-                  boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.12), 0 1px 3px rgba(0,0,0,0.3)',
+                  background: 'rgba(255,255,255,0.16)',
+                  border: '1px solid rgba(255,255,255,0.10)',
+                  boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.14), 0 1px 3px rgba(0,0,0,0.4)',
                 } : undefined}
               >
                 {label}

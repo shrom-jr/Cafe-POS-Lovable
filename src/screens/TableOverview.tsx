@@ -46,21 +46,21 @@ const TableOverview = () => {
 
   const headerRight = (
     <>
-      <div className="flex items-center gap-2 text-xs font-medium text-white/55">
+      <div className="flex items-center gap-2 text-xs font-medium text-white/50">
         <span
           className="w-1.5 h-1.5 rounded-full bg-success flex-shrink-0"
-          style={{ boxShadow: '0 0 5px 1px hsl(var(--success)/0.55)' }}
+          style={{ boxShadow: '0 0 4px 1px hsl(var(--success)/0.45)' }}
         />
         <span>{counts.available} Available</span>
-        <span className="text-white/20">•</span>
+        <span className="text-white/18">•</span>
         <span
           className="w-1.5 h-1.5 rounded-full bg-warning flex-shrink-0"
-          style={{ boxShadow: '0 0 5px 1px hsl(var(--warning)/0.55)' }}
+          style={{ boxShadow: '0 0 4px 1px hsl(var(--warning)/0.5)' }}
         />
         <span>{counts.active} Active</span>
       </div>
       <div className="h-5 w-px bg-white/10" />
-      <span className="font-mono text-xs font-medium text-white/40 tabular-nums min-w-[76px] text-right">
+      <span className="font-mono text-xs font-medium text-white/35 tabular-nums min-w-[76px] text-right">
         {clock}
       </span>
     </>
@@ -78,14 +78,13 @@ const TableOverview = () => {
           <div
             onMouseEnter={() => setPanelHovered(true)}
             onMouseLeave={() => setPanelHovered(false)}
-            className="rounded-2xl border border-white/[0.06] p-4 transition-all duration-500"
+            className="rounded-2xl border border-white/[0.08] p-4 transition-all duration-500"
             style={{
               background:
-                'radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.028) 0%, rgba(255,255,255,0.008) 60%), rgba(255,255,255,0.025)',
-              backdropFilter: 'blur(4px)',
+                'radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.032) 0%, rgba(255,255,255,0.01) 55%), rgba(255,255,255,0.04)',
               boxShadow:
-                '0 12px 48px -8px rgba(0,0,0,0.55), 0 2px 8px -2px rgba(0,0,0,0.35), inset 0 1px 0 0 rgba(255,255,255,0.07)',
-              filter: panelHovered ? 'brightness(1.02)' : 'brightness(1)',
+                '0 12px 48px -8px rgba(0,0,0,0.6), 0 2px 8px -2px rgba(0,0,0,0.4), inset 0 1px 0 0 rgba(255,255,255,0.08)',
+              filter: panelHovered ? 'brightness(1.018)' : 'brightness(1)',
             }}
           >
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
