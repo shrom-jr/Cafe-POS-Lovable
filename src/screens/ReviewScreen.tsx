@@ -551,7 +551,7 @@ const ReviewScreen = () => {
                   border: '1px solid rgba(255,255,255,0.09)',
                 }}
               >
-                <div className="px-4 pt-2.5 pb-2 space-y-2">
+                <div className="px-4 pt-2 pb-1.5 space-y-1.5">
 
                   {/* Subtotal */}
                   <div className="flex justify-between items-center">
@@ -573,7 +573,7 @@ const ReviewScreen = () => {
                   </div>
 
                   {/* Discount controls */}
-                  <div className="space-y-1.5 pl-0">
+                  <div className="space-y-1 pl-0">
                     {/* Preset pills */}
                     <div className="flex gap-1.5">
                       {PRESETS.map((pct) => {
@@ -651,11 +651,11 @@ const ReviewScreen = () => {
                 <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', margin: '0 16px' }} />
 
                 {/* Total */}
-                <div className="flex items-center justify-between px-4 py-2.5">
+                <div className="flex items-center justify-between px-4 py-2">
                   <span className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: 'rgba(255,255,255,0.35)' }}>
                     Total
                   </span>
-                  <span className="text-[30px] font-black tracking-tight leading-none tabular-nums" style={{ color: '#ffffff' }}>
+                  <span className="text-[26px] font-black tracking-tight leading-none tabular-nums" style={{ color: '#ffffff' }}>
                     Rs. {bill.total}
                   </span>
                 </div>
@@ -663,7 +663,7 @@ const ReviewScreen = () => {
 
             {/* ── Payment Method card ── */}
             <div
-              className="rounded-2xl px-4 py-2 space-y-1.5"
+              className="rounded-2xl px-4 py-1.5 space-y-1.5"
               style={{
                 background: 'rgba(255,255,255,0.04)',
                 border: '1px solid rgba(255,255,255,0.09)',
@@ -678,17 +678,17 @@ const ReviewScreen = () => {
               <button
                 onClick={() => handleConfirmPayment('cash')}
                 data-testid="button-payment-method-cash"
-                className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all active:scale-[0.97]"
+                className="w-full flex items-center gap-3 px-4 py-2 rounded-xl transition-all active:scale-[0.97]"
                 style={{
                   background: 'rgba(52,211,153,0.07)',
                   border: '1px solid rgba(52,211,153,0.25)',
                 }}
               >
                 <div
-                  className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                   style={{ background: 'rgba(52,211,153,0.12)' }}
                 >
-                  <Banknote size={18} className="text-success" />
+                  <Banknote size={16} className="text-success" />
                 </div>
                 <div className="flex-1 text-left">
                   <p className="font-bold text-sm" style={{ color: 'rgba(255,255,255,0.92)' }}>Cash</p>
@@ -699,23 +699,23 @@ const ReviewScreen = () => {
 
               {/* Digital wallets */}
               {qrMethods.length > 0 && (
-                <div className={`grid gap-2 ${qrMethods.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                <div className={`grid gap-1.5 ${qrMethods.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
                   {qrMethods.map(({ id, label }) => (
                     <button
                       key={id}
                       onClick={() => { setSelectedMethod(id); setShowQRModal(true); }}
                       data-testid={`button-payment-method-${id}`}
-                      className="flex items-center gap-3 px-3.5 py-3 rounded-xl transition-all active:scale-[0.97]"
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all active:scale-[0.97]"
                       style={{
                         background: 'rgba(255,255,255,0.04)',
                         border: '1px solid rgba(255,255,255,0.09)',
                       }}
                     >
                       <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                        className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
                         style={{ background: 'rgba(255,255,255,0.07)' }}
                       >
-                        <Smartphone size={15} style={{ color: 'rgba(255,255,255,0.5)' }} />
+                        <Smartphone size={13} style={{ color: 'rgba(255,255,255,0.5)' }} />
                       </div>
                       <div className="text-left min-w-0">
                         <p className="font-bold text-sm" style={{ color: 'rgba(255,255,255,0.88)' }}>{label}</p>
@@ -725,6 +725,7 @@ const ReviewScreen = () => {
                   ))}
                 </div>
               )}
+              <div className="h-0.5" />
             </div>
 
             </div>{/* end flex-shrink-0 bottom section */}
