@@ -19,6 +19,8 @@ const BillHistory = () => {
   const [customDate, setCustomDate] = useState('');
   const [methodFilter, setMethodFilter] = useState('');
   const [selectedBill, setSelectedBill] = useState<Payment | null>(null);
+  const [printError, setPrintError] = useState(false);
+  const [printing, setPrinting] = useState(false);
 
   const baseList = useMemo(() => {
     let list = [...payments].sort((a, b) => b.createdAt - a.createdAt);
@@ -51,8 +53,9 @@ const BillHistory = () => {
   }, [baseList, search, methodFilter]);
 
   const handleReprint = async (p: Payment) => {
-    if (!printer.isConnected) return;
-    await printer.print(
+    setPrintError(false);
+    setPrinting(true);
+    const ok = await printer.print(
       formatReceipt({
         cafeName: p.cafeName,
         tableNumber: p.tableNumber,
@@ -71,6 +74,8 @@ const BillHistory = () => {
         billNumber: p.billNumber,
       })
     );
+    setPrinting(false);
+    if (!ok) setPrintError(true);
   };
 
   const methodBadgeColor = (method: string) => {
@@ -214,7 +219,7 @@ const BillHistory = () => {
       {selectedBill && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          onClick={() => setSelectedBill(null)}
+          onClick={() => { setSelectedBill(null); setPrintError(false); }}
         >
           <div
             className="w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-2xl bg-background border border-border shadow-2xl"
@@ -229,7 +234,7 @@ const BillHistory = () => {
                 </p>
               </div>
               <button
-                onClick={() => setSelectedBill(null)}
+                onClick={() => { setSelectedBill(null); setPrintError(false); }}
                 className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
               >
                 <X size={16} />
@@ -259,15 +264,15 @@ const BillHistory = () => {
             <div className="px-4 pb-4">
               <button
                 onClick={() => handleReprint(selectedBill)}
-                disabled={!printer.isConnected}
-                className="w-full py-3 rounded-xl bg-accent text-accent-foreground font-bold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+                disabled={printing}
+                className="w-full py-3 rounded-xl bg-accent text-accent-foreground font-bold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60"
               >
                 <Printer size={16} />
-                Print Bill
+                {printing ? 'Printing…' : 'Print Bill'}
               </button>
-              {!printer.isConnected && (
-                <p className="text-center text-xs text-muted-foreground mt-2">
-                  Connect a printer in Admin settings to enable printing
+              {printError && (
+                <p className="text-center text-xs text-destructive mt-2">
+                  Print failed. Check that the printer is connected and try again.
                 </p>
               )}
             </div>
