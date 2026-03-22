@@ -4,6 +4,7 @@ export interface CafeTable {
   status: 'free' | 'occupied' | 'billing';
   orderId?: string;
   orderStartTime?: number;
+  pax?: number;
 }
 
 export interface Category {

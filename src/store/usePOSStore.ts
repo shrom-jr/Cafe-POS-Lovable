@@ -79,7 +79,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
   resetTable: (id) => {
     set((state) => {
       const tables = state.tables.map((t) =>
-        t.id === id ? { ...t, status: 'free' as const, orderId: undefined, orderStartTime: undefined } : t
+        t.id === id ? { ...t, status: 'free' as const, orderId: undefined, orderStartTime: undefined, pax: undefined } : t
       );
       const orders = state.orders.map((o) =>
         o.tableId === id && (o.status === 'active' || o.status === 'billed')
@@ -265,7 +265,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
       const orders = state.orders.filter((o) => o.id !== orderId);
       const tables = state.tables.map((t) =>
         t.id === order.tableId
-          ? { ...t, status: 'free' as const, orderId: undefined, orderStartTime: undefined }
+          ? { ...t, status: 'free' as const, orderId: undefined, orderStartTime: undefined, pax: undefined }
           : t
       );
       db.saveOrders(orders);

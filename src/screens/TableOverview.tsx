@@ -25,12 +25,11 @@ const TableOverview = () => {
   const [panelHovered, setPanelHovered] = useState(false);
 
   const tableOrderData = useMemo(() => {
-    const map: Record<string, { itemCount: number; runningTotal: number }> = {};
+    const map: Record<string, { itemCount: number }> = {};
     orders.forEach((order) => {
       if (order.status === 'active' || order.status === 'billed') {
         const itemCount = order.items.reduce((s, i) => s + i.quantity, 0);
-        const runningTotal = order.items.reduce((s, i) => s + i.price * i.quantity, 0);
-        map[order.tableId] = { itemCount, runningTotal };
+        map[order.tableId] = { itemCount };
       }
     });
     return map;
@@ -84,13 +83,12 @@ const TableOverview = () => {
               {tables
                 .sort((a, b) => a.number - b.number)
                 .map((table) => {
-                  const data = tableOrderData[table.id] || { itemCount: 0, runningTotal: 0 };
+                  const data = tableOrderData[table.id] || { itemCount: 0 };
                   return (
                     <TableCard
                       key={table.id}
                       table={table}
                       itemCount={data.itemCount}
-                      runningTotal={data.runningTotal}
                       onClick={() => handleTableClick(table)}
                     />
                   );

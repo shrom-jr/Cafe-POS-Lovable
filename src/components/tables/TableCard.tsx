@@ -74,11 +74,10 @@ function useTimer(startTime?: number) {
 interface TableCardProps {
   table: CafeTable;
   itemCount?: number;
-  runningTotal?: number;
   onClick: () => void;
 }
 
-const TableCard = ({ table, itemCount = 0, runningTotal = 0, onClick }: TableCardProps) => {
+const TableCard = ({ table, itemCount = 0, onClick }: TableCardProps) => {
   const timer = useTimer(table.orderStartTime);
   const cfg = statusConfig[table.status];
   const isActive = table.status !== 'free';
@@ -128,8 +127,8 @@ const TableCard = ({ table, itemCount = 0, runningTotal = 0, onClick }: TableCar
       {/* Active/Billing details */}
       {isActive && (
         <div className="mt-3 flex flex-col items-center gap-1 w-full">
-          <span className={`text-lg font-black ${cfg.totalColor}`}>
-            Rs. {runningTotal}
+          <span className={`text-sm font-bold ${cfg.totalColor}`}>
+            {table.pax ?? 1} pax
           </span>
           <span className={`text-[11px] font-medium tabular-nums ${cfg.metaColor}`}>
             {itemCount} item{itemCount !== 1 ? 's' : ''}{timer ? ` • ${timer}` : ''}

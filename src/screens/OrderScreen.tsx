@@ -16,6 +16,7 @@ const OrderScreen = () => {
   const isMobile = useIsMobile();
 
   const { tables } = useTables();
+  const updateTable = usePOSStore((s) => s.updateTable);
   const {
     getActiveOrder,
     createOrder,
@@ -88,6 +89,10 @@ const OrderScreen = () => {
   const handleClear = () => {
     if (!order) return;
     clearOrder(order.id);
+  };
+
+  const handlePaxChange = (newPax: number) => {
+    if (tableId) updateTable(tableId, { pax: newPax });
   };
 
   const handleRepeatLast = () => {
@@ -202,6 +207,8 @@ const OrderScreen = () => {
               }
               onPay={handlePay}
               onClear={handleClear}
+              pax={table.pax ?? 1}
+              onPaxChange={handlePaxChange}
             />
           </div>
         )}
@@ -264,6 +271,8 @@ const OrderScreen = () => {
                 }
                 onPay={() => { setShowCart(false); handlePay(); }}
                 onClear={handleClear}
+                pax={table.pax ?? 1}
+                onPaxChange={handlePaxChange}
               />
             </div>
           </div>

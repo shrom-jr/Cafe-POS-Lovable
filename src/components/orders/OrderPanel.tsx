@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Order, OrderItem } from '@/types/pos';
-import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingBag, Users } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,6 +18,8 @@ interface OrderPanelProps {
   onRemove: (menuItemId: string) => void;
   onPay: () => void;
   onClear?: () => void;
+  pax?: number;
+  onPaxChange?: (pax: number) => void;
 }
 
 const OrderPanel = ({
@@ -26,6 +28,8 @@ const OrderPanel = ({
   onRemove,
   onPay,
   onClear,
+  pax = 1,
+  onPaxChange,
 }: OrderPanelProps) => {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
@@ -62,6 +66,28 @@ const OrderPanel = ({
             )}
           </div>
         )}
+      </div>
+
+      {/* Pax selector */}
+      <div className="px-4 py-2.5 border-b border-border flex items-center gap-3 bg-background/20">
+        <Users size={14} className="text-muted-foreground flex-shrink-0" />
+        <span className="text-xs font-semibold text-muted-foreground flex-1">Guests (Pax)</span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onPaxChange?.(Math.max(1, pax - 1))}
+            disabled={pax <= 1}
+            className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center text-foreground hover:bg-accent/20 hover:text-accent transition-colors active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <Minus size={12} />
+          </button>
+          <span className="w-6 text-center font-black text-foreground text-sm tabular-nums">{pax}</span>
+          <button
+            onClick={() => onPaxChange?.(pax + 1)}
+            className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center text-foreground hover:bg-accent/20 hover:text-accent transition-colors active:scale-90"
+          >
+            <Plus size={12} />
+          </button>
+        </div>
       </div>
 
       {/* Item list */}
