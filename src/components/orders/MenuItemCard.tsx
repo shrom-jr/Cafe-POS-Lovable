@@ -32,8 +32,14 @@ const MenuItemCard = ({ item, quantityInOrder = 0, onAdd, disabled = false }: Me
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-primary/80 text-accent text-4xl font-bold select-none">
-            {item.name.charAt(0)}
+          <div
+            className="w-full h-full flex items-center justify-center text-4xl font-black select-none"
+            style={{
+              background: 'linear-gradient(160deg, #111827 0%, #0d1425 100%)',
+              color: 'rgba(255,255,255,0.18)',
+            }}
+          >
+            {item.name.charAt(0).toUpperCase()}
           </div>
         )}
 

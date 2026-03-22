@@ -115,7 +115,7 @@ const OrderScreen = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col" style={{ background: 'linear-gradient(180deg, #0d1f2e 0%, #04100a 100%)' }}>
+    <div className="h-screen flex flex-col" style={{ background: 'linear-gradient(180deg, #0d1525 0%, #060e1a 100%)' }}>
       <TopBar title={`Table ${table.number}`} showBack onBack={() => navigate('/')} />
 
       {/* Payment-in-progress info banner */}

@@ -1,57 +1,62 @@
 import { useEffect, useState } from 'react';
 import { CafeTable } from '@/types/pos';
 
+const DARK_SURFACE = 'linear-gradient(160deg, #0f1929 0%, #0b1220 100%)';
+const HOVER_BORDER = 'rgba(59,130,246,0.38)';
+const HOVER_SHADOW = '0 6px 24px -4px rgba(59,130,246,0.18), inset 0 1px 0 0 rgba(59,130,246,0.05)';
+const BASE_SHADOW  = '0 2px 10px -2px rgba(0,0,0,0.55), inset 0 1px 0 0 rgba(255,255,255,0.03)';
+
 const statusConfig = {
   free: {
-    cardBg: 'linear-gradient(160deg, #0d1f18 0%, #091510 100%)',
-    cardBorder: 'rgba(16,185,129,0.28)',
-    cardShadow: '0 2px 10px -2px rgba(0,0,0,0.5), inset 0 1px 0 0 rgba(16,185,129,0.08)',
-    cardHoverBorder: 'rgba(59,130,246,0.45)',
-    cardHoverShadow: '0 6px 24px -4px rgba(59,130,246,0.25), inset 0 1px 0 0 rgba(59,130,246,0.1)',
+    cardBg: DARK_SURFACE,
+    cardBorder: 'rgba(16,185,129,0.22)',
+    cardShadow: BASE_SHADOW,
+    cardHoverBorder: HOVER_BORDER,
+    cardHoverShadow: HOVER_SHADOW,
     dotColor: '#10b981',
-    dotGlow: '0 0 6px 2px rgba(16,185,129,0.55)',
+    dotGlow: '0 0 6px 2px rgba(16,185,129,0.45)',
     dotPulse: false,
     label: 'Available',
-    labelBg: 'rgba(16,185,129,0.12)',
-    labelColor: 'rgba(52,211,153,0.85)',
-    numberColor: 'rgba(255,255,255,0.82)',
-    numberShadow: '0 0 10px rgba(16,185,129,0.2)',
+    labelBg: 'rgba(16,185,129,0.09)',
+    labelColor: 'rgba(52,211,153,0.78)',
+    numberColor: 'rgba(255,255,255,0.75)',
+    numberShadow: 'none',
     paxColor: '',
     metaColor: '',
   },
   occupied: {
-    cardBg: 'linear-gradient(160deg, #1e1408 0%, #140d04 100%)',
-    cardBorder: 'hsl(32 90% 50% / 0.45)',
-    cardShadow: '0 2px 14px -2px hsl(32 90% 40% / 0.25), inset 0 1px 0 0 hsl(32 90% 50% / 0.1)',
-    cardHoverBorder: 'rgba(59,130,246,0.45)',
-    cardHoverShadow: '0 6px 24px -4px rgba(59,130,246,0.25), inset 0 1px 0 0 rgba(59,130,246,0.1)',
+    cardBg: DARK_SURFACE,
+    cardBorder: 'hsl(32 90% 50% / 0.28)',
+    cardShadow: BASE_SHADOW,
+    cardHoverBorder: HOVER_BORDER,
+    cardHoverShadow: HOVER_SHADOW,
     dotColor: 'hsl(32 90% 55%)',
-    dotGlow: '0 0 6px 2px hsl(32 90% 50% / 0.6)',
+    dotGlow: '0 0 6px 2px hsl(32 90% 50% / 0.5)',
     dotPulse: true,
     label: 'Active',
-    labelBg: 'hsl(32 90% 50% / 0.15)',
-    labelColor: 'hsl(32 90% 68%)',
-    numberColor: 'rgba(255,255,255,0.92)',
-    numberShadow: '0 0 12px hsl(32 90% 50% / 0.3)',
-    paxColor: 'hsl(32 90% 65%)',
-    metaColor: 'hsl(32 60% 45%)',
+    labelBg: 'hsl(32 90% 50% / 0.11)',
+    labelColor: 'hsl(32 90% 65%)',
+    numberColor: 'rgba(255,255,255,0.88)',
+    numberShadow: 'none',
+    paxColor: 'hsl(32 85% 62%)',
+    metaColor: 'rgba(255,255,255,0.32)',
   },
   billing: {
-    cardBg: 'linear-gradient(160deg, #1e0d0d 0%, #130606 100%)',
-    cardBorder: 'hsl(0 72% 51% / 0.45)',
-    cardShadow: '0 2px 14px -2px hsl(0 72% 40% / 0.25), inset 0 1px 0 0 hsl(0 72% 51% / 0.1)',
-    cardHoverBorder: 'rgba(59,130,246,0.45)',
-    cardHoverShadow: '0 6px 24px -4px rgba(59,130,246,0.25), inset 0 1px 0 0 rgba(59,130,246,0.1)',
+    cardBg: DARK_SURFACE,
+    cardBorder: 'hsl(0 72% 51% / 0.28)',
+    cardShadow: BASE_SHADOW,
+    cardHoverBorder: HOVER_BORDER,
+    cardHoverShadow: HOVER_SHADOW,
     dotColor: 'hsl(0 72% 55%)',
-    dotGlow: '0 0 6px 2px hsl(0 72% 51% / 0.6)',
+    dotGlow: '0 0 6px 2px hsl(0 72% 51% / 0.5)',
     dotPulse: true,
     label: 'Billing',
-    labelBg: 'hsl(0 72% 51% / 0.15)',
-    labelColor: 'hsl(0 72% 68%)',
-    numberColor: 'rgba(255,255,255,0.92)',
-    numberShadow: '0 0 12px hsl(0 72% 51% / 0.3)',
-    paxColor: 'hsl(0 70% 65%)',
-    metaColor: 'hsl(0 40% 45%)',
+    labelBg: 'hsl(0 72% 51% / 0.11)',
+    labelColor: 'hsl(0 72% 65%)',
+    numberColor: 'rgba(255,255,255,0.88)',
+    numberShadow: 'none',
+    paxColor: 'hsl(0 70% 62%)',
+    metaColor: 'rgba(255,255,255,0.32)',
   },
 };
 
@@ -105,7 +110,7 @@ const TableCard = ({ table, itemCount = 0, onClick }: TableCardProps) => {
       {/* Top inner highlight */}
       <div
         className="absolute inset-0 rounded-2xl pointer-events-none"
-        style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 40%)' }}
+        style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.035) 0%, transparent 40%)' }}
       />
 
       {/* Status dot */}
@@ -115,7 +120,7 @@ const TableCard = ({ table, itemCount = 0, onClick }: TableCardProps) => {
       >
         {cfg.dotPulse && (
           <div
-            className="absolute inset-0 rounded-full animate-ping opacity-55"
+            className="absolute inset-0 rounded-full animate-ping opacity-50"
             style={{ background: cfg.dotColor, animationDuration: '2.2s' }}
           />
         )}
