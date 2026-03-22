@@ -6,7 +6,8 @@ import { useOrders } from '@/hooks/useOrders';
 import { useTables } from '@/hooks/useTables';
 import { calcBill } from '@/utils/calcBill';
 import { fmt, resolvePaymentLabel } from '@/utils/format';
-import { printer, formatReceipt, numberToWords } from '@/utils/printer';
+import { numberToWords } from '@/utils/printer';
+import { triggerPrint } from '@/utils/print';
 import { playSuccess } from '@/utils/sounds';
 import { format } from 'date-fns';
 import { QRCodeSVG } from 'qrcode.react';
@@ -16,16 +17,6 @@ import {
 } from 'lucide-react';
 
 const PRESETS = [0, 5, 10, 15];
-
-function triggerPrint(mode: 'receipt' | 'invoice') {
-  document.body.setAttribute('data-print', mode);
-  const cleanup = () => {
-    document.body.removeAttribute('data-print');
-    window.removeEventListener('afterprint', cleanup);
-  };
-  window.addEventListener('afterprint', cleanup);
-  setTimeout(() => window.print(), 80);
-}
 
 const ReviewScreen = () => {
   const { tableId } = useParams<{ tableId: string }>();
@@ -154,25 +145,6 @@ const ReviewScreen = () => {
     setPaid(true);
 
     triggerPrint('receipt');
-
-    if (printer.isConnected) {
-      await printer.print(
-        formatReceipt({
-          cafeName: settings.cafeName,
-          tableNumber,
-          items,
-          subtotal: bill.subtotal,
-          discount: bill.discountAmount,
-          vatAmount: bill.vatAmount,
-          vatRate: bill.vatRate,
-          vatEnabled: bill.vatEnabled,
-          total: bill.total,
-          method,
-          date: format(now, 'yyyy-MM-dd HH:mm'),
-          billNumber: bn,
-        })
-      );
-    }
   };
 
   // ── Early exits ───────────────────────────────────────────────
@@ -345,28 +317,10 @@ const ReviewScreen = () => {
     const displayItems = items.slice(0, 3);
     const extraCount = items.length - displayItems.length;
 
-    const handleReprint = async () => {
+    const handleReprint = () => {
       if (reprinting) return;
       setReprinting(true);
       triggerPrint('receipt');
-      if (printer.isConnected) {
-        await printer.print(
-          formatReceipt({
-            cafeName: settings.cafeName,
-            tableNumber,
-            items,
-            subtotal: bill.subtotal,
-            discount: bill.discountAmount,
-            vatAmount: bill.vatAmount,
-            vatRate: bill.vatRate,
-            vatEnabled: bill.vatEnabled,
-            total: bill.total,
-            method: paidMethod,
-            date: format(paidAt || Date.now(), 'yyyy-MM-dd HH:mm'),
-            billNumber: billNum,
-          })
-        );
-      }
       setTimeout(() => setReprinting(false), 1800);
     };
 

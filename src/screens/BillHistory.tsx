@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { usePOSStore } from '@/store/usePOSStore';
 import { fmt, resolvePaymentLabel } from '@/utils/format';
 import AppLayout from '@/components/ui/AppLayout';
 import ReceiptPreview from '@/components/ReceiptPreview';
 import { Search, Printer, Receipt, X, Calendar } from 'lucide-react';
 import { format, isToday, isYesterday, isSameDay } from 'date-fns';
-import { printer, formatReceipt } from '@/utils/printer';
+import { triggerPrint } from '@/utils/print';
 import type { Payment } from '@/types/pos';
 
 type DateFilter = 'today' | 'yesterday' | 'custom';
@@ -19,8 +20,6 @@ const BillHistory = () => {
   const [customDate, setCustomDate] = useState('');
   const [methodFilter, setMethodFilter] = useState('');
   const [selectedBill, setSelectedBill] = useState<Payment | null>(null);
-  const [printError, setPrintError] = useState(false);
-  const [printing, setPrinting] = useState(false);
 
   const baseList = useMemo(() => {
     let list = [...payments].sort((a, b) => b.createdAt - a.createdAt);
@@ -52,40 +51,11 @@ const BillHistory = () => {
     return list;
   }, [baseList, search, methodFilter]);
 
-  const handleReprint = async (p: Payment) => {
-    setPrintError(false);
-    setPrinting(true);
-
-    const discountAmount =
-      p.discountType === 'percent'
-        ? Math.round((p.subtotal * p.discount) / 100)
-        : p.discount ?? 0;
-
-    const printPayload = {
-      cafeName: p.cafeName ?? settings.cafeName,
-      tableNumber: p.tableNumber,
-      items: p.items.map((item) => ({
-        name: item.name,
-        quantity: item.quantity,
-        price: item.price,
-      })),
-      subtotal: p.subtotal ?? 0,
-      discount: discountAmount,
-      vatAmount: p.vatAmount ?? 0,
-      vatRate: p.vatRate ?? 0.13,
-      vatEnabled: p.vatEnabled ?? false,
-      total: p.total ?? 0,
-      method: p.method,
-      date: format(p.createdAt, 'yyyy-MM-dd HH:mm'),
-      billNumber: p.billNumber,
-    };
-
-    console.log('PRINT DATA:', printPayload);
-
-    const ok = await printer.print(formatReceipt(printPayload));
-    setPrinting(false);
-    if (!ok) setPrintError(true);
+  const handlePrint = () => {
+    triggerPrint('receipt');
   };
+
+  const closeModal = () => setSelectedBill(null);
 
   const methodBadgeColor = (method: string) => {
     if (method === 'cash') return 'bg-success/15 text-success';
@@ -228,7 +198,7 @@ const BillHistory = () => {
       {selectedBill && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          onClick={() => { setSelectedBill(null); setPrintError(false); }}
+          onClick={closeModal}
         >
           <div
             className="w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-2xl bg-background border border-border shadow-2xl"
@@ -243,7 +213,7 @@ const BillHistory = () => {
                 </p>
               </div>
               <button
-                onClick={() => { setSelectedBill(null); setPrintError(false); }}
+                onClick={closeModal}
                 className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
               >
                 <X size={16} />
@@ -272,21 +242,104 @@ const BillHistory = () => {
             {/* Print button */}
             <div className="px-4 pb-4">
               <button
-                onClick={() => handleReprint(selectedBill)}
-                disabled={printing}
-                className="w-full py-3 rounded-xl bg-accent text-accent-foreground font-bold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60"
+                onClick={handlePrint}
+                className="w-full py-3 rounded-xl bg-accent text-accent-foreground font-bold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
               >
                 <Printer size={16} />
-                {printing ? 'Printing…' : 'Print Bill'}
+                Print Bill
               </button>
-              {printError && (
-                <p className="text-center text-xs text-destructive mt-2">
-                  Print failed. Check that the printer is connected and try again.
-                </p>
-              )}
             </div>
           </div>
         </div>
+      )}
+
+      {/* Print portal — same receipt template as checkout */}
+      {selectedBill && createPortal(
+        <div
+          id="print-receipt"
+          style={{
+            display: 'none',
+            fontFamily: "'Courier New', Courier, monospace",
+            fontSize: 12,
+            lineHeight: 1.5,
+            color: '#000',
+            background: '#fff',
+            padding: '6mm',
+            width: '80mm',
+          }}
+        >
+          <div style={{ textAlign: 'center', marginBottom: 6 }}>
+            <div style={{ fontSize: 15, fontWeight: 900 }}>{selectedBill.cafeName || settings.cafeName}</div>
+            {settings.cafeAddress && <div style={{ fontSize: 11 }}>{settings.cafeAddress}</div>}
+            {settings.cafePhone && <div style={{ fontSize: 11 }}>{settings.cafePhone}</div>}
+          </div>
+
+          <div style={{ borderTop: '1px dashed #000', margin: '5px 0' }} />
+
+          <div style={{ fontSize: 11, marginBottom: 5 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Bill #{selectedBill.billNumber}</span>
+              <span>Table {selectedBill.tableNumber}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>{format(selectedBill.createdAt, 'dd MMM yyyy')}</span>
+              <span>{format(selectedBill.createdAt, 'HH:mm')}</span>
+            </div>
+          </div>
+
+          <div style={{ borderTop: '1px dashed #000', margin: '5px 0' }} />
+
+          {selectedBill.items.map((item) => (
+            <div key={item.menuItemId} style={{ marginBottom: 2 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                <span style={{ flex: 1, paddingRight: 4 }}>{item.name}</span>
+                <span style={{ whiteSpace: 'nowrap' }}>Rs. {item.price * item.quantity}</span>
+              </div>
+              <div style={{ fontSize: 11, color: '#333' }}>
+                {item.quantity} × Rs. {item.price}
+              </div>
+            </div>
+          ))}
+
+          <div style={{ borderTop: '1px dashed #000', margin: '5px 0' }} />
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 2 }}>
+            <span>Subtotal</span><span>Rs. {selectedBill.subtotal}</span>
+          </div>
+          {(() => {
+            const discountAmount =
+              selectedBill.discountType === 'percent'
+                ? Math.round((selectedBill.subtotal * selectedBill.discount) / 100)
+                : selectedBill.discount ?? 0;
+            return discountAmount > 0 ? (
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 2 }}>
+                <span>Discount</span><span>-Rs. {discountAmount}</span>
+              </div>
+            ) : null;
+          })()}
+          {(selectedBill.vatEnabled ?? false) && (selectedBill.vatAmount ?? 0) > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 2 }}>
+              <span>VAT ({Math.round((selectedBill.vatRate ?? 0.13) * 100)}%)</span>
+              <span>Rs. {selectedBill.vatAmount}</span>
+            </div>
+          )}
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 900, marginTop: 4 }}>
+            <span>TOTAL</span><span>Rs. {selectedBill.total}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginTop: 2 }}>
+            <span>Payment</span>
+            <span style={{ textTransform: 'uppercase', fontWeight: 700 }}>
+              {resolvePaymentLabel(selectedBill.method, settings)}
+            </span>
+          </div>
+
+          <div style={{ borderTop: '1px dashed #000', margin: '5px 0' }} />
+
+          <div style={{ textAlign: 'center', fontSize: 11 }}>
+            {settings.billFooter || 'Thank you for visiting!'}
+          </div>
+        </div>,
+        document.body
       )}
     </AppLayout>
   );

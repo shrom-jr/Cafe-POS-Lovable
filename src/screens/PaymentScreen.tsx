@@ -8,21 +8,11 @@ import { TopBar } from '@/components/ui/Navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import { Banknote, Smartphone, CheckCircle2, Home, X, Loader2, Printer, FileText } from 'lucide-react';
 import { resolvePaymentLabel } from '@/utils/format';
-import { printer, formatReceipt, numberToWords } from '@/utils/printer';
+import { numberToWords } from '@/utils/printer';
+import { triggerPrint } from '@/utils/print';
 import { format } from 'date-fns';
 import { OrderItem } from '@/types/pos';
 import { playSuccess } from '@/utils/sounds';
-
-// ── Trigger window.print() with a data-print mode on <body> ──
-function triggerPrint(mode: 'receipt' | 'invoice') {
-  document.body.setAttribute('data-print', mode);
-  const cleanup = () => {
-    document.body.removeAttribute('data-print');
-    window.removeEventListener('afterprint', cleanup);
-  };
-  window.addEventListener('afterprint', cleanup);
-  setTimeout(() => window.print(), 80);
-}
 
 const PaymentScreen = () => {
   const { tableId } = useParams<{ tableId: string }>();
@@ -154,25 +144,6 @@ const PaymentScreen = () => {
 
     // Auto-print simple receipt
     triggerPrint('receipt');
-
-    if (printer.isConnected) {
-      await printer.print(
-        formatReceipt({
-          cafeName: settings.cafeName,
-          tableNumber: snap.tableNumber,
-          items: snap.items,
-          subtotal,
-          discount: discountAmount,
-          vatAmount,
-          vatRate,
-          vatEnabled,
-          total: finalTotal,
-          method,
-          date: format(now, 'yyyy-MM-dd HH:mm'),
-          billNumber: bn,
-        })
-      );
-    }
   };
 
   /* ── RECEIPT PORTAL (simple thermal receipt) ──────────────── */
@@ -362,28 +333,10 @@ const PaymentScreen = () => {
     const displayItems = snap.items.slice(0, 3);
     const extraCount = snap.items.length - displayItems.length;
 
-    const handleReprint = async () => {
+    const handleReprint = () => {
       if (reprinting) return;
       setReprinting(true);
       triggerPrint('receipt');
-      if (printer.isConnected) {
-        await printer.print(
-          formatReceipt({
-            cafeName: settings.cafeName,
-            tableNumber: snap.tableNumber,
-            items: snap.items,
-            subtotal,
-            discount: discountAmount,
-            vatAmount,
-            vatRate,
-            vatEnabled,
-            total: finalTotal,
-            method: paidMethod,
-            date: format(paidAt || Date.now(), 'yyyy-MM-dd HH:mm'),
-            billNumber: billNum,
-          })
-        );
-      }
       setTimeout(() => setReprinting(false), 1800);
     };
 
