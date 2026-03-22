@@ -13,7 +13,7 @@ function useClock() {
     const id = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
-  return time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  return time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 const TableOverview = () => {
@@ -46,13 +46,18 @@ const TableOverview = () => {
 
   const headerRight = (
     <>
-      <span className="text-sm font-semibold">
-        <span className="text-success">{counts.available} Available</span>
-        <span className="text-muted-foreground/50 mx-2">•</span>
-        <span className="text-warning">{counts.active} Active</span>
-      </span>
-      <div className="h-6 w-px bg-white/10" />
-      <span className="font-mono text-sm font-semibold text-muted-foreground tabular-nums min-w-[76px] text-right">
+      <div className="flex items-center gap-3">
+        <span className="flex items-center gap-1.5 text-sm font-semibold tabular-nums">
+          <span className="w-2 h-2 rounded-full bg-success inline-block" />
+          <span className="text-foreground/70">{counts.available}</span>
+        </span>
+        <span className="flex items-center gap-1.5 text-sm font-semibold tabular-nums">
+          <span className="w-2 h-2 rounded-full bg-warning inline-block" />
+          <span className="text-foreground/70">{counts.active}</span>
+        </span>
+      </div>
+      <div className="h-4 w-px bg-white/10" />
+      <span className="font-mono text-sm font-medium text-foreground/40 tabular-nums">
         {clock}
       </span>
     </>
