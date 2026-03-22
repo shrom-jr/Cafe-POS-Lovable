@@ -497,7 +497,7 @@ const ReviewScreen = () => {
 
         {/* Body — flex column, items scroll, bottom is fixed */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="max-w-[460px] mx-auto w-full flex flex-col flex-1 min-h-0 px-4 pt-4 pb-3 gap-3">
+          <div className="max-w-[460px] mx-auto w-full flex flex-col flex-1 min-h-0 px-4 pt-3 pb-2 gap-2">
 
             {/* ── Items card (scrollable) ── */}
             <div
@@ -532,7 +532,7 @@ const ReviewScreen = () => {
             </div>
 
             {/* ── Fixed bottom section ── */}
-            <div className="flex-shrink-0 flex flex-col gap-3">
+            <div className="flex-shrink-0 flex flex-col gap-2">
 
               {/* Billing summary + total */}
               <div
@@ -542,7 +542,7 @@ const ReviewScreen = () => {
                   border: '1px solid rgba(255,255,255,0.09)',
                 }}
               >
-                <div className="px-4 py-3 space-y-2">
+                <div className="px-4 py-2 space-y-1.5">
                   <div className="flex justify-between items-center">
                     <span className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>Subtotal</span>
                     <span className="text-xs font-semibold tabular-nums" style={{ color: 'rgba(255,255,255,0.85)' }}>
@@ -570,11 +570,11 @@ const ReviewScreen = () => {
                   )}
                 </div>
                 <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', margin: '0 16px' }} />
-                <div className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center justify-between px-4 py-2">
                   <span className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: 'rgba(255,255,255,0.35)' }}>
                     Total
                   </span>
-                  <span className="text-[34px] font-black tracking-tight leading-none tabular-nums" style={{ color: '#ffffff' }}>
+                  <span className="text-[28px] font-black tracking-tight leading-none tabular-nums" style={{ color: '#ffffff' }}>
                     Rs. {bill.total}
                   </span>
                 </div>
@@ -582,7 +582,7 @@ const ReviewScreen = () => {
 
             {/* ── Discount card ── */}
             <div
-              className="rounded-2xl px-4 py-3 space-y-2"
+              className="rounded-2xl px-4 py-2 space-y-1.5"
               style={{
                 background: 'rgba(255,255,255,0.03)',
                 border: '1px solid rgba(255,255,255,0.07)',
@@ -651,7 +651,7 @@ const ReviewScreen = () => {
 
             {/* ── Payment Method card ── */}
             <div
-              className="rounded-2xl px-4 py-3 space-y-2.5"
+              className="rounded-2xl px-4 py-2 space-y-1.5"
               style={{
                 background: 'rgba(255,255,255,0.04)',
                 border: '1px solid rgba(255,255,255,0.09)',
@@ -666,7 +666,7 @@ const ReviewScreen = () => {
               <button
                 onClick={() => handleConfirmPayment('cash')}
                 data-testid="button-payment-method-cash"
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all active:scale-[0.97]"
+                className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all active:scale-[0.97]"
                 style={{
                   background: 'rgba(52,211,153,0.07)',
                   border: '1px solid rgba(52,211,153,0.25)',
