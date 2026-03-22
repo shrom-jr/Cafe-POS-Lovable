@@ -495,13 +495,13 @@ const ReviewScreen = () => {
           </div>
         </div>
 
-        {/* Body — flex column, items scroll, bottom is fixed */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="max-w-[460px] mx-auto w-full flex flex-col flex-1 min-h-0 px-4 pt-2.5 pb-2 gap-1.5">
+        {/* Body — scrollable column */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-[460px] mx-auto w-full px-4 pt-2.5 pb-4 flex flex-col gap-1.5">
 
-            {/* ── Items card (scrollable) ── */}
+            {/* ── Items card ── */}
             <div
-              className="flex-1 min-h-0 rounded-xl overflow-hidden flex flex-col"
+              className="flex-shrink-0 rounded-xl overflow-hidden"
               style={{
                 background: 'rgba(255,255,255,0.04)',
                 border: '1px solid rgba(255,255,255,0.06)',
@@ -517,12 +517,12 @@ const ReviewScreen = () => {
                   Order Items
                 </span>
               </div>
-              <div className="overflow-y-auto flex-1 min-h-0">
-                {items.map((item, idx) => (
+              <div>
+                {items.slice(0, 3).map((item, idx) => (
                   <div
                     key={item.menuItemId}
                     className="flex items-center gap-3 px-3 py-2"
-                    style={idx < items.length - 1 ? { borderBottom: '1px solid rgba(255,255,255,0.04)' } : {}}
+                    style={idx < Math.min(items.length, 3) - 1 ? { borderBottom: '1px solid rgba(255,255,255,0.04)' } : {}}
                   >
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold truncate leading-snug" style={{ color: 'rgba(255,255,255,0.95)' }}>
@@ -537,11 +537,21 @@ const ReviewScreen = () => {
                     </p>
                   </div>
                 ))}
+                {items.length > 3 && (
+                  <div
+                    className="px-3 py-1.5"
+                    style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}
+                  >
+                    <p className="text-xs" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                      +{items.length - 3} more item{items.length - 3 !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* ── Fixed bottom section ── */}
-            <div className="flex-shrink-0 flex flex-col gap-1.5">
+            {/* ── Bill + Payment section ── */}
+            <div className="flex flex-col gap-1.5">
 
               {/* ── Unified bill card: subtotal + discount controls + VAT + total ── */}
               <div
