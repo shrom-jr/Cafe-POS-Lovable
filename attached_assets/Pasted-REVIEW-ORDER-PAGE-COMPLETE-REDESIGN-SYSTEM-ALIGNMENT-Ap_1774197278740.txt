@@ -1,0 +1,169 @@
+REVIEW ORDER PAGE — COMPLETE REDESIGN + SYSTEM ALIGNMENT
+
+Apply changes ONLY to the Review Order page.
+Do NOT modify dashboard or table page.
+
+---
+
+🎯 GOAL
+
+Transform this page into a clean, centered, professional checkout experience:
+
+* fix excessive width
+* improve structure and hierarchy
+* align with blue-based theme
+* make actions and total very clear
+
+---
+
+📐 LAYOUT (MAJOR FIX)
+
+* Wrap entire content in a centered container:
+  max-width: 900px
+  margin: auto
+
+* Add vertical spacing between sections
+
+* Avoid full-width stretched layout
+
+---
+
+📦 SECTION STRUCTURE
+
+Create 3 clear sections:
+
+1. Order Items
+2. Billing Summary
+3. Payment Action
+
+Each section should feel like a separate card
+
+---
+
+📦 ORDER ITEMS
+
+* Place inside a card container
+
+* Each item row:
+
+  * name (left, stronger text)
+  * quantity + price (right)
+
+* Increase row spacing
+
+* Add subtle divider between items
+
+---
+
+📊 BILLING SUMMARY
+
+* Separate card below items
+
+* Include:
+
+  * Subtotal
+  * Discount
+  * VAT
+
+* Labels:
+  muted (white/60–70)
+
+* Values:
+  brighter (white/85–100)
+
+---
+
+💰 TOTAL (IMPORTANT FIX)
+
+* Place at bottom of billing card
+
+* Change color → WHITE (not green)
+
+* Increase size significantly
+
+* Make bold / high emphasis
+
+* Add spacing above
+
+---
+
+🎛 DISCOUNT SECTION
+
+* Keep but make compact
+
+* Reduce height of buttons (0%, 5%, etc.)
+
+* Make it visually secondary (not dominant)
+
+---
+
+🔘 PRIMARY BUTTON (CRITICAL FIX)
+
+* "Proceed to Payment" MUST be BLUE (not green)
+
+* Use same blue as system accent:
+  (tabs, + buttons)
+
+* Style:
+
+  * white text
+  * subtle gradient (optional)
+  * soft shadow/glow
+
+* Full width INSIDE container (not full screen)
+
+* Slightly increase height
+
+---
+
+🎨 COLOR SYSTEM RULE
+
+* Blue → primary actions (buttons, interaction)
+* Green → status only (success, availability)
+* Orange → active/in-progress
+
+DO NOT mix roles
+
+---
+
+🧭 HEADER
+
+* Keep simple:
+  "Review Order"
+  small subtitle (Table name)
+
+* Reduce unnecessary empty space
+
+---
+
+🎨 VISUAL STYLE
+
+* Use card surfaces (slightly lighter than background)
+
+* Add soft shadow for depth
+
+* Maintain dark blue theme
+
+---
+
+🚫 REMOVE
+
+* full-width stretched layout
+* green primary button
+* green total price
+* oversized discount controls
+* weak text contrast
+
+---
+
+🎯 RESULT
+
+Page should feel:
+
+* centered
+* structured
+* easy to scan
+* clearly actionable
+
+User flow should be:
+Items → Total → Button (no confusion)
