@@ -202,7 +202,13 @@ const OrderScreen = () => {
 
         {/* Right: Order Panel — desktop only */}
         {!isMobile && (
-          <div className="w-[340px] lg:w-[380px] flex-shrink-0 border-l border-border flex flex-col">
+          <div
+            className="w-[340px] lg:w-[380px] flex-shrink-0 flex flex-col"
+            style={{
+              borderLeft: '1px solid rgba(255,255,255,0.10)',
+              boxShadow: '-10px 0 30px rgba(0,0,0,0.4)',
+            }}
+          >
             <OrderPanel
               order={order}
               onUpdateQty={(menuItemId, delta) =>
