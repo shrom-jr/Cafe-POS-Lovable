@@ -1,0 +1,169 @@
+REVIEW ORDER PAGE — DETAILED REFINEMENT (BASED ON CURRENT APP + REFERENCE STRUCTURE)
+
+Apply changes ONLY to Review Order page.
+
+---
+
+🎯 GOAL
+
+Improve structure, readability, and focus using a compact centered layout, while staying consistent with the app’s blue theme and current flow.
+
+---
+
+📐 LAYOUT
+
+* Center the entire content
+
+* Use:
+  max-width: 440px – 480px
+  margin: auto
+
+* Keep vertical stacking:
+
+  1. Header
+  2. Main card (items + billing)
+  3. Action button
+
+* Add consistent vertical spacing between sections
+
+---
+
+🧭 HEADER (KEEP SIMPLE)
+
+* Left: back arrow
+
+* Center/left: "Review Order"
+
+* Small subtitle: table name
+
+* Reduce height (avoid large empty space)
+
+---
+
+📦 MAIN CARD (IMPORTANT)
+
+* Single container holding:
+
+  * items
+  * billing summary
+  * total
+
+* Style:
+
+  * slightly lighter than background
+  * rounded corners
+  * padding on all sides
+  * subtle shadow for separation
+
+---
+
+🧾 ITEMS LIST
+
+* Each row layout:
+  left → item name
+  right → qty × price OR total amount
+
+* Spacing:
+
+  * increase vertical padding per row
+  * keep rows breathable
+
+* Divider:
+
+  * thin line between items (low opacity)
+
+---
+
+📊 BILLING SUMMARY (INSIDE SAME CARD)
+
+Place below items:
+
+* Subtotal
+* Discount
+* VAT
+
+Style:
+
+* labels → muted (white/60–70)
+
+* values → clearer (white/85–100)
+
+* Align:
+  labels left, values right
+
+---
+
+💰 TOTAL (KEY FOCUS)
+
+* Place at bottom of card
+
+* Add spacing above (clear separation)
+
+* Style:
+
+  * larger font size
+  * bold weight
+  * color: WHITE
+
+* Make it the most visible element in the card
+
+---
+
+🔘 PRIMARY ACTION
+
+"Proceed to Payment"
+
+* Position:
+  below the main card
+
+* Style:
+
+  * blue background (same as system primary)
+  * white text
+  * full width (within container)
+  * slightly increased height
+
+* Add:
+  subtle shadow or depth for click feel
+
+---
+
+🎨 VISUAL CONSISTENCY
+
+* Follow existing blue-based theme
+
+* Keep:
+
+  * background darker
+  * card slightly lighter
+
+* Maintain clear contrast between layers
+
+---
+
+📊 TYPOGRAPHY HIERARCHY
+
+* Item name → primary readable text
+* Price → clear and visible
+* Secondary info → slightly muted
+
+Ensure text is easy to scan quickly
+
+---
+
+📐 SPACING
+
+* Avoid large empty areas
+
+* Keep layout compact but breathable
+
+* Maintain consistent padding across sections
+
+---
+
+🎯 RESULT
+
+* Centered and focused layout
+* Clean structure (items → summary → total → action)
+* Easy to scan and fast to use
+* Consistent with rest of the app

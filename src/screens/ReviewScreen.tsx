@@ -92,19 +92,19 @@ const ReviewScreen = () => {
       className="h-screen flex flex-col overflow-hidden"
       style={{ background: 'linear-gradient(180deg, #0d1525 0%, #060e1a 100%)' }}
     >
-      {/* Header */}
+      {/* ── Header ── */}
       <div
-        className="flex-shrink-0 flex items-center gap-3 px-4 py-3"
+        className="flex-shrink-0 flex items-center gap-3 px-4 py-2.5"
         style={{
           borderBottom: '1px solid rgba(255,255,255,0.07)',
-          background: 'rgba(13,21,37,0.85)',
+          background: 'rgba(13,21,37,0.9)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
         }}
       >
         <button
           onClick={() => navigate(`/order/${tableId}`)}
-          className="w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 hover:text-white"
+          className="w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90"
           style={{
             background: 'rgba(255,255,255,0.07)',
             border: '1px solid rgba(255,255,255,0.1)',
@@ -113,43 +113,33 @@ const ReviewScreen = () => {
         >
           <ChevronLeft size={17} />
         </button>
-        <div className="flex-1 min-w-0">
-          <p className="font-black text-white text-[14px] leading-tight tracking-wide">Review Order</p>
-          <p className="text-[11px] leading-tight mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+        <div>
+          <p className="font-black text-white text-sm leading-tight">Review Order</p>
+          <p className="text-[11px] leading-tight" style={{ color: 'rgba(255,255,255,0.38)' }}>
             Table {table.number}
           </p>
         </div>
       </div>
 
-      {/* Scrollable body */}
-      <div className="flex-1 overflow-y-auto py-5">
-        <div className="max-w-[900px] mx-auto px-4 space-y-3">
+      {/* ── Scrollable body ── */}
+      <div className="flex-1 overflow-y-auto py-4">
+        <div className="max-w-[460px] mx-auto px-4 flex flex-col gap-3">
 
-          {/* ── Card 1: Order Items ── */}
+          {/* ── Main card: items + billing + total ── */}
           <div
             className="rounded-2xl overflow-hidden"
             style={{
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              boxShadow: '0 4px 24px -6px rgba(0,0,0,0.4)',
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.09)',
+              boxShadow: '0 8px 32px -8px rgba(0,0,0,0.5)',
             }}
           >
-            <div
-              className="px-4 py-2.5"
-              style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}
-            >
-              <p
-                className="text-[10px] font-black uppercase tracking-[0.16em]"
-                style={{ color: 'rgba(255,255,255,0.35)' }}
-              >
-                Order Items
-              </p>
-            </div>
+            {/* Items */}
             <div>
               {items.map((item, idx) => (
                 <div
                   key={item.menuItemId}
-                  className="flex items-center gap-3 px-4 py-3"
+                  className="flex items-center gap-3 px-4 py-3.5"
                   style={
                     idx < items.length - 1
                       ? { borderBottom: '1px solid rgba(255,255,255,0.05)' }
@@ -163,40 +153,28 @@ const ReviewScreen = () => {
                     >
                       {item.name}
                     </p>
-                    <p
-                      className="text-xs leading-snug mt-0.5"
-                      style={{ color: 'rgba(255,255,255,0.38)' }}
-                    >
-                      Rs. {item.price} × {item.quantity}
+                    <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.38)' }}>
+                      {item.quantity} × Rs. {item.price}
                     </p>
                   </div>
                   <p
-                    className="text-sm font-bold whitespace-nowrap tabular-nums"
-                    style={{ color: 'rgba(255,255,255,0.90)' }}
+                    className="text-sm font-bold tabular-nums whitespace-nowrap"
+                    style={{ color: 'rgba(255,255,255,0.88)' }}
                   >
                     Rs. {item.price * item.quantity}
                   </p>
                 </div>
               ))}
             </div>
-          </div>
 
-          {/* ── Card 2: Billing Summary ── */}
-          <div
-            className="rounded-2xl px-4 py-4 space-y-3"
-            style={{
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              boxShadow: '0 4px 24px -6px rgba(0,0,0,0.4)',
-            }}
-          >
-            <div className="space-y-2">
+            {/* Separator between items and billing */}
+            <div style={{ height: 1, background: 'rgba(255,255,255,0.08)' }} />
+
+            {/* Billing summary */}
+            <div className="px-4 py-3 space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>Subtotal</span>
-                <span
-                  className="text-xs font-semibold tabular-nums"
-                  style={{ color: 'rgba(255,255,255,0.85)' }}
-                >
+                <span className="text-xs font-semibold tabular-nums" style={{ color: 'rgba(255,255,255,0.85)' }}>
                   Rs. {bill.subtotal}
                 </span>
               </div>
@@ -204,9 +182,7 @@ const ReviewScreen = () => {
                 <span className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>Discount</span>
                 <span
                   className="text-xs font-semibold tabular-nums"
-                  style={{
-                    color: bill.discountAmount > 0 ? 'rgba(52,211,153,0.9)' : 'rgba(255,255,255,0.28)',
-                  }}
+                  style={{ color: bill.discountAmount > 0 ? 'rgba(52,211,153,0.9)' : 'rgba(255,255,255,0.28)' }}
                 >
                   −Rs. {bill.discountAmount}
                 </span>
@@ -216,27 +192,26 @@ const ReviewScreen = () => {
                   <span className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
                     VAT ({Math.round(bill.vatRate * 100)}%)
                   </span>
-                  <span
-                    className="text-xs font-semibold tabular-nums"
-                    style={{ color: 'rgba(255,255,255,0.85)' }}
-                  >
+                  <span className="text-xs font-semibold tabular-nums" style={{ color: 'rgba(255,255,255,0.85)' }}>
                     Rs. {bill.vatAmount}
                   </span>
                 </div>
               )}
             </div>
 
-            <div style={{ height: 1, background: 'rgba(255,255,255,0.08)' }} />
+            {/* Separator before total */}
+            <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', margin: '0 16px' }} />
 
-            <div className="flex items-end justify-between pt-1">
+            {/* Total */}
+            <div className="flex items-center justify-between px-4 py-4">
               <span
-                className="text-[10px] font-black uppercase tracking-[0.18em] leading-none mb-1"
+                className="text-[11px] font-black uppercase tracking-[0.16em]"
                 style={{ color: 'rgba(255,255,255,0.35)' }}
               >
                 Total
               </span>
               <span
-                className="text-[36px] font-black tracking-tight leading-none tabular-nums"
+                className="text-[34px] font-black tracking-tight leading-none tabular-nums"
                 style={{ color: '#ffffff' }}
               >
                 Rs. {bill.total}
@@ -244,7 +219,7 @@ const ReviewScreen = () => {
             </div>
           </div>
 
-          {/* ── Card 3: Discount ── */}
+          {/* ── Discount card ── */}
           <div
             className="rounded-2xl px-4 py-3 space-y-2"
             style={{
@@ -254,13 +229,13 @@ const ReviewScreen = () => {
           >
             <p
               className="text-[10px] font-black uppercase tracking-[0.14em]"
-              style={{ color: 'rgba(255,255,255,0.3)' }}
+              style={{ color: 'rgba(255,255,255,0.28)' }}
             >
               Discount
             </p>
 
             {/* Preset pills */}
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
               {PRESETS.map((pct) => {
                 const isActive = activePreset === pct && discountMode === 'percent';
                 return (
@@ -276,9 +251,9 @@ const ReviewScreen = () => {
                             border: '1px solid rgba(59,130,246,0.38)',
                           }
                         : {
-                            background: 'rgba(255,255,255,0.05)',
-                            color: 'rgba(255,255,255,0.42)',
-                            border: '1px solid rgba(255,255,255,0.09)',
+                            background: 'rgba(255,255,255,0.04)',
+                            color: 'rgba(255,255,255,0.40)',
+                            border: '1px solid rgba(255,255,255,0.08)',
                           }
                     }
                   >
@@ -288,19 +263,19 @@ const ReviewScreen = () => {
               })}
             </div>
 
-            {/* Mode toggle + custom input */}
+            {/* Mode toggle + input */}
             <div className="flex gap-2 items-center">
               <div
                 className="flex rounded-lg overflow-hidden flex-shrink-0 text-[11px] font-bold"
-                style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)' }}
+                style={{ border: '1px solid rgba(255,255,255,0.09)', background: 'rgba(255,255,255,0.04)' }}
               >
                 <button
                   onClick={() => handleModeToggle('percent')}
                   className="px-3 py-1.5 transition-colors"
                   style={
                     discountMode === 'percent'
-                      ? { background: 'rgba(59,130,246,0.28)', color: 'rgba(147,197,253,0.95)' }
-                      : { color: 'rgba(255,255,255,0.38)' }
+                      ? { background: 'rgba(59,130,246,0.25)', color: 'rgba(147,197,253,0.95)' }
+                      : { color: 'rgba(255,255,255,0.36)' }
                   }
                 >
                   %
@@ -310,8 +285,8 @@ const ReviewScreen = () => {
                   className="px-3 py-1.5 transition-colors"
                   style={
                     discountMode === 'fixed'
-                      ? { background: 'rgba(59,130,246,0.28)', color: 'rgba(147,197,253,0.95)' }
-                      : { color: 'rgba(255,255,255,0.38)', borderLeft: '1px solid rgba(255,255,255,0.08)' }
+                      ? { background: 'rgba(59,130,246,0.25)', color: 'rgba(147,197,253,0.95)' }
+                      : { color: 'rgba(255,255,255,0.36)', borderLeft: '1px solid rgba(255,255,255,0.08)' }
                   }
                 >
                   Rs
@@ -326,23 +301,23 @@ const ReviewScreen = () => {
                 onChange={(e) => handleInputChange(e.target.value)}
                 className="flex-1 px-3 py-1.5 rounded-lg text-[13px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none transition-all"
                 style={{
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.09)',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.08)',
                 }}
                 onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(59,130,246,0.5)'; }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.09)'; }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
               />
             </div>
           </div>
 
-          {/* ── Primary Action ── */}
+          {/* ── Primary action ── */}
           <button
             onClick={handlePay}
             disabled={items.length === 0}
-            className="w-full py-4 rounded-xl text-white font-black text-[17px] tracking-wide transition-all active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
+            className="w-full py-[14px] rounded-xl text-white font-black text-base tracking-wide transition-all active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
             style={{
               background: 'linear-gradient(135deg, #1e50d0 0%, #4186f5 100%)',
-              boxShadow: '0 4px 20px -4px rgba(59,130,246,0.55), inset 0 1px 0 rgba(255,255,255,0.12)',
+              boxShadow: '0 4px 20px -4px rgba(59,130,246,0.6), inset 0 1px 0 rgba(255,255,255,0.12)',
             }}
           >
             Proceed to Payment →
