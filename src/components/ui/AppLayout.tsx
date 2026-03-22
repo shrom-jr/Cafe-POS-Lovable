@@ -26,20 +26,17 @@ const AppLayout = ({ title, headerRight, children }: AppLayoutProps) => {
       }}
     >
       {/* ── Top navigation bar ── */}
-      <header className="flex-shrink-0 flex items-stretch h-[54px] px-6 border-b border-white/[0.1] bg-black/30 backdrop-blur-md">
+      <header className="flex-shrink-0 flex items-stretch h-14 px-6 border-b border-white/[0.06] bg-black/25 backdrop-blur-md">
 
         {/* Left: café / screen name */}
-        <div className="flex items-center pr-6 min-w-0">
+        <div className="flex items-center flex-1 min-w-0">
           <span className="text-sm font-bold text-foreground tracking-tight truncate select-none">
             {title}
           </span>
         </div>
 
-        {/* Left divider */}
-        <div className="w-px my-3.5 bg-white/[0.08] flex-shrink-0" />
-
         {/* Center: tab navigation */}
-        <nav className="flex items-stretch px-2">
+        <nav className="flex items-stretch">
           {navItems.map(({ path, label }) => {
             const active = location.pathname === path;
             return (
@@ -48,27 +45,24 @@ const AppLayout = ({ title, headerRight, children }: AppLayoutProps) => {
                 onClick={() => navigate(path)}
                 data-testid={`nav-${label.toLowerCase()}`}
                 className={`
-                  relative px-5 flex items-center text-[13px] font-semibold
+                  relative px-5 flex items-center text-sm font-semibold
                   transition-colors duration-150 select-none
                   ${active
                     ? 'text-foreground'
-                    : 'text-muted-foreground/70 hover:text-foreground/60'}
+                    : 'text-muted-foreground hover:text-foreground/70'}
                 `}
               >
                 {label}
                 {active && (
-                  <span className="absolute bottom-0 inset-x-3 h-[2px] rounded-t-sm bg-accent" />
+                  <span className="absolute bottom-0 inset-x-0 h-[2px] bg-accent" />
                 )}
               </button>
             );
           })}
         </nav>
 
-        {/* Right divider */}
-        <div className="w-px my-3.5 bg-white/[0.08] flex-shrink-0" />
-
         {/* Right: status / meta */}
-        <div className="flex items-center justify-end gap-3 flex-1 min-w-0 pl-6">
+        <div className="flex items-center justify-end gap-3 flex-1 min-w-0">
           {headerRight}
         </div>
 

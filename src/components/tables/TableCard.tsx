@@ -3,43 +3,49 @@ import { CafeTable } from '@/types/pos';
 
 const statusConfig = {
   free: {
-    border:        'border-white/[0.07]',
-    hoverBorder:   'hover:border-white/[0.15]',
-    cardBg:        'linear-gradient(160deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%)',
-    chipBg:        'bg-white/[0.06]',
-    chipText:      'text-muted-foreground',
-    dotColor:      'bg-muted-foreground/40',
-    dotPulse:      false,
-    label:         'Available',
-    numberColor:   'text-foreground',
-    totalColor:    'text-foreground',
-    metaColor:     'text-muted-foreground/60',
+    border: 'border-success/30',
+    bg: 'from-success/10 via-success/5 to-transparent',
+    innerGlow: 'shadow-[inset_0_1px_0_0_hsl(var(--success)/0.2)]',
+    outerGlow: '',
+    hoverGlow: 'hover:shadow-[0_8px_32px_-4px_hsl(var(--success)/0.3),inset_0_1px_0_0_hsl(var(--success)/0.25)]',
+    dot: 'bg-success shadow-[0_0_6px_2px_hsl(var(--success)/0.5)]',
+    dotPulse: false,
+    label: 'Available',
+    labelColor: 'text-success',
+    labelBg: 'bg-success/10',
+    numberColor: 'text-foreground',
+    totalColor: 'text-success',
+    metaColor: 'text-success/60',
   },
   occupied: {
-    border:        'border-warning/[0.18]',
-    hoverBorder:   'hover:border-warning/[0.35]',
-    cardBg:        'linear-gradient(160deg, rgba(251,146,60,0.07) 0%, rgba(255,255,255,0.014) 100%)',
-    chipBg:        'bg-warning/[0.12]',
-    chipText:      'text-warning/80',
-    dotColor:      'bg-warning/75',
-    dotPulse:      true,
-    label:         'Active',
-    numberColor:   'text-foreground',
-    totalColor:    'text-warning/90',
-    metaColor:     'text-warning/55',
+    border: 'border-warning/40',
+    bg: 'from-warning/12 via-warning/6 to-transparent',
+    innerGlow: 'shadow-[inset_0_1px_0_0_hsl(var(--warning)/0.25)]',
+    outerGlow: 'shadow-[0_4px_20px_-4px_hsl(var(--warning)/0.2)]',
+    hoverGlow: 'hover:shadow-[0_8px_32px_-4px_hsl(var(--warning)/0.4),inset_0_1px_0_0_hsl(var(--warning)/0.3)]',
+    dot: 'bg-warning shadow-[0_0_6px_2px_hsl(var(--warning)/0.5)]',
+    dotPulse: true,
+    label: 'Active',
+    labelColor: 'text-warning',
+    labelBg: 'bg-warning/10',
+    numberColor: 'text-foreground',
+    totalColor: 'text-warning',
+    metaColor: 'text-warning/60',
   },
   billing: {
-    border:        'border-danger/[0.18]',
-    hoverBorder:   'hover:border-danger/[0.35]',
-    cardBg:        'linear-gradient(160deg, rgba(220,38,38,0.07) 0%, rgba(255,255,255,0.014) 100%)',
-    chipBg:        'bg-danger/[0.12]',
-    chipText:      'text-danger/80',
-    dotColor:      'bg-danger/75',
-    dotPulse:      true,
-    label:         'Billing',
-    numberColor:   'text-foreground',
-    totalColor:    'text-danger/90',
-    metaColor:     'text-danger/55',
+    border: 'border-danger/40',
+    bg: 'from-danger/12 via-danger/6 to-transparent',
+    innerGlow: 'shadow-[inset_0_1px_0_0_hsl(var(--danger)/0.25)]',
+    outerGlow: 'shadow-[0_4px_20px_-4px_hsl(var(--danger)/0.25)]',
+    hoverGlow: 'hover:shadow-[0_8px_32px_-4px_hsl(var(--danger)/0.45),inset_0_1px_0_0_hsl(var(--danger)/0.3)]',
+    dot: 'bg-danger shadow-[0_0_6px_2px_hsl(var(--danger)/0.5)]',
+    dotPulse: true,
+    label: 'Billing',
+    labelColor: 'text-danger',
+    labelBg: 'bg-danger/10',
+    numberColor: 'text-foreground',
+    totalColor: 'text-danger',
+    metaColor: 'text-danger/60',
   },
 };
 
@@ -83,44 +89,52 @@ const TableCard = ({ table, itemCount = 0, runningTotal = 0, onClick }: TableCar
       data-testid={`table-card-${table.id}`}
       className={`
         relative flex flex-col items-center justify-center
-        rounded-2xl border w-full min-h-[130px] p-4
-        transition-all duration-150
-        ${cfg.border} ${cfg.hoverBorder}
-        hover:shadow-[0_4px_18px_-4px_rgba(0,0,0,0.5)]
-        hover:-translate-y-px
-        active:scale-[0.97] active:translate-y-0 active:shadow-none
+        p-5 rounded-2xl border-2 w-full
+        bg-gradient-to-b ${cfg.bg}
+        ${cfg.border}
+        ${cfg.innerGlow}
+        ${isActive ? cfg.outerGlow : ''}
+        ${cfg.hoverGlow}
+        transition-all duration-200
+        hover:scale-[1.02] hover:-translate-y-0.5
+        active:scale-[0.97] active:translate-y-0
+        min-h-[150px]
+        backdrop-blur-sm
       `}
-      style={{ background: cfg.cardBg }}
+      style={{ background: undefined }}
     >
-      {/* Subtle top-edge highlight */}
-      <div className="absolute inset-x-0 top-0 h-px rounded-t-2xl bg-white/[0.06] pointer-events-none" />
+      {/* Subtle card surface overlay */}
+      <div className="absolute inset-0 rounded-2xl bg-white/[0.02] pointer-events-none" />
+
+      {/* Status dot */}
+      <div
+        className={`
+          absolute top-3.5 right-3.5 w-2.5 h-2.5 rounded-full
+          ${cfg.dot}
+          ${cfg.dotPulse ? 'animate-pulse' : ''}
+        `}
+      />
 
       {/* Table number */}
       <span className={`text-5xl font-black tracking-tight leading-none ${cfg.numberColor}`}>
         {table.number}
       </span>
 
-      {/* Status chip */}
-      <span className={`mt-2.5 inline-flex items-center gap-1.5 text-[10px] font-semibold px-2.5 py-[3px] rounded-full ${cfg.chipBg} ${cfg.chipText}`}>
-        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${cfg.dotColor} ${cfg.dotPulse ? 'animate-pulse' : ''}`} />
+      {/* Status badge */}
+      <span className={`mt-2 text-[11px] font-bold px-2.5 py-0.5 rounded-full ${cfg.labelBg} ${cfg.labelColor}`}>
         {cfg.label}
       </span>
 
-      {/* Active / billing details */}
+      {/* Active/Billing details */}
       {isActive && (
-        <div className="mt-3 flex flex-col items-center gap-0.5 w-full">
-          <span className={`text-base font-bold tabular-nums ${cfg.totalColor}`}>
+        <div className="mt-3 flex flex-col items-center gap-1 w-full">
+          <span className={`text-lg font-black ${cfg.totalColor}`}>
             Rs. {runningTotal}
           </span>
-          <span className={`text-[11px] tabular-nums ${cfg.metaColor}`}>
-            {itemCount} item{itemCount !== 1 ? 's' : ''}{timer ? ` · ${timer}` : ''}
+          <span className={`text-[11px] font-medium tabular-nums ${cfg.metaColor}`}>
+            {itemCount} item{itemCount !== 1 ? 's' : ''}{timer ? ` • ${timer}` : ''}
           </span>
         </div>
-      )}
-
-      {/* Placeholder row for free tables — keeps height consistent */}
-      {!isActive && (
-        <div className="mt-3 h-[36px]" />
       )}
     </button>
   );
