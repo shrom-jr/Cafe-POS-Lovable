@@ -77,6 +77,31 @@ const defaultSettings: Settings = {
   vatMode: 'excluded',
 };
 
+const SETTINGS_VERSION = 2;
+
+function migrateSettings() {
+  const versionKey = 'pos_settings_version';
+  const storedVersion = parseInt(localStorage.getItem(versionKey) || '0', 10);
+  if (storedVersion < SETTINGS_VERSION) {
+    const raw = localStorage.getItem(KEYS.settings);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        parsed.wallets = {
+          esewa: { ...(parsed.wallets?.esewa || {}), enabled: true },
+          khalti: { ...(parsed.wallets?.khalti || {}), enabled: true },
+          fonepay: { ...(parsed.wallets?.fonepay || {}), enabled: true },
+        };
+        localStorage.setItem(KEYS.settings, JSON.stringify(parsed));
+      } catch {
+      }
+    }
+    localStorage.setItem(versionKey, String(SETTINGS_VERSION));
+  }
+}
+
+migrateSettings();
+
 export const db = {
   getTables: (): CafeTable[] => get(KEYS.tables, defaultTables),
   saveTables: (t: CafeTable[]) => set(KEYS.tables, t),
