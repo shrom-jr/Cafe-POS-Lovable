@@ -46,21 +46,24 @@ const TableOverview = () => {
 
   const headerRight = (
     <>
-      <div className="flex items-center gap-2 text-xs font-medium text-white/50">
+      <div className="flex items-center gap-2 text-xs font-semibold">
         <span
-          className="w-1.5 h-1.5 rounded-full bg-success flex-shrink-0"
-          style={{ boxShadow: '0 0 4px 1px hsl(var(--success)/0.45)' }}
+          className="w-2 h-2 rounded-full flex-shrink-0"
+          style={{ background: 'hsl(var(--success))', boxShadow: '0 0 6px 2px hsl(142 71% 40% / 0.6)' }}
         />
-        <span>{counts.available} Available</span>
-        <span className="text-white/18">•</span>
+        <span style={{ color: 'hsl(142 60% 60%)' }}>{counts.available} Available</span>
+        <span style={{ color: 'hsl(142 30% 30%)' }}>•</span>
         <span
-          className="w-1.5 h-1.5 rounded-full bg-warning flex-shrink-0"
-          style={{ boxShadow: '0 0 4px 1px hsl(var(--warning)/0.5)' }}
+          className="w-2 h-2 rounded-full flex-shrink-0"
+          style={{ background: 'hsl(var(--accent))', boxShadow: '0 0 6px 2px hsl(48 96% 53% / 0.6)' }}
         />
-        <span>{counts.active} Active</span>
+        <span style={{ color: 'hsl(48 80% 65%)' }}>{counts.active} Active</span>
       </div>
-      <div className="h-5 w-px bg-white/10" />
-      <span className="font-mono text-xs font-medium text-white/35 tabular-nums min-w-[76px] text-right">
+      <div className="h-5 w-px" style={{ background: 'hsl(142 40% 25%)' }} />
+      <span
+        className="font-mono text-xs font-medium tabular-nums min-w-[76px] text-right"
+        style={{ color: 'hsl(142 40% 40%)' }}
+      >
         {clock}
       </span>
     </>
@@ -78,13 +81,12 @@ const TableOverview = () => {
           <div
             onMouseEnter={() => setPanelHovered(true)}
             onMouseLeave={() => setPanelHovered(false)}
-            className="rounded-2xl border border-white/[0.08] p-4 transition-all duration-500"
+            className="rounded-2xl p-4 transition-all duration-500"
             style={{
-              background:
-                'radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.032) 0%, rgba(255,255,255,0.01) 55%), rgba(255,255,255,0.04)',
-              boxShadow:
-                '0 12px 48px -8px rgba(0,0,0,0.6), 0 2px 8px -2px rgba(0,0,0,0.4), inset 0 1px 0 0 rgba(255,255,255,0.08)',
-              filter: panelHovered ? 'brightness(1.018)' : 'brightness(1)',
+              background: 'linear-gradient(180deg, rgba(10,30,18,0.7) 0%, rgba(5,15,10,0.6) 100%)',
+              border: '1px solid hsl(142 50% 30% / 0.3)',
+              boxShadow: '0 12px 48px -8px rgba(0,0,0,0.7), inset 0 1px 0 0 hsl(142 60% 40% / 0.1)',
+              filter: panelHovered ? 'brightness(1.04)' : 'brightness(1)',
             }}
           >
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">

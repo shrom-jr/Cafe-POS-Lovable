@@ -21,21 +21,23 @@ const AppLayout = ({ title, headerRight, children }: AppLayoutProps) => {
     <div
       className="h-screen flex flex-col overflow-hidden"
       style={{
-        background: 'linear-gradient(180deg, #111214 0%, #0c0d10 100%)',
+        background: 'linear-gradient(180deg, #0d1f2e 0%, #04100a 100%)',
       }}
     >
       {/* ── Top navigation bar ── */}
       <header
-        className="flex-shrink-0 flex items-stretch h-14 px-6 border-b border-white/[0.09] backdrop-blur-[3px]"
+        className="flex-shrink-0 flex items-stretch h-14 px-6"
         style={{
-          background:
-            'linear-gradient(to right, rgba(10,11,14,0.96) 0%, rgba(11,14,22,0.94) 100%)',
+          background: 'linear-gradient(135deg, #071a10 0%, #091628 100%)',
+          borderBottom: '1px solid hsl(142 71% 36% / 0.35)',
         }}
       >
-
         {/* Left: café / screen name */}
         <div className="flex items-center flex-1 min-w-0">
-          <span className="text-xs font-semibold text-white/50 tracking-[0.14em] uppercase truncate select-none">
+          <span
+            className="text-xs font-bold truncate select-none uppercase tracking-[0.16em]"
+            style={{ color: 'hsl(142 60% 55%)' }}
+          >
             {title}
           </span>
         </div>
@@ -50,17 +52,22 @@ const AppLayout = ({ title, headerRight, children }: AppLayoutProps) => {
                 onClick={() => navigate(path)}
                 data-testid={`nav-${label.toLowerCase()}`}
                 className={`
-                  relative px-4 my-2 flex items-center text-sm font-semibold rounded-md
+                  relative px-4 my-2 flex items-center text-sm font-bold rounded-md
                   transition-all duration-200 select-none
-                  ${active
-                    ? 'text-white/92'
-                    : 'text-white/40 hover:text-white/65'}
                 `}
                 style={active ? {
-                  background: 'rgba(255,255,255,0.16)',
-                  border: '1px solid rgba(255,255,255,0.10)',
-                  boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.14), 0 1px 3px rgba(0,0,0,0.4)',
-                } : undefined}
+                  background: 'hsl(var(--accent))',
+                  color: 'hsl(var(--accent-foreground))',
+                  boxShadow: '0 2px 10px -2px hsl(48 96% 53% / 0.45)',
+                } : {
+                  color: 'hsl(142 55% 55% / 0.75)',
+                }}
+                onMouseEnter={(e) => {
+                  if (!active) (e.currentTarget as HTMLButtonElement).style.color = 'hsl(142 60% 65%)';
+                }}
+                onMouseLeave={(e) => {
+                  if (!active) (e.currentTarget as HTMLButtonElement).style.color = 'hsl(142 55% 55% / 0.75)';
+                }}
               >
                 {label}
               </button>
@@ -72,7 +79,6 @@ const AppLayout = ({ title, headerRight, children }: AppLayoutProps) => {
         <div className="flex items-center justify-end gap-3 flex-1 min-w-0">
           {headerRight}
         </div>
-
       </header>
 
       {/* ── Content ── */}

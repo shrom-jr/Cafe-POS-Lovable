@@ -3,62 +3,53 @@ import { CafeTable } from '@/types/pos';
 
 const statusConfig = {
   free: {
-    border: 'border-white/[0.09]',
-    bg: 'from-success/6 via-success/2 to-transparent',
-    innerGlow: 'shadow-[inset_0_1px_0_0_rgba(255,255,255,0.07)]',
-    outerGlow: '',
-    hoverGlow: 'hover:shadow-[0_6px_24px_-4px_hsl(var(--success)/0.18),inset_0_1px_0_0_rgba(255,255,255,0.09)]',
-    dot: 'bg-success',
-    dotShadow: '0 0 5px 1px hsl(var(--success)/0.38)',
+    cardBg: 'linear-gradient(160deg, #0d2416 0%, #081a0e 100%)',
+    cardBorder: 'hsl(142 65% 35% / 0.55)',
+    cardShadow: '0 2px 12px -2px rgba(0,0,0,0.5), inset 0 1px 0 0 hsl(142 60% 40% / 0.15)',
+    cardHoverShadow: '0 6px 24px -4px hsl(142 71% 36% / 0.35), inset 0 1px 0 0 hsl(142 60% 40% / 0.2)',
+    dotColor: 'hsl(142 71% 40%)',
+    dotGlow: '0 0 7px 2px hsl(142 71% 40% / 0.6)',
     dotPulse: false,
     label: 'Available',
-    labelColor: 'text-white/30',
-    labelBg: 'bg-white/[0.05]',
-    numberColor: 'text-white/70',
-    numberShadow: '0 1px 4px rgba(0,0,0,0.6)',
+    labelBg: 'hsl(142 65% 20% / 0.6)',
+    labelColor: 'hsl(142 60% 60%)',
+    numberColor: 'hsl(142 30% 88%)',
+    numberShadow: '0 0 12px hsl(142 60% 36% / 0.3)',
+    paxColor: '',
+    metaColor: '',
   },
   occupied: {
-    border: 'border-warning/30',
-    bg: 'from-warning/11 via-warning/5 to-transparent',
-    innerGlow: 'shadow-[inset_0_1px_0_0_hsl(var(--warning)/0.22)]',
-    outerGlow: 'shadow-[0_4px_18px_-4px_hsl(var(--warning)/0.28)]',
-    hoverGlow: 'hover:shadow-[0_8px_30px_-4px_hsl(var(--warning)/0.42),inset_0_1px_0_0_hsl(var(--warning)/0.25)]',
-    dot: 'bg-warning',
-    dotShadow: '0 0 5px 1px hsl(var(--warning)/0.5)',
+    cardBg: 'linear-gradient(160deg, #251a07 0%, #180f03 100%)',
+    cardBorder: 'hsl(38 90% 50% / 0.6)',
+    cardShadow: '0 2px 16px -2px hsl(32 90% 40% / 0.3), inset 0 1px 0 0 hsl(38 90% 50% / 0.15)',
+    cardHoverShadow: '0 6px 28px -4px hsl(32 90% 50% / 0.5), inset 0 1px 0 0 hsl(38 90% 50% / 0.2)',
+    dotColor: 'hsl(var(--accent))',
+    dotGlow: '0 0 7px 2px hsl(48 96% 53% / 0.65)',
     dotPulse: true,
     label: 'Active',
-    labelColor: 'text-warning/55',
-    labelBg: 'bg-warning/[0.08]',
-    numberColor: 'text-white/92',
-    numberShadow: '0 1px 5px rgba(0,0,0,0.55)',
+    labelBg: 'hsl(38 90% 40% / 0.25)',
+    labelColor: 'hsl(43 90% 65%)',
+    numberColor: 'hsl(38 20% 95%)',
+    numberShadow: '0 0 14px hsl(38 80% 50% / 0.35)',
+    paxColor: 'hsl(43 90% 62%)',
+    metaColor: 'hsl(38 50% 45%)',
   },
   billing: {
-    border: 'border-danger/30',
-    bg: 'from-danger/11 via-danger/5 to-transparent',
-    innerGlow: 'shadow-[inset_0_1px_0_0_hsl(var(--danger)/0.22)]',
-    outerGlow: 'shadow-[0_4px_18px_-4px_hsl(var(--danger)/0.28)]',
-    hoverGlow: 'hover:shadow-[0_8px_30px_-4px_hsl(var(--danger)/0.42),inset_0_1px_0_0_hsl(var(--danger)/0.25)]',
-    dot: 'bg-danger',
-    dotShadow: '0 0 5px 1px hsl(var(--danger)/0.5)',
+    cardBg: 'linear-gradient(160deg, #250d0d 0%, #180505 100%)',
+    cardBorder: 'hsl(0 72% 51% / 0.6)',
+    cardShadow: '0 2px 16px -2px hsl(0 72% 40% / 0.3), inset 0 1px 0 0 hsl(0 72% 51% / 0.15)',
+    cardHoverShadow: '0 6px 28px -4px hsl(0 72% 51% / 0.5), inset 0 1px 0 0 hsl(0 72% 51% / 0.2)',
+    dotColor: 'hsl(var(--danger))',
+    dotGlow: '0 0 7px 2px hsl(0 72% 51% / 0.65)',
     dotPulse: true,
     label: 'Billing',
-    labelColor: 'text-danger/55',
-    labelBg: 'bg-danger/[0.08]',
-    numberColor: 'text-white/92',
-    numberShadow: '0 1px 5px rgba(0,0,0,0.55)',
+    labelBg: 'hsl(0 72% 30% / 0.25)',
+    labelColor: 'hsl(0 72% 68%)',
+    numberColor: 'hsl(0 10% 95%)',
+    numberShadow: '0 0 14px hsl(0 70% 50% / 0.35)',
+    paxColor: 'hsl(0 70% 65%)',
+    metaColor: 'hsl(0 40% 45%)',
   },
-};
-
-const paxColor: Record<string, string> = {
-  free:     'text-white/45',
-  occupied: 'text-warning/85',
-  billing:  'text-danger/85',
-};
-
-const metaColor: Record<string, string> = {
-  free:     'text-white/28',
-  occupied: 'text-white/38',
-  billing:  'text-white/38',
 };
 
 function useTimer(startTime?: number) {
@@ -93,71 +84,63 @@ const TableCard = ({ table, itemCount = 0, onClick }: TableCardProps) => {
   const timer = useTimer(table.orderStartTime);
   const cfg = statusConfig[table.status];
   const isActive = table.status !== 'free';
+  const [hovered, setHovered] = useState(false);
 
   return (
     <button
       onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       data-testid={`table-card-${table.id}`}
-      className={`
-        relative flex flex-col items-center justify-center
-        p-4 rounded-2xl border w-full
-        bg-gradient-to-b ${cfg.bg}
-        ${cfg.border}
-        ${cfg.innerGlow}
-        ${isActive ? cfg.outerGlow : ''}
-        ${cfg.hoverGlow}
-        transition-all duration-200
-        hover:scale-[1.02] hover:-translate-y-0.5
-        active:scale-[0.97] active:translate-y-0
-        min-h-[148px]
-      `}
+      className="relative flex flex-col items-center justify-center p-4 rounded-2xl w-full min-h-[148px] transition-all duration-200 hover:scale-[1.02] hover:-translate-y-0.5 active:scale-[0.97] active:translate-y-0"
+      style={{
+        background: cfg.cardBg,
+        border: `1px solid ${cfg.cardBorder}`,
+        boxShadow: hovered ? cfg.cardHoverShadow : cfg.cardShadow,
+      }}
     >
-      {/* Solid surface base */}
-      <div className="absolute inset-0 rounded-2xl bg-white/[0.04] pointer-events-none" />
-
-      {/* Radial center highlight */}
+      {/* Top inner highlight */}
       <div
         className="absolute inset-0 rounded-2xl pointer-events-none"
-        style={{
-          background: 'radial-gradient(ellipse at 50% 35%, rgba(255,255,255,0.045) 0%, transparent 60%)',
-        }}
+        style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 40%)' }}
       />
 
       {/* Status dot */}
       <div
-        className={`absolute top-3 right-3 w-2 h-2 rounded-full ${cfg.dot}`}
-        style={{ boxShadow: cfg.dotShadow }}
+        className="absolute top-3 right-3 w-2 h-2 rounded-full"
+        style={{ background: cfg.dotColor, boxShadow: cfg.dotGlow }}
       >
         {cfg.dotPulse && (
           <div
-            className={`absolute inset-0 rounded-full ${cfg.dot} animate-ping opacity-50`}
-            style={{ animationDuration: '2.2s' }}
+            className="absolute inset-0 rounded-full animate-ping opacity-60"
+            style={{ background: cfg.dotColor, animationDuration: '2.2s' }}
           />
         )}
       </div>
 
       {/* Table number — highest priority */}
       <span
-        className={`text-5xl font-black tracking-tight leading-none ${cfg.numberColor}`}
-        style={{ textShadow: cfg.numberShadow }}
+        className="text-5xl font-black tracking-tight leading-none"
+        style={{ color: cfg.numberColor, textShadow: cfg.numberShadow }}
       >
         {table.number}
       </span>
 
-      {/* Status badge — low importance */}
-      <span className={`mt-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full ${cfg.labelBg} ${cfg.labelColor}`}>
+      {/* Status badge — lower importance */}
+      <span
+        className="mt-1.5 text-[10px] font-semibold px-2.5 py-0.5 rounded-full"
+        style={{ background: cfg.labelBg, color: cfg.labelColor }}
+      >
         {cfg.label}
       </span>
 
       {/* Active/Billing details */}
       {isActive && (
         <div className="mt-2 flex flex-col items-center gap-0.5 w-full">
-          {/* Pax — second priority */}
-          <span className={`text-[15px] font-bold leading-tight ${paxColor[table.status]}`}>
+          <span className="text-[15px] font-bold leading-tight" style={{ color: cfg.paxColor }}>
             {table.pax ?? 1} pax
           </span>
-          {/* Items + timer — lowest priority */}
-          <span className={`text-[10px] font-medium tabular-nums ${metaColor[table.status]}`}>
+          <span className="text-[10px] font-medium tabular-nums" style={{ color: cfg.metaColor }}>
             {itemCount} item{itemCount !== 1 ? 's' : ''}{timer ? ` · ${timer}` : ''}
           </span>
         </div>

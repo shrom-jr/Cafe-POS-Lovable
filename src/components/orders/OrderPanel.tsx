@@ -43,23 +43,50 @@ const OrderPanel = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-card overflow-hidden">
+    <div
+      className="flex flex-col h-full overflow-hidden"
+      style={{ background: 'linear-gradient(180deg, #091a10 0%, #060f0a 100%)' }}
+    >
       {/* Header */}
-      <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-        <ShoppingBag size={16} className="text-accent" />
-        <h3 className="font-bold text-foreground text-sm flex-1">
+      <div
+        className="px-4 py-3 flex items-center gap-2"
+        style={{ borderBottom: '1px solid hsl(142 50% 25% / 0.5)' }}
+      >
+        <ShoppingBag size={16} style={{ color: 'hsl(142 60% 50%)' }} />
+        <h3 className="font-bold text-sm flex-1" style={{ color: 'hsl(142 30% 85%)' }}>
           {order ? `Table ${order.tableNumber}` : 'Order'}
         </h3>
         {itemCount > 0 && (
           <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded-full bg-accent/15 text-accent text-xs font-bold">
+            <span
+              className="px-2 py-0.5 rounded-full text-xs font-bold"
+              style={{
+                background: 'hsl(142 65% 36% / 0.25)',
+                color: 'hsl(142 60% 60%)',
+                border: '1px solid hsl(142 60% 36% / 0.4)',
+              }}
+            >
               {itemCount} items
             </span>
             {onClear && (
               <button
                 onClick={() => setShowClearConfirm(true)}
                 data-testid="button-clear-order"
-                className="px-2.5 py-1 rounded-lg text-xs font-semibold text-muted-foreground border border-border transition-all active:scale-95 hover:border-destructive/60 hover:text-destructive hover:bg-destructive/10 active:border-destructive active:text-destructive"
+                className="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all active:scale-95"
+                style={{
+                  color: 'hsl(215 15% 50%)',
+                  border: '1px solid hsl(222 28% 22%)',
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.color = 'hsl(0 72% 65%)';
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = 'hsl(0 72% 51% / 0.5)';
+                  (e.currentTarget as HTMLButtonElement).style.background = 'hsl(0 72% 51% / 0.1)';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.color = 'hsl(215 15% 50%)';
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = 'hsl(222 28% 22%)';
+                  (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+                }}
               >
                 Clear
               </button>
@@ -69,21 +96,28 @@ const OrderPanel = ({
       </div>
 
       {/* Pax selector */}
-      <div className="px-4 py-2.5 border-b border-border flex items-center gap-3 bg-background/20">
-        <Users size={14} className="text-muted-foreground flex-shrink-0" />
-        <span className="text-xs font-semibold text-muted-foreground flex-1">Guests (Pax)</span>
+      <div
+        className="px-4 py-2.5 flex items-center gap-3"
+        style={{ borderBottom: '1px solid hsl(142 50% 25% / 0.4)', background: 'hsl(142 40% 10% / 0.3)' }}
+      >
+        <Users size={14} style={{ color: 'hsl(142 40% 40%)' }} className="flex-shrink-0" />
+        <span className="text-xs font-semibold flex-1" style={{ color: 'hsl(142 30% 50%)' }}>Guests (Pax)</span>
         <div className="flex items-center gap-2">
           <button
             onClick={() => onPaxChange?.(Math.max(1, pax - 1))}
             disabled={pax <= 1}
-            className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center text-foreground hover:bg-accent/20 hover:text-accent transition-colors active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
+            style={{ background: 'hsl(142 40% 15%)', color: 'hsl(142 50% 60%)' }}
           >
             <Minus size={12} />
           </button>
-          <span className="w-6 text-center font-black text-foreground text-sm tabular-nums">{pax}</span>
+          <span className="w-6 text-center font-black text-sm tabular-nums" style={{ color: 'hsl(142 20% 88%)' }}>
+            {pax}
+          </span>
           <button
             onClick={() => onPaxChange?.(pax + 1)}
-            className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center text-foreground hover:bg-accent/20 hover:text-accent transition-colors active:scale-90"
+            className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors active:scale-90"
+            style={{ background: 'hsl(142 40% 15%)', color: 'hsl(142 50% 60%)' }}
           >
             <Plus size={12} />
           </button>
@@ -91,10 +125,10 @@ const OrderPanel = ({
       </div>
 
       {/* Item list */}
-      <div className="flex-1 overflow-y-auto p-2 space-y-1.5 bg-background/30">
+      <div className="flex-1 overflow-y-auto p-2 space-y-1.5" style={{ background: 'hsl(142 30% 8% / 0.4)' }}>
         {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full py-12 text-muted-foreground">
-            <ShoppingBag size={40} className="mb-3 opacity-15" />
+          <div className="flex flex-col items-center justify-center h-full py-12" style={{ color: 'hsl(142 30% 35%)' }}>
+            <ShoppingBag size={40} className="mb-3 opacity-25" />
             <p className="text-base font-bold text-center">No items yet</p>
             <p className="text-xs opacity-70 mt-1.5 text-center">Tap items on the left to start building the order</p>
           </div>
@@ -106,19 +140,33 @@ const OrderPanel = ({
       </div>
 
       {/* Footer */}
-      <div className="border-t border-border bg-card p-4 space-y-3">
+      <div
+        className="p-4 space-y-3"
+        style={{ borderTop: '1px solid hsl(142 50% 25% / 0.4)', background: '#071410' }}
+      >
         {/* Total */}
         <div className="flex items-center justify-between">
-          <span className="text-muted-foreground text-sm font-medium">Total</span>
-          <span className="text-3xl font-black text-foreground">Rs. {total}</span>
+          <span className="text-sm font-medium" style={{ color: 'hsl(142 30% 45%)' }}>Total</span>
+          <span className="text-3xl font-black" style={{ color: 'hsl(142 20% 92%)' }}>Rs. {total}</span>
         </div>
 
-        {/* Primary Pay button */}
+        {/* Primary Pay button — amber/yellow */}
         <button
           onClick={onPay}
           disabled={items.length === 0}
           data-testid="button-proceed-to-bill"
-          className="w-full py-4 rounded-xl bg-success text-white font-black text-lg flex items-center justify-center gap-2 transition-all active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed hover:brightness-110 shadow-[0_4px_16px_-4px_hsl(var(--success)/0.45)]"
+          className="w-full py-4 rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-all active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
+          style={{
+            background: items.length > 0 ? 'hsl(var(--accent))' : 'hsl(48 96% 53% / 0.3)',
+            color: 'hsl(var(--accent-foreground))',
+            boxShadow: items.length > 0 ? '0 4px 18px -4px hsl(48 96% 53% / 0.5)' : 'none',
+          }}
+          onMouseEnter={(e) => {
+            if (items.length > 0) (e.currentTarget as HTMLButtonElement).style.filter = 'brightness(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.filter = 'brightness(1)';
+          }}
         >
           {items.length > 0 ? 'Review Order →' : 'Add items to order'}
         </button>
@@ -156,35 +204,54 @@ interface OrderItemRowProps {
 
 const OrderItemRow = ({ item, onUpdateQty, onRemove }: OrderItemRowProps) => (
   <div
-    className="flex items-center gap-2 bg-card hover:bg-secondary/50 rounded-xl p-2.5 transition-colors border border-border/50"
+    className="flex items-center gap-2 rounded-xl p-2.5 transition-colors"
     data-testid={`order-item-${item.menuItemId}`}
+    style={{
+      background: 'hsl(142 35% 10%)',
+      border: '1px solid hsl(142 40% 18% / 0.6)',
+    }}
   >
     <div className="flex-1 min-w-0">
-      <p className="text-sm font-semibold text-foreground truncate">{item.name}</p>
-      <p className="text-xs text-muted-foreground">Rs. {item.price} each</p>
+      <p className="text-sm font-semibold truncate" style={{ color: 'hsl(142 15% 85%)' }}>{item.name}</p>
+      <p className="text-xs" style={{ color: 'hsl(142 25% 42%)' }}>Rs. {item.price} each</p>
     </div>
     <div className="flex items-center gap-1">
       <button
         onClick={() => onUpdateQty(item.menuItemId, -1)}
         data-testid={`button-decrease-${item.menuItemId}`}
-        className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center text-foreground hover:bg-danger/20 hover:text-danger transition-colors active:scale-90"
+        className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors active:scale-90"
+        style={{ background: 'hsl(142 30% 13%)', color: 'hsl(142 40% 55%)' }}
       >
         <Minus size={13} />
       </button>
-      <span className="w-7 text-center font-black text-foreground text-sm">{item.quantity}</span>
+      <span className="w-7 text-center font-black text-sm" style={{ color: 'hsl(142 15% 88%)' }}>
+        {item.quantity}
+      </span>
       <button
         onClick={() => onUpdateQty(item.menuItemId, 1)}
         data-testid={`button-increase-${item.menuItemId}`}
-        className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center text-foreground hover:bg-accent/20 hover:text-accent transition-colors active:scale-90"
+        className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors active:scale-90"
+        style={{ background: 'hsl(142 50% 18%)', color: 'hsl(142 60% 55%)' }}
       >
         <Plus size={13} />
       </button>
     </div>
-    <p className="w-16 text-right text-sm font-bold text-foreground">Rs. {item.price * item.quantity}</p>
+    <p className="w-16 text-right text-sm font-bold" style={{ color: 'hsl(142 40% 68%)' }}>
+      Rs. {item.price * item.quantity}
+    </p>
     <button
       onClick={() => onRemove(item.menuItemId)}
       data-testid={`button-remove-${item.menuItemId}`}
-      className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-danger hover:bg-danger/10 transition-colors active:scale-90"
+      className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors active:scale-90"
+      style={{ color: 'hsl(215 15% 45%)' }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLButtonElement).style.color = 'hsl(0 72% 65%)';
+        (e.currentTarget as HTMLButtonElement).style.background = 'hsl(0 72% 51% / 0.12)';
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLButtonElement).style.color = 'hsl(215 15% 45%)';
+        (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+      }}
     >
       <Trash2 size={13} />
     </button>

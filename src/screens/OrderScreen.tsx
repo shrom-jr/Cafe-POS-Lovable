@@ -115,7 +115,7 @@ const OrderScreen = () => {
   };
 
   return (
-    <div className="h-screen bg-background flex flex-col">
+    <div className="h-screen flex flex-col" style={{ background: 'linear-gradient(180deg, #0d1f2e 0%, #04100a 100%)' }}>
       <TopBar title={`Table ${table.number}`} showBack onBack={() => navigate('/')} />
 
       {/* Payment-in-progress info banner */}
@@ -160,11 +160,16 @@ const OrderScreen = () => {
                   key={cat.id}
                   onClick={() => setActiveCat(cat.id)}
                   data-testid={`button-category-${cat.id}`}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-all active:scale-95 ${
-                    activeCat === cat.id
-                      ? 'bg-accent text-accent-foreground shadow-[0_2px_8px_-2px_hsl(var(--accent)/0.4)]'
-                      : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                  }`}
+                  className="px-4 py-1.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-all active:scale-95"
+                  style={activeCat === cat.id ? {
+                    background: 'hsl(var(--accent))',
+                    color: 'hsl(var(--accent-foreground))',
+                    boxShadow: '0 2px 10px -2px hsl(48 96% 53% / 0.45)',
+                  } : {
+                    background: 'hsl(142 35% 12%)',
+                    color: 'hsl(142 40% 55%)',
+                    border: '1px solid hsl(142 40% 20% / 0.5)',
+                  }}
                 >
                   {cat.name}
                 </button>
