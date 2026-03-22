@@ -55,25 +55,34 @@ const BillHistory = () => {
   const handleReprint = async (p: Payment) => {
     setPrintError(false);
     setPrinting(true);
-    const ok = await printer.print(
-      formatReceipt({
-        cafeName: p.cafeName,
-        tableNumber: p.tableNumber,
-        items: p.items,
-        subtotal: p.subtotal,
-        discount:
-          p.discountType === 'percent'
-            ? Math.round((p.subtotal * p.discount) / 100)
-            : p.discount,
-        vatAmount: p.vatAmount,
-        vatRate: p.vatRate,
-        vatEnabled: p.vatEnabled,
-        total: p.total,
-        method: p.method,
-        date: format(p.createdAt, 'yyyy-MM-dd HH:mm'),
-        billNumber: p.billNumber,
-      })
-    );
+
+    const discountAmount =
+      p.discountType === 'percent'
+        ? Math.round((p.subtotal * p.discount) / 100)
+        : p.discount ?? 0;
+
+    const printPayload = {
+      cafeName: p.cafeName ?? settings.cafeName,
+      tableNumber: p.tableNumber,
+      items: p.items.map((item) => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      subtotal: p.subtotal ?? 0,
+      discount: discountAmount,
+      vatAmount: p.vatAmount ?? 0,
+      vatRate: p.vatRate ?? 0.13,
+      vatEnabled: p.vatEnabled ?? false,
+      total: p.total ?? 0,
+      method: p.method,
+      date: format(p.createdAt, 'yyyy-MM-dd HH:mm'),
+      billNumber: p.billNumber,
+    };
+
+    console.log('PRINT DATA:', printPayload);
+
+    const ok = await printer.print(formatReceipt(printPayload));
     setPrinting(false);
     if (!ok) setPrintError(true);
   };
