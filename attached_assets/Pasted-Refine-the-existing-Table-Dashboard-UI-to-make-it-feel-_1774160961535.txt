@@ -1,0 +1,159 @@
+Refine the existing Table Dashboard UI to make it feel premium, structured, and professional.
+
+IMPORTANT:
+
+* Do NOT change any logic or functionality
+* Do NOT restructure components
+* Do NOT redesign layout
+* Only improve visual hierarchy, spacing, contrast, and depth
+* Keep everything minimal, fast, and calm (no flashy UI)
+
+---
+
+🪑 TABLE CARDS (HIGHEST PRIORITY)
+
+The current table cards feel too flat and identical. Improve them so each card has better hierarchy and clarity.
+
+1. REMOVE current bright green borders and glow effects
+
+* Replace with very subtle neutral borders
+* Avoid neon or high-saturation colors
+
+2. ADD subtle background variation
+
+* Cards should not feel flat
+* Use very soft dark gradients or slight tint differences
+* Keep it minimal (almost invisible, but adds depth)
+
+3. IMPROVE TABLE NUMBER
+
+* Make table number slightly more prominent
+* Adjust spacing so it feels centered and balanced
+* Reduce unnecessary empty space
+
+4. REPLACE status display
+
+* Current: green dot + "Available"
+* Replace with a small, clean status chip
+
+Status chip rules:
+
+* Soft background (low opacity)
+* Small rounded pill
+* No glow, no bright colors
+* Text should be clear but not dominant
+
+5. PREPARE FOR REAL DATA (IMPORTANT)
+   Even if all tables are free now, design for occupied state:
+
+* Leave space for:
+
+  * total amount (e.g. Rs 1,250)
+  * optional item count
+* Keep layout flexible but clean
+
+---
+
+📦 ADD DEPTH TO MAIN CONTENT
+
+Right now everything sits flat.
+
+1. Wrap the table grid inside a subtle container:
+
+* Slightly different background than page
+* Very soft border
+* Light shadow (barely visible)
+
+2. This container should:
+
+* Separate content from background
+* Create a layered UI feel
+* Still remain minimal
+
+---
+
+🧭 TOP NAVIGATION REFINEMENT
+
+Navigation is structurally correct but visually weak.
+
+1. Slightly increase visual weight:
+
+* Adjust height/padding slightly for better presence
+* Improve spacing between elements
+
+2. ACTIVE TAB:
+
+* Keep underline style
+* Make it slightly clearer (better contrast or thickness)
+* Ensure perfect alignment
+
+3. INACTIVE TABS:
+
+* Muted text
+* Subtle hover only (no glow)
+
+4. ADD subtle separation:
+
+* Small spacing or divider between café name and tabs
+
+5. Add a slightly stronger bottom border to the top bar
+
+* Helps anchor the layout
+
+---
+
+📐 SPACING & DENSITY (VERY IMPORTANT)
+
+Current spacing feels generic and too loose.
+
+1. Reduce vertical gaps between table rows slightly
+2. Slightly reduce padding inside cards
+3. Tighten layout so it feels efficient and operational
+
+Goal:
+
+* More “POS system”
+* Less “empty dashboard”
+
+---
+
+⚡ MICRO-INTERACTIONS
+
+Keep interactions minimal and tactile:
+
+1. On table click/tap:
+
+* Very slight scale down (subtle press feel)
+
+2. On hover (desktop only):
+
+* Slight border highlight
+* Optional tiny elevation (very subtle)
+
+DO NOT:
+
+* Add glow
+* Add heavy animation
+* Add flashy transitions
+
+---
+
+🎯 FINAL GOAL
+
+The dashboard should:
+
+* Feel like a real premium POS system
+* Be easy to scan instantly
+* Have clear visual hierarchy
+* Use contrast intelligently (not loudly)
+* Have subtle depth and layering
+
+Avoid:
+
+* Flat, lifeless UI
+* Overly soft gray everywhere
+* Bright/glowing effects
+* Generic spacing
+
+Focus on:
+clarity, structure, and professional polish.
