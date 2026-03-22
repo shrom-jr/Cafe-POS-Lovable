@@ -153,7 +153,7 @@ const OrderPanel = ({
           <span className="text-xs font-semibold uppercase tracking-wider text-white/30">Total</span>
           <span
             className="text-3xl font-black"
-            style={{ color: items.length > 0 ? 'rgba(52,211,153,0.92)' : 'rgba(255,255,255,0.25)' }}
+            style={{ color: items.length > 0 ? 'rgba(255,255,255,0.97)' : 'rgba(255,255,255,0.25)' }}
           >
             Rs. {total}
           </span>
@@ -219,8 +219,8 @@ const OrderItemRow = ({ item, onUpdateQty, onRemove }: OrderItemRowProps) => (
     }}
   >
     <div className="flex-1 min-w-0">
-      <p className="text-sm font-semibold text-white/82 truncate">{item.name}</p>
-      <p className="text-xs" style={{ color: 'rgba(255,255,255,0.28)' }}>Rs. {item.price} each</p>
+      <p className="text-sm font-bold truncate" style={{ color: 'rgba(255,255,255,0.95)' }}>{item.name}</p>
+      <p className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.42)' }}>Rs. {item.price} each</p>
     </div>
     <div className="flex items-center gap-1">
       <button
@@ -241,7 +241,7 @@ const OrderItemRow = ({ item, onUpdateQty, onRemove }: OrderItemRowProps) => (
         <Plus size={13} />
       </button>
     </div>
-    <p className="w-16 text-right text-sm font-bold text-white/55">
+    <p className="w-16 text-right text-sm font-bold" style={{ color: 'rgba(255,255,255,0.88)' }}>
       Rs. {item.price * item.quantity}
     </p>
     <button

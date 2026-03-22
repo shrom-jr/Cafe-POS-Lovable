@@ -24,7 +24,7 @@ const MenuItemCard = ({ item, quantityInOrder = 0, onAdd, disabled = false }: Me
       `}
     >
       {/* ── Image ── */}
-      <div className="relative w-full aspect-square overflow-hidden">
+      <div className="relative w-full overflow-hidden" style={{ aspectRatio: '1 / 0.85' }}>
         {item.image ? (
           <img
             src={item.image}
@@ -60,11 +60,11 @@ const MenuItemCard = ({ item, quantityInOrder = 0, onAdd, disabled = false }: Me
       </div>
 
       {/* ── Text ── */}
-      <div className="px-3 py-2.5 flex flex-col gap-[3px]">
-        <span className="text-sm font-medium text-foreground leading-snug line-clamp-2">
+      <div className="px-3 py-3 flex flex-col gap-1">
+        <span className="text-sm font-bold leading-snug line-clamp-2" style={{ color: 'rgba(255,255,255,0.92)' }}>
           {item.name}
         </span>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.65)' }}>
           Rs. {item.price}
         </span>
       </div>
