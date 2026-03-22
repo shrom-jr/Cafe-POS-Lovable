@@ -102,6 +102,7 @@ const ReviewScreen = () => {
     ...(settings.wallets.esewa.enabled ? [{ id: 'esewa', label: 'eSewa', isQR: true }] : []),
     ...(settings.wallets.khalti.enabled ? [{ id: 'khalti', label: 'Khalti', isQR: true }] : []),
     ...(settings.wallets.fonepay.enabled ? [{ id: 'fonepay', label: 'Fonepay', isQR: true }] : []),
+    ...(settings.customWallets || []).filter((w) => w.enabled).map((w) => ({ id: w.id, label: w.name, isQR: true })),
   ];
   const qrMethods = methods.filter((m) => m.isQR);
 
@@ -112,8 +113,12 @@ const ReviewScreen = () => {
   };
 
   const getQRImage = (method: string) => {
-    const k = method as 'esewa' | 'khalti' | 'fonepay';
-    return settings.wallets[k]?.qrImage || null;
+    const builtIn = ['esewa', 'khalti', 'fonepay'] as const;
+    if (builtIn.includes(method as 'esewa' | 'khalti' | 'fonepay')) {
+      return settings.wallets[method as 'esewa' | 'khalti' | 'fonepay']?.qrImage || null;
+    }
+    const custom = (settings.customWallets || []).find((w) => w.id === method);
+    return custom?.qrImage || null;
   };
 
   const handleConfirmPayment = async (method: string) => {
@@ -710,12 +715,16 @@ const ReviewScreen = () => {
               {qrMethods.length > 0 && (
                 <div className={`grid gap-1.5 ${qrMethods.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
                   {qrMethods.map(({ id, label }) => {
-                    const walletKey = id as 'esewa' | 'khalti' | 'fonepay';
-                    const logoImage = settings.wallets[walletKey]?.logoImage;
+                    const builtInKeys = ['esewa', 'khalti', 'fonepay'] as const;
+                    const isBuiltIn = builtInKeys.includes(id as 'esewa' | 'khalti' | 'fonepay');
+                    const logoImage = isBuiltIn
+                      ? settings.wallets[id as 'esewa' | 'khalti' | 'fonepay']?.logoImage
+                      : (settings.customWallets || []).find((w) => w.id === id)?.logoImage;
                     const brandColor =
                       id === 'esewa' ? '#16a34a' :
                       id === 'khalti' ? '#7c3aed' :
-                      '#dc2626';
+                      id === 'fonepay' ? '#dc2626' :
+                      '#3b82f6';
                     return (
                       <button
                         key={id}
