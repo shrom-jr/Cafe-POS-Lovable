@@ -5,7 +5,7 @@ import { usePOSStore } from '@/store/usePOSStore';
 import { useOrders } from '@/hooks/useOrders';
 import { useTables } from '@/hooks/useTables';
 import { calcBill } from '@/utils/calcBill';
-import { fmt } from '@/utils/format';
+import { fmt, resolvePaymentLabel } from '@/utils/format';
 import { printer, formatReceipt, numberToWords } from '@/utils/printer';
 import { playSuccess } from '@/utils/sounds';
 import { format } from 'date-fns';
@@ -121,15 +121,12 @@ const ReviewScreen = () => {
     return custom?.qrImage || null;
   };
 
-  const getMethodLabel = (method: string) =>
-    methods.find((m) => m.id === method)?.label ?? method;
-
   const handleConfirmPayment = async (method: string) => {
     const bn = getNextBillNumber();
     const now = Date.now();
     setBillNum(bn);
     setPaidAt(now);
-    setPaidMethod(getMethodLabel(method));
+    setPaidMethod(resolvePaymentLabel(method, settings));
 
     addPayment({
       orderId: orderIdRef.current,
@@ -773,7 +770,7 @@ const ReviewScreen = () => {
           <div className="bg-card rounded-3xl border border-border w-full max-w-sm shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <h3 className="font-black text-foreground text-base">
-                {(methods.find((m) => m.id === selectedMethod)?.label ?? selectedMethod)} Payment
+                {resolvePaymentLabel(selectedMethod, settings)} Payment
               </h3>
               <button
                 onClick={() => { setShowQRModal(false); setSelectedMethod(null); setConfirming(false); }}

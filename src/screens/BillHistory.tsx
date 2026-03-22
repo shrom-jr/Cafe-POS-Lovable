@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { usePOSStore } from '@/store/usePOSStore';
-import { fmt } from '@/utils/format';
+import { fmt, resolvePaymentLabel } from '@/utils/format';
 import AppLayout from '@/components/ui/AppLayout';
 import ReceiptPreview from '@/components/ReceiptPreview';
 import { Search, ChevronDown, ChevronUp, Printer, TrendingUp, Receipt, Calendar } from 'lucide-react';
@@ -196,7 +196,7 @@ const BillHistory = () => {
                         <span
                           className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${methodBadgeColor(p.method)}`}
                         >
-                          {p.method}
+                          {resolvePaymentLabel(p.method, settings)}
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5">

@@ -7,6 +7,7 @@ import { useTables } from '@/hooks/useTables';
 import { TopBar } from '@/components/ui/Navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import { Banknote, Smartphone, CheckCircle2, Home, X, Loader2, Printer, FileText } from 'lucide-react';
+import { resolvePaymentLabel } from '@/utils/format';
 import { printer, formatReceipt, numberToWords } from '@/utils/printer';
 import { format } from 'date-fns';
 import { OrderItem } from '@/types/pos';
@@ -119,15 +120,12 @@ const PaymentScreen = () => {
     return custom?.qrImage || null;
   };
 
-  const getMethodLabel = (method: string) =>
-    methods.find((m) => m.id === method)?.label ?? method;
-
   const handleConfirmPayment = async (method: string) => {
     const bn = getNextBillNumber();
     const now = Date.now();
     setBillNum(bn);
     setPaidAt(now);
-    setPaidMethod(getMethodLabel(method));
+    setPaidMethod(resolvePaymentLabel(method, settings));
 
     addPayment({
       orderId: snap.id,
@@ -579,7 +577,7 @@ const PaymentScreen = () => {
 
             <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <h3 className="font-black text-foreground text-base">
-                {(methods.find((m) => m.id === selectedMethod)?.label ?? selectedMethod)} Payment
+                {resolvePaymentLabel(selectedMethod, settings)} Payment
               </h3>
               <button
                 onClick={() => { setShowQRModal(false); setSelectedMethod(null); setConfirming(false); }}
