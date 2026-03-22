@@ -6,11 +6,10 @@ import { useOrders } from '@/hooks/useOrders';
 import { useTables } from '@/hooks/useTables';
 import { TopBar } from '@/components/ui/Navigation';
 import { QRCodeSVG } from 'qrcode.react';
-import { Banknote, Smartphone, CheckCircle2, Home, X, Loader2, Printer, FileText } from 'lucide-react';
+import { Banknote, Smartphone, CheckCircle2, Home, X, Loader2, Printer } from 'lucide-react';
+import ThermalReceiptLayout from '@/components/ThermalReceiptLayout';
 import { resolvePaymentLabel } from '@/utils/format';
-import { numberToWords } from '@/utils/printer';
 import { triggerPrint } from '@/utils/print';
-import { format } from 'date-fns';
 import { OrderItem } from '@/types/pos';
 import { playSuccess } from '@/utils/sounds';
 
@@ -58,7 +57,6 @@ const PaymentScreen = () => {
   const [paidAt, setPaidAt] = useState<number>(0);
   const [paidMethod, setPaidMethod] = useState<string>('');
   const [reprinting, setReprinting] = useState(false);
-  const [printingInvoice, setPrintingInvoice] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
   const subtotal = rawState?.subtotal ?? 0;
@@ -146,7 +144,7 @@ const PaymentScreen = () => {
     triggerPrint('receipt');
   };
 
-  /* ── RECEIPT PORTAL (simple thermal receipt) ──────────────── */
+  /* ── RECEIPT PORTAL (thermal receipt) ─────────────────────── */
   const receiptPortal = paid
     ? createPortal(
         <div
@@ -162,167 +160,23 @@ const PaymentScreen = () => {
             width: '80mm',
           }}
         >
-          <div style={{ textAlign: 'center', marginBottom: 6 }}>
-            <div style={{ fontSize: 15, fontWeight: 900 }}>{settings.cafeName}</div>
-            {settings.cafeAddress && <div style={{ fontSize: 11 }}>{settings.cafeAddress}</div>}
-            {settings.cafePhone && <div style={{ fontSize: 11 }}>{settings.cafePhone}</div>}
-          </div>
-
-          <div style={{ borderTop: '1px dashed #000', margin: '5px 0' }} />
-
-          <div style={{ fontSize: 11, marginBottom: 5 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Bill #{billNum}</span>
-              <span>Table {snap.tableNumber}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>{format(paidAt || Date.now(), 'dd MMM yyyy')}</span>
-              <span>{format(paidAt || Date.now(), 'HH:mm')}</span>
-            </div>
-          </div>
-
-          <div style={{ borderTop: '1px dashed #000', margin: '5px 0' }} />
-
-          {snap.items.map((item) => (
-            <div key={item.menuItemId} style={{ marginBottom: 2 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                <span style={{ flex: 1, paddingRight: 4 }}>{item.name}</span>
-                <span style={{ whiteSpace: 'nowrap' }}>Rs. {item.price * item.quantity}</span>
-              </div>
-              <div style={{ fontSize: 11, color: '#333' }}>
-                {item.quantity} × Rs. {item.price}
-              </div>
-            </div>
-          ))}
-
-          <div style={{ borderTop: '1px dashed #000', margin: '5px 0' }} />
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 2 }}>
-            <span>Subtotal</span><span>Rs. {subtotal}</span>
-          </div>
-          {discountAmount > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 2 }}>
-              <span>Discount</span><span>-Rs. {discountAmount}</span>
-            </div>
-          )}
-          {vatEnabled && vatAmount > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 2 }}>
-              <span>VAT ({Math.round(vatRate * 100)}%)</span><span>Rs. {vatAmount}</span>
-            </div>
-          )}
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 900, marginTop: 4 }}>
-            <span>TOTAL</span><span>Rs. {finalTotal}</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginTop: 2 }}>
-            <span>Payment</span>
-            <span style={{ textTransform: 'uppercase', fontWeight: 700 }}>{paidMethod}</span>
-          </div>
-
-          <div style={{ borderTop: '1px dashed #000', margin: '5px 0' }} />
-
-          <div style={{ textAlign: 'center', fontSize: 11 }}>
-            {settings.billFooter || 'Thank you for visiting!'}
-          </div>
-        </div>,
-        document.body
-      )
-    : null;
-
-  /* ── INVOICE PORTAL (full Nepali tax invoice) ─────────────── */
-  const invoicePortal = paid
-    ? createPortal(
-        <div
-          id="print-invoice"
-          style={{ display: 'none' }}
-        >
-          {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: 10 }}>
-            <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 1 }}>{settings.cafeName}</div>
-            {settings.cafeAddress && <div style={{ fontSize: 12 }}>{settings.cafeAddress}</div>}
-            {settings.cafePhone && <div style={{ fontSize: 12 }}>Tel: {settings.cafePhone}</div>}
-            {settings.cafePan && <div style={{ fontSize: 12 }}>PAN: {settings.cafePan}</div>}
-          </div>
-
-          <div style={{ textAlign: 'center', fontSize: 16, fontWeight: 900, letterSpacing: 2, border: '2px solid #000', padding: '4px 0', marginBottom: 10 }}>
-            TAX INVOICE
-          </div>
-
-          {/* Bill details */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 8 }}>
-            <div>
-              <div><strong>Bill No:</strong> #{billNum}</div>
-              <div><strong>Table:</strong> {snap.tableNumber}</div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div><strong>Date:</strong> {format(paidAt || Date.now(), 'dd/MM/yyyy')}</div>
-              <div><strong>Time:</strong> {format(paidAt || Date.now(), 'HH:mm')}</div>
-            </div>
-          </div>
-
-          <div style={{ borderTop: '1px solid #000', borderBottom: '1px solid #000', padding: '3px 0', marginBottom: 2 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '30px 1fr 50px 60px 70px', gap: 4, fontSize: 11, fontWeight: 700 }}>
-              <span>SN</span>
-              <span>Particulars</span>
-              <span style={{ textAlign: 'center' }}>Qty</span>
-              <span style={{ textAlign: 'right' }}>Rate</span>
-              <span style={{ textAlign: 'right' }}>Amount</span>
-            </div>
-          </div>
-
-          {snap.items.map((item, idx) => (
-            <div
-              key={item.menuItemId}
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '30px 1fr 50px 60px 70px',
-                gap: 4,
-                fontSize: 11,
-                padding: '2px 0',
-                borderBottom: '1px dashed #ccc',
-              }}
-            >
-              <span>{idx + 1}</span>
-              <span>{item.name}</span>
-              <span style={{ textAlign: 'center' }}>{item.quantity}</span>
-              <span style={{ textAlign: 'right' }}>{item.price.toFixed(2)}</span>
-              <span style={{ textAlign: 'right' }}>{(item.price * item.quantity).toFixed(2)}</span>
-            </div>
-          ))}
-
-          <div style={{ borderTop: '1px solid #000', marginTop: 4, paddingTop: 6 }}>
-            {[
-              { label: 'Basic Amount', value: `Rs. ${subtotal.toFixed(2)}` },
-              ...(discountAmount > 0 ? [{ label: 'Discount', value: `-Rs. ${discountAmount.toFixed(2)}` }] : []),
-              { label: 'Taxable Amount', value: `Rs. ${(subtotal - discountAmount).toFixed(2)}` },
-              ...(vatEnabled && vatAmount > 0 ? [{ label: `VAT (${Math.round(vatRate * 100)}%)`, value: `Rs. ${vatAmount.toFixed(2)}` }] : []),
-            ].map(({ label, value }) => (
-              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 2 }}>
-                <span>{label}</span><span>{value}</span>
-              </div>
-            ))}
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 900, borderTop: '1px solid #000', paddingTop: 4, marginTop: 4 }}>
-              <span>Total Amount</span><span>Rs. {finalTotal.toFixed(2)}</span>
-            </div>
-          </div>
-
-          <div style={{ borderTop: '1px solid #000', marginTop: 8, paddingTop: 6, fontSize: 11 }}>
-            <strong>Amount in Words:</strong> {numberToWords(finalTotal)}
-          </div>
-
-          <div style={{ borderTop: '1px solid #000', marginTop: 8, paddingTop: 6 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
-              <div>
-                <div><strong>Payment Method:</strong> {paidMethod.toUpperCase()}</div>
-                <div><strong>Cashier:</strong> {settings.cafeName}</div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div><strong>Ref:</strong> {reference}</div>
-              </div>
-            </div>
-            <div style={{ textAlign: 'center', marginTop: 10, fontSize: 12 }}>
-              {settings.billFooter || 'Thank you for your visit!'}
-            </div>
-          </div>
+          <ThermalReceiptLayout
+            cafeName={settings.cafeName}
+            cafeAddress={settings.cafeAddress}
+            cafePan={settings.cafePan}
+            billFooter={settings.billFooter}
+            tableNumber={snap.tableNumber}
+            billNumber={billNum}
+            createdAt={paidAt || Date.now()}
+            items={snap.items}
+            subtotal={subtotal}
+            discountAmount={discountAmount}
+            vatEnabled={vatEnabled}
+            vatAmount={vatAmount}
+            vatRate={vatRate}
+            total={finalTotal}
+            method={paidMethod}
+          />
         </div>,
         document.body
       )
@@ -340,17 +194,9 @@ const PaymentScreen = () => {
       setTimeout(() => setReprinting(false), 1800);
     };
 
-    const handlePrintInvoice = () => {
-      if (printingInvoice) return;
-      setPrintingInvoice(true);
-      triggerPrint('invoice');
-      setTimeout(() => setPrintingInvoice(false), 1800);
-    };
-
     return (
       <>
         {receiptPortal}
-        {invoicePortal}
         <div className="h-screen bg-background flex flex-col overflow-hidden">
           <div className="flex-1 flex flex-col items-center justify-center p-5 gap-4 overflow-hidden">
 
@@ -407,27 +253,15 @@ const PaymentScreen = () => {
 
             {/* Action buttons */}
             <div className="w-full max-w-sm space-y-2.5">
-              <div className="grid grid-cols-2 gap-2.5">
-                <button
-                  onClick={handleReprint}
-                  disabled={reprinting}
-                  data-testid="button-reprint"
-                  className="py-3.5 rounded-2xl border border-border bg-secondary text-foreground font-bold text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.97] hover:bg-secondary/80 disabled:opacity-60"
-                >
-                  <Printer size={15} />
-                  {reprinting ? 'Reprinting...' : 'Reprint Receipt'}
-                </button>
-
-                <button
-                  onClick={handlePrintInvoice}
-                  disabled={printingInvoice}
-                  data-testid="button-print-invoice"
-                  className="py-3.5 rounded-2xl border border-border bg-secondary text-foreground font-bold text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.97] hover:bg-secondary/80 disabled:opacity-60"
-                >
-                  <FileText size={15} />
-                  {printingInvoice ? 'Printing...' : 'Full Invoice'}
-                </button>
-              </div>
+              <button
+                onClick={handleReprint}
+                disabled={reprinting}
+                data-testid="button-reprint"
+                className="w-full py-3.5 rounded-2xl border border-border bg-secondary text-foreground font-bold text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.97] hover:bg-secondary/80 disabled:opacity-60"
+              >
+                <Printer size={15} />
+                {reprinting ? 'Reprinting...' : 'Reprint Receipt'}
+              </button>
 
               <button
                 onClick={() => navigate('/', { replace: true })}

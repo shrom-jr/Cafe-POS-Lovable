@@ -1,0 +1,174 @@
+import { format } from 'date-fns';
+import { numberToWords } from '@/utils/printer';
+
+interface ThermalReceiptLayoutProps {
+  cafeName: string;
+  cafeAddress?: string;
+  cafePan?: string;
+  billFooter?: string;
+  tableNumber: number;
+  billNumber: number;
+  createdAt: number;
+  items: Array<{ name: string; price: number; quantity: number }>;
+  subtotal: number;
+  discountAmount: number;
+  vatEnabled: boolean;
+  vatAmount: number;
+  vatRate: number;
+  total: number;
+  method: string;
+}
+
+const HR = () => (
+  <div style={{ borderTop: '1px dashed #000', margin: '5px 0' }} />
+);
+
+const Row = ({ label, value }: { label: string; value: string }) => (
+  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 1 }}>
+    <span>{label}</span>
+    <span>{value}</span>
+  </div>
+);
+
+const ThermalReceiptLayout = ({
+  cafeName,
+  cafeAddress,
+  cafePan,
+  billFooter,
+  tableNumber,
+  billNumber,
+  createdAt,
+  items,
+  subtotal,
+  discountAmount,
+  vatEnabled,
+  vatAmount,
+  vatRate,
+  total,
+  method,
+}: ThermalReceiptLayoutProps) => {
+  const taxableAmount = subtotal - discountAmount;
+  const dateStr = format(createdAt, 'dd/MM/yyyy');
+  const timeStr = format(createdAt, 'hh:mm aa');
+
+  return (
+    <>
+      <div style={{ textAlign: 'center', marginBottom: 6 }}>
+        <div style={{ fontSize: 15, fontWeight: 900 }}>{cafeName}</div>
+        {cafeAddress && <div style={{ fontSize: 11 }}>{cafeAddress}</div>}
+        {cafePan && <div style={{ fontSize: 11 }}>PAN: {cafePan}</div>}
+      </div>
+
+      <HR />
+
+      <div style={{ textAlign: 'center', fontWeight: 900, fontSize: 12, letterSpacing: 1, marginBottom: 5 }}>
+        TAX INVOICE
+      </div>
+
+      <HR />
+
+      <div style={{ fontSize: 11, marginBottom: 5 }}>
+        <div style={{ marginBottom: 2 }}>
+          <strong>Payment Mode:</strong> {method}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span><strong>Bill No:</strong> #{billNumber}</span>
+          <span><strong>Date:</strong> {dateStr}</span>
+        </div>
+        <div>
+          <strong>Table:</strong> {tableNumber}
+        </div>
+      </div>
+
+      <HR />
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '18px 1fr 28px 44px 48px',
+          gap: 2,
+          fontSize: 10,
+          fontWeight: 700,
+          paddingBottom: 3,
+          borderBottom: '1px solid #000',
+          marginBottom: 2,
+        }}
+      >
+        <span>SN</span>
+        <span>Particulars</span>
+        <span style={{ textAlign: 'center' }}>Qty</span>
+        <span style={{ textAlign: 'right' }}>Rate</span>
+        <span style={{ textAlign: 'right' }}>Amt</span>
+      </div>
+
+      {items.map((item, idx) => (
+        <div
+          key={idx}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '18px 1fr 28px 44px 48px',
+            gap: 2,
+            fontSize: 10,
+            paddingBottom: 2,
+            borderBottom: '1px dashed #ccc',
+            marginBottom: 2,
+          }}
+        >
+          <span>{idx + 1}</span>
+          <span>{item.name}</span>
+          <span style={{ textAlign: 'center' }}>{item.quantity}</span>
+          <span style={{ textAlign: 'right' }}>{item.price.toFixed(2)}</span>
+          <span style={{ textAlign: 'right' }}>{(item.price * item.quantity).toFixed(2)}</span>
+        </div>
+      ))}
+
+      <HR />
+
+      <div style={{ fontSize: 11 }}>
+        <Row label="Basic Amount :" value={`Rs. ${subtotal.toFixed(2)}`} />
+        {discountAmount > 0 && (
+          <Row label="Discount :" value={`-Rs. ${discountAmount.toFixed(2)}`} />
+        )}
+        <Row label="Taxable Amount :" value={`Rs. ${taxableAmount.toFixed(2)}`} />
+        {vatEnabled && vatAmount > 0 && (
+          <Row label={`VAT (${Math.round(vatRate * 100)}%) :`} value={`Rs. ${vatAmount.toFixed(2)}`} />
+        )}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            fontWeight: 900,
+            fontSize: 13,
+            borderTop: '1px solid #000',
+            paddingTop: 3,
+            marginTop: 3,
+          }}
+        >
+          <span>Total :</span>
+          <span>Rs. {total.toFixed(2)}</span>
+        </div>
+      </div>
+
+      <HR />
+
+      <div style={{ fontSize: 10, marginBottom: 2 }}>
+        In word: {numberToWords(Math.round(total))}
+      </div>
+
+      <HR />
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10 }}>
+        <span>Cashier: {cafeName}</span>
+        <span>Time: {timeStr}</span>
+      </div>
+
+      <HR />
+
+      <div style={{ textAlign: 'center', fontSize: 11 }}>
+        {billFooter || 'Thank you for visiting!'}
+      </div>
+    </>
+  );
+};
+
+export default ThermalReceiptLayout;

@@ -158,27 +158,4 @@
     print-color-adjust: exact !important;
   }
 
-  #print-invoice { display: none !important; }
-
-  body[data-print="invoice"] #print-receipt { display: none !important; }
-
-  body[data-print="invoice"] #print-invoice {
-    display: block !important;
-    visibility: visible !important;
-    position: static !important;
-    width: 100% !important;
-    background: #ffffff !important;
-    color: #000000 !important;
-    font-family: 'Courier New', Courier, monospace !important;
-    font-size: 11px !important;
-    line-height: 1.6 !important;
-    padding: 12mm 14mm !important;
-  }
-
-  body[data-print="invoice"] #print-invoice * {
-    color: #000000 !important;
-    background: transparent !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
 }

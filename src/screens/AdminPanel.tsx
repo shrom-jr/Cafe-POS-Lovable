@@ -72,7 +72,7 @@ const AdminPanel = () => {
     { id: 'menu', label: 'Menu', icon: <Coffee size={16} /> },
     { id: 'tables', label: 'Tables', icon: <Table2 size={16} /> },
     { id: 'payments', label: 'Payments', icon: <CreditCard size={16} /> },
-    { id: 'bill', label: 'Bill Design', icon: <Receipt size={16} /> },
+    { id: 'bill', label: 'Company Profile', icon: <Receipt size={16} /> },
     { id: 'reports', label: 'Reports', icon: <TrendingUp size={16} /> },
     { id: 'backup', label: 'Backup', icon: <FileDown size={16} /> },
   ];
@@ -825,7 +825,7 @@ const BillDesignSection = () => {
       </div>
 
       <div className="bg-card rounded-xl border border-border p-4 space-y-3">
-        <h3 className="font-bold text-foreground">Bill Information</h3>
+        <h3 className="font-bold text-foreground">Company Information</h3>
         <div className="space-y-2">
           <div>
             <label className="text-xs text-muted-foreground">Café Name</label>
@@ -865,13 +865,18 @@ const BillDesignSection = () => {
           cafeLogo={settings.cafeLogo}
           cafeAddress={cafeAddress}
           cafePhone={cafePhone}
+          cafePan={cafePan}
           billFooter={billFooter}
           tableNumber={1}
           items={sampleItems}
           subtotal={680}
           discount={0}
           discountType="fixed"
-          total={680}
+          vatEnabled={settings.vatEnabled}
+          vatRate={settings.vatRate}
+          vatAmount={settings.vatEnabled ? Math.round(680 * settings.vatRate) : 0}
+          total={settings.vatEnabled ? 680 + Math.round(680 * settings.vatRate) : 680}
+          method="Cash"
           billNumber={Number(billCounter) + 1}
           date={Date.now()}
         />

@@ -1,0 +1,174 @@
+You must refactor the POS billing system to use ONE unified receipt layout globally.
+
+DO NOT break existing logic. DO NOT redesign UI outside scope.
+
+========================
+1. REMOVE FULL INVOICE OPTION
+========================
+
+- In PaymentSuccess screen:
+  - REMOVE the "Full Invoice" button completely
+  - KEEP only:
+    - "Reprint Receipt"
+    - "Back to Tables"
+
+- Anywhere else in app:
+  - REMOVE any "Full Invoice" references, routes, or conditions
+  - There must be NO dual layout system anymore
+
+========================
+2. ONE GLOBAL PRINT TEMPLATE
+========================
+
+- Replace ALL print outputs with ONE shared template:
+  - Used in:
+    - PaymentScreen (after payment)
+    - ReviewScreen (if exists)
+    - BillHistory (reprint)
+
+- Use existing triggerPrint() from utils
+- Use ONE print container id globally:
+  → id="print-receipt"
+
+- Ensure:
+  - CSS print rules show ONLY #print-receipt
+  - Everything else hidden during print
+
+========================
+3. RECEIPT DESIGN (STRICT STRUCTURE)
+========================
+
+This is NOT a card UI. This is a THERMAL RECEIPT FORMAT.
+
+STYLE:
+- Monospace font
+- White background
+- Black text
+- No colors
+- No shadows
+- No rounded cards
+- Width: 72mm or 80mm max
+- Compact spacing
+
+STRUCTURE (MUST MATCH):
+
+--------------------------------
+[Centered]
+Cafe Name
+Address
+PAN No
+
+--------------------------------
+[Centered]
+TAX INVOICE
+--------------------------------
+
+Customer Name:
+Customer PAN:
+Address:
+
+Payment Mode: {method}
+
+Bill No: XXXX        Date: DD/MM/YYYY
+Table: X             Miti: XXXX
+
+--------------------------------
+SN  Particulars   Qty   Rate   Amount
+--------------------------------
+
+1. Item Name
+   (optional subtext like size)
+   qty   rate   amount
+
+--------------------------------
+
+RIGHT ALIGNED TOTAL SECTION:
+
+Basic Amount :
+Discount :
+Taxable Amount :
+VAT (13%) : (ONLY if VAT enabled)
+Total :
+
+--------------------------------
+
+In word: Rs. XXXX only
+
+--------------------------------
+
+Cashier: XXXX       Time: XX:XX
+
+--------------------------------
+[Centered]
+Footer Message
+
+--------------------------------
+
+========================
+4. DATA RULES
+========================
+
+- All values must come dynamically from existing state
+- Add safe fallback:
+  - Customer Name → empty
+  - PAN → empty
+  - VAT → only if enabled
+- Time format: HH:MM AM/PM
+- Date format: DD/MM/YYYY
+
+========================
+5. ADMIN PANEL CHANGE
+========================
+
+- Rename "Bill Design" menu → "Company Profile"
+
+- This section must manage:
+
+  - Cafe Name
+  - Logo (optional, not required in print)
+  - Address
+  - Phone Number
+  - PAN Number
+  - VAT Number
+  - VAT Toggle (ON/OFF)
+      → If ON: apply 13%
+      → If OFF: NO VAT row in receipt
+
+  - Footer Message
+  - Current Bill Number (auto increment, do not break logic)
+
+- KEEP Bill Preview
+  → Update preview to match NEW receipt layout (thermal style)
+
+========================
+6. IMPORTANT CONSTRAINTS
+========================
+
+- DO NOT touch:
+  - table logic
+  - cart logic
+  - payment flow
+
+- DO NOT:
+  - add animations
+  - add new libraries
+  - redesign main UI
+
+- ONLY:
+  - unify print system
+  - replace template
+  - clean old invoice logic
+
+========================
+7. FINAL RESULT
+========================
+
+- One button: "Reprint Receipt"
+- One print layout everywhere
+- Thermal-style structured receipt
+- Admin controls business identity + VAT
+- Clean, consistent printing
+
+========================
+END
+========================

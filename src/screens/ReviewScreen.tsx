@@ -6,15 +6,14 @@ import { useOrders } from '@/hooks/useOrders';
 import { useTables } from '@/hooks/useTables';
 import { calcBill } from '@/utils/calcBill';
 import { fmt, resolvePaymentLabel } from '@/utils/format';
-import { numberToWords } from '@/utils/printer';
 import { triggerPrint } from '@/utils/print';
 import { playSuccess } from '@/utils/sounds';
-import { format } from 'date-fns';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   ChevronLeft, Banknote, Smartphone,
-  CheckCircle2, Home, X, Loader2, Printer, FileText,
+  CheckCircle2, Home, X, Loader2, Printer,
 } from 'lucide-react';
+import ThermalReceiptLayout from '@/components/ThermalReceiptLayout';
 
 const PRESETS = [0, 5, 10, 15];
 
@@ -65,7 +64,6 @@ const ReviewScreen = () => {
   const [paidAt, setPaidAt] = useState(0);
   const [paidMethod, setPaidMethod] = useState('');
   const [reprinting, setReprinting] = useState(false);
-  const [printingInvoice, setPrintingInvoice] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
   // ── Discount handlers ─────────────────────────────────────────
@@ -179,134 +177,23 @@ const ReviewScreen = () => {
             width: '80mm',
           }}
         >
-          <div style={{ textAlign: 'center', marginBottom: 6 }}>
-            <div style={{ fontSize: 15, fontWeight: 900 }}>{settings.cafeName}</div>
-            {settings.cafeAddress && <div style={{ fontSize: 11 }}>{settings.cafeAddress}</div>}
-            {settings.cafePhone && <div style={{ fontSize: 11 }}>{settings.cafePhone}</div>}
-          </div>
-          <div style={{ borderTop: '1px dashed #000', margin: '5px 0' }} />
-          <div style={{ fontSize: 11, marginBottom: 5 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Bill #{billNum}</span>
-              <span>Table {tableNumber}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>{format(paidAt || Date.now(), 'dd MMM yyyy')}</span>
-              <span>{format(paidAt || Date.now(), 'HH:mm')}</span>
-            </div>
-          </div>
-          <div style={{ borderTop: '1px dashed #000', margin: '5px 0' }} />
-          {items.map((item) => (
-            <div key={item.menuItemId} style={{ marginBottom: 2 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                <span style={{ flex: 1, paddingRight: 4 }}>{item.name}</span>
-                <span style={{ whiteSpace: 'nowrap' }}>Rs. {item.price * item.quantity}</span>
-              </div>
-              <div style={{ fontSize: 11, color: '#333' }}>{item.quantity} × Rs. {item.price}</div>
-            </div>
-          ))}
-          <div style={{ borderTop: '1px dashed #000', margin: '5px 0' }} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 2 }}>
-            <span>Subtotal</span><span>Rs. {bill.subtotal}</span>
-          </div>
-          {bill.discountAmount > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 2 }}>
-              <span>Discount</span><span>-Rs. {bill.discountAmount}</span>
-            </div>
-          )}
-          {bill.vatEnabled && bill.vatAmount > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 2 }}>
-              <span>VAT ({Math.round(bill.vatRate * 100)}%)</span><span>Rs. {bill.vatAmount}</span>
-            </div>
-          )}
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 900, marginTop: 4 }}>
-            <span>TOTAL</span><span>Rs. {bill.total}</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginTop: 2 }}>
-            <span>Payment</span>
-            <span style={{ textTransform: 'uppercase', fontWeight: 700 }}>{paidMethod}</span>
-          </div>
-          <div style={{ borderTop: '1px dashed #000', margin: '5px 0' }} />
-          <div style={{ textAlign: 'center', fontSize: 11 }}>
-            {settings.billFooter || 'Thank you for visiting!'}
-          </div>
-        </div>,
-        document.body
-      )
-    : null;
-
-  // ── Invoice portal ────────────────────────────────────────────
-  const invoicePortal = paid
-    ? createPortal(
-        <div id="print-invoice" style={{ display: 'none' }}>
-          <div style={{ textAlign: 'center', marginBottom: 10 }}>
-            <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 1 }}>{settings.cafeName}</div>
-            {settings.cafeAddress && <div style={{ fontSize: 12 }}>{settings.cafeAddress}</div>}
-            {settings.cafePhone && <div style={{ fontSize: 12 }}>Tel: {settings.cafePhone}</div>}
-            {settings.cafePan && <div style={{ fontSize: 12 }}>PAN: {settings.cafePan}</div>}
-          </div>
-          <div style={{ textAlign: 'center', fontSize: 16, fontWeight: 900, letterSpacing: 2, border: '2px solid #000', padding: '4px 0', marginBottom: 10 }}>
-            TAX INVOICE
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 8 }}>
-            <div>
-              <div><strong>Bill No:</strong> #{billNum}</div>
-              <div><strong>Table:</strong> {tableNumber}</div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div><strong>Date:</strong> {format(paidAt || Date.now(), 'dd/MM/yyyy')}</div>
-              <div><strong>Time:</strong> {format(paidAt || Date.now(), 'HH:mm')}</div>
-            </div>
-          </div>
-          <div style={{ borderTop: '1px solid #000', borderBottom: '1px solid #000', padding: '3px 0', marginBottom: 2 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '30px 1fr 50px 60px 70px', gap: 4, fontSize: 11, fontWeight: 700 }}>
-              <span>SN</span><span>Particulars</span>
-              <span style={{ textAlign: 'center' }}>Qty</span>
-              <span style={{ textAlign: 'right' }}>Rate</span>
-              <span style={{ textAlign: 'right' }}>Amount</span>
-            </div>
-          </div>
-          {items.map((item, idx) => (
-            <div key={item.menuItemId} style={{ display: 'grid', gridTemplateColumns: '30px 1fr 50px 60px 70px', gap: 4, fontSize: 11, padding: '2px 0', borderBottom: '1px dashed #ccc' }}>
-              <span>{idx + 1}</span>
-              <span>{item.name}</span>
-              <span style={{ textAlign: 'center' }}>{item.quantity}</span>
-              <span style={{ textAlign: 'right' }}>{item.price.toFixed(2)}</span>
-              <span style={{ textAlign: 'right' }}>{(item.price * item.quantity).toFixed(2)}</span>
-            </div>
-          ))}
-          <div style={{ borderTop: '1px solid #000', marginTop: 4, paddingTop: 6 }}>
-            {[
-              { label: 'Basic Amount', value: `Rs. ${bill.subtotal.toFixed(2)}` },
-              ...(bill.discountAmount > 0 ? [{ label: 'Discount', value: `-Rs. ${bill.discountAmount.toFixed(2)}` }] : []),
-              { label: 'Taxable Amount', value: `Rs. ${(bill.subtotal - bill.discountAmount).toFixed(2)}` },
-              ...(bill.vatEnabled && bill.vatAmount > 0 ? [{ label: `VAT (${Math.round(bill.vatRate * 100)}%)`, value: `Rs. ${bill.vatAmount.toFixed(2)}` }] : []),
-            ].map(({ label, value }) => (
-              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 2 }}>
-                <span>{label}</span><span>{value}</span>
-              </div>
-            ))}
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 900, borderTop: '1px solid #000', paddingTop: 4, marginTop: 4 }}>
-              <span>Total Amount</span><span>Rs. {bill.total.toFixed(2)}</span>
-            </div>
-          </div>
-          <div style={{ borderTop: '1px solid #000', marginTop: 8, paddingTop: 6, fontSize: 11 }}>
-            <strong>Amount in Words:</strong> {numberToWords(bill.total)}
-          </div>
-          <div style={{ borderTop: '1px solid #000', marginTop: 8, paddingTop: 6 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
-              <div>
-                <div><strong>Payment Method:</strong> {paidMethod.toUpperCase()}</div>
-                <div><strong>Cashier:</strong> {settings.cafeName}</div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div><strong>Ref:</strong> {reference}</div>
-              </div>
-            </div>
-            <div style={{ textAlign: 'center', marginTop: 10, fontSize: 12 }}>
-              {settings.billFooter || 'Thank you for your visit!'}
-            </div>
-          </div>
+          <ThermalReceiptLayout
+            cafeName={settings.cafeName}
+            cafeAddress={settings.cafeAddress}
+            cafePan={settings.cafePan}
+            billFooter={settings.billFooter}
+            tableNumber={tableNumber}
+            billNumber={billNum}
+            createdAt={paidAt || Date.now()}
+            items={items}
+            subtotal={bill.subtotal}
+            discountAmount={bill.discountAmount}
+            vatEnabled={bill.vatEnabled}
+            vatAmount={bill.vatAmount}
+            vatRate={bill.vatRate}
+            total={bill.total}
+            method={paidMethod}
+          />
         </div>,
         document.body
       )
@@ -324,17 +211,9 @@ const ReviewScreen = () => {
       setTimeout(() => setReprinting(false), 1800);
     };
 
-    const handlePrintInvoice = () => {
-      if (printingInvoice) return;
-      setPrintingInvoice(true);
-      triggerPrint('invoice');
-      setTimeout(() => setPrintingInvoice(false), 1800);
-    };
-
     return (
       <>
         {receiptPortal}
-        {invoicePortal}
         <div className="h-screen bg-background flex flex-col overflow-hidden">
           <div className="flex-1 flex flex-col items-center justify-center p-5 gap-4 overflow-hidden">
             <div className="flex flex-col items-center gap-2">
@@ -386,24 +265,14 @@ const ReviewScreen = () => {
             </div>
 
             <div className="w-full max-w-sm space-y-2.5">
-              <div className="grid grid-cols-2 gap-2.5">
-                <button
-                  onClick={handleReprint}
-                  disabled={reprinting}
-                  className="py-3.5 rounded-2xl border border-border bg-secondary text-foreground font-bold text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.97] hover:bg-secondary/80 disabled:opacity-60"
-                >
-                  <Printer size={15} />
-                  {reprinting ? 'Reprinting...' : 'Reprint Receipt'}
-                </button>
-                <button
-                  onClick={handlePrintInvoice}
-                  disabled={printingInvoice}
-                  className="py-3.5 rounded-2xl border border-border bg-secondary text-foreground font-bold text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.97] hover:bg-secondary/80 disabled:opacity-60"
-                >
-                  <FileText size={15} />
-                  {printingInvoice ? 'Printing...' : 'Full Invoice'}
-                </button>
-              </div>
+              <button
+                onClick={handleReprint}
+                disabled={reprinting}
+                className="w-full py-3.5 rounded-2xl border border-border bg-secondary text-foreground font-bold text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.97] hover:bg-secondary/80 disabled:opacity-60"
+              >
+                <Printer size={15} />
+                {reprinting ? 'Reprinting...' : 'Reprint Receipt'}
+              </button>
               <button
                 onClick={() => navigate('/', { replace: true })}
                 className="w-full py-4 rounded-2xl bg-success text-white font-black text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.97] hover:brightness-110 shadow-[0_4px_16px_-4px_hsl(var(--success)/0.4)]"
@@ -421,7 +290,6 @@ const ReviewScreen = () => {
   return (
     <>
       {receiptPortal}
-      {invoicePortal}
       <div
         className="h-screen flex flex-col overflow-hidden"
         style={{ background: 'linear-gradient(180deg, #0d1525 0%, #060e1a 100%)' }}
