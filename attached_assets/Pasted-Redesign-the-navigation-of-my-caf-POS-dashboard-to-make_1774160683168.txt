@@ -1,0 +1,114 @@
+Redesign the navigation of my café POS dashboard to make it feel like a clean, premium POS interface.
+
+IMPORTANT:
+
+* Do NOT change any business logic
+* Do NOT break existing functionality
+* Only change layout, navigation structure, and UI styling
+* Keep everything minimal, fast, and calm (no flashy UI)
+
+---
+
+🧭 REMOVE SIDEBAR COMPLETELY
+
+* Remove the entire left sidebar
+* Remove all icons (Tables, History, Admin)
+* Remove the sidebar spacing from layout
+* Expand main content area to use full width
+
+---
+
+🧭 CREATE TOP NAVIGATION BAR
+
+Design a horizontal top bar with 3 sections:
+
+LEFT:
+
+* Café name (e.g. "Shramik Café Brew")
+* Slightly prominent but clean
+
+CENTER:
+
+* Navigation tabs (NOT buttons):
+
+  * Tables
+  * History
+  * Admin
+
+RIGHT:
+
+* Status info:
+
+  * Available tables count
+  * Active tables count
+  * Current time
+
+---
+
+🧭 NAV TABS STYLE
+
+Tabs must feel minimal and structured:
+
+ACTIVE TAB:
+
+* Brighter text
+* Subtle underline or bottom border
+* No background color
+
+INACTIVE TABS:
+
+* Muted text
+* No border
+* No background
+
+HOVER:
+
+* Very subtle color change only
+
+IMPORTANT:
+
+* Do NOT use pills
+* Do NOT use solid button styles
+* Do NOT use glow or heavy effects
+
+---
+
+📐 LAYOUT & SPACING
+
+* Center the navigation tabs horizontally (or slightly left-centered)
+
+* Ensure proper spacing between tabs
+
+* Add balanced padding inside the top bar
+
+* Add a very subtle bottom border under the top bar to separate it from content
+
+---
+
+📦 CONTENT AREA
+
+* Expand the table grid to use full width
+
+* Keep a reasonable max-width so it doesn’t stretch too much
+
+* Keep content centered
+
+* Slightly reduce excessive padding around the grid
+
+* Make spacing feel tighter and more operational
+
+---
+
+🎯 FINAL GOAL
+
+The interface should:
+
+* Feel like a real POS system (not a generic dashboard)
+* Be centered around tables, not navigation
+* Have clean, structured navigation
+* Avoid visual clutter
+* Maintain a premium but calm look
+
+Do NOT overdesign.
+Do NOT add animations.
+Focus on clarity, hierarchy, and usability.

@@ -61,7 +61,7 @@ const TableOverview = () => {
 
   return (
     <AppLayout title={settings.cafeName || 'Café Brew'} headerRight={headerRight}>
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto px-5 py-4">
         {tables.length === 0 ? (
           <div className="text-center text-muted-foreground py-20">
             <p className="text-lg">No tables configured.</p>
@@ -71,7 +71,7 @@ const TableOverview = () => {
           <div
             onMouseEnter={() => setPanelHovered(true)}
             onMouseLeave={() => setPanelHovered(false)}
-            className="rounded-2xl border border-white/[0.07] p-5 transition-all duration-500"
+            className="rounded-2xl border border-white/[0.07] p-4 transition-all duration-500"
             style={{
               background:
                 'radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 70%), rgba(255,255,255,0.03)',
