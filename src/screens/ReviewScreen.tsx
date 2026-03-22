@@ -495,13 +495,13 @@ const ReviewScreen = () => {
           </div>
         </div>
 
-        {/* Body — scrollable */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="max-w-[460px] mx-auto w-full px-4 pt-2.5 pb-4 flex flex-col gap-1.5">
+        {/* Body */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="max-w-[460px] mx-auto w-full flex flex-col flex-1 min-h-0 px-4 pt-2.5 pb-2 gap-1.5">
 
             {/* ── Items card (scrollable) ── */}
             <div
-              className="flex-shrink-0 rounded-xl overflow-hidden"
+              className="flex-1 min-h-0 rounded-xl overflow-hidden flex flex-col"
               style={{
                 background: 'rgba(255,255,255,0.04)',
                 border: '1px solid rgba(255,255,255,0.06)',
@@ -510,42 +510,46 @@ const ReviewScreen = () => {
             >
               {/* Items header label */}
               <div
-                className="px-3 py-1.5 flex items-center"
+                className="flex-shrink-0 px-3 py-1.5 flex items-center"
                 style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
               >
                 <span className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.22)' }}>
                   Order Items
                 </span>
               </div>
-              {/* Each row is exactly 52px tall; container = 4 × 52px = 208px max */}
-              <div className="overflow-y-auto" style={{ maxHeight: `${52 * 4}px` }}>
-                {items.map((item, idx) => (
-                  <div
-                    key={item.menuItemId}
-                    className="flex items-center gap-3 px-3"
-                    style={{
-                      height: 52,
-                      ...(idx < items.length - 1 ? { borderBottom: '1px solid rgba(255,255,255,0.04)' } : {}),
-                    }}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold truncate leading-snug" style={{ color: 'rgba(255,255,255,0.95)' }}>
-                        {item.name}
-                      </p>
-                      <p className="text-xs" style={{ color: 'rgba(255,255,255,0.38)' }}>
-                        {item.quantity} × Rs. {item.price}
+              {/* Scroll area with bottom fade overlay */}
+              <div className="relative flex-1 min-h-0">
+                <div className="overflow-y-auto h-full">
+                  {items.map((item, idx) => (
+                    <div
+                      key={item.menuItemId}
+                      className="flex items-center gap-3 px-3 py-2"
+                      style={idx < items.length - 1 ? { borderBottom: '1px solid rgba(255,255,255,0.04)' } : {}}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold truncate leading-snug" style={{ color: 'rgba(255,255,255,0.95)' }}>
+                          {item.name}
+                        </p>
+                        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.38)' }}>
+                          {item.quantity} × Rs. {item.price}
+                        </p>
+                      </div>
+                      <p className="text-sm font-bold tabular-nums whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.88)' }}>
+                        Rs. {item.price * item.quantity}
                       </p>
                     </div>
-                    <p className="text-sm font-bold tabular-nums whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.88)' }}>
-                      Rs. {item.price * item.quantity}
-                    </p>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                {/* Bottom fade — masks any partial row */}
+                <div
+                  className="absolute bottom-0 inset-x-0 h-8 pointer-events-none"
+                  style={{ background: 'linear-gradient(to bottom, transparent, rgba(9,14,28,0.95))' }}
+                />
               </div>
             </div>
 
             {/* ── Bill + Payment section ── */}
-            <div className="flex flex-col gap-1.5">
+            <div className="flex-shrink-0 flex flex-col gap-1.5">
 
               {/* ── Unified bill card: subtotal + discount controls + VAT + total ── */}
               <div
