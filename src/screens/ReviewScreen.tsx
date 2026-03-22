@@ -677,16 +677,17 @@ const ReviewScreen = () => {
 
             {/* ── Payment Method card ── */}
             <div
-              className="rounded-2xl px-4 py-1.5 space-y-1.5"
+              className="rounded-2xl px-4 pt-1.5 pb-2"
               style={{
                 background: 'rgba(255,255,255,0.04)',
                 border: '1px solid rgba(255,255,255,0.09)',
                 boxShadow: '0 4px 20px -6px rgba(0,0,0,0.4)',
               }}
             >
-              <p className="text-[10px] font-black uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              <p className="text-[10px] font-black uppercase tracking-[0.14em] mb-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
                 Payment Method
               </p>
+              <div className="overflow-y-auto max-h-48 space-y-1.5 pr-0.5">
 
               {/* Cash */}
               <button
@@ -755,7 +756,7 @@ const ReviewScreen = () => {
                   })}
                 </div>
               )}
-              <div className="h-0.5" />
+              </div>{/* end scrollable */}
             </div>
 
             </div>{/* end flex-shrink-0 bottom section */}
