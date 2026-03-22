@@ -3,11 +3,12 @@ import { usePOSStore } from '@/store/usePOSStore';
 import { fmt, resolvePaymentLabel } from '@/utils/format';
 import AppLayout from '@/components/ui/AppLayout';
 import ReceiptPreview from '@/components/ReceiptPreview';
-import { Search, ChevronDown, ChevronUp, Printer, TrendingUp, Receipt, Calendar } from 'lucide-react';
-import { format, isToday } from 'date-fns';
+import { Search, Printer, Receipt, X, Calendar } from 'lucide-react';
+import { format, isToday, isYesterday, isSameDay } from 'date-fns';
 import { printer, formatReceipt } from '@/utils/printer';
+import type { Payment } from '@/types/pos';
 
-type DateFilter = 'today' | 'all';
+type DateFilter = 'today' | 'yesterday' | 'custom';
 
 const BillHistory = () => {
   const payments = usePOSStore((s) => s.payments);
@@ -15,32 +16,31 @@ const BillHistory = () => {
 
   const [search, setSearch] = useState('');
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
+  const [customDate, setCustomDate] = useState('');
   const [methodFilter, setMethodFilter] = useState('');
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedBill, setSelectedBill] = useState<Payment | null>(null);
 
-  const todayPayments = useMemo(
-    () => payments.filter((p) => isToday(new Date(p.createdAt))),
-    [payments]
-  );
-
-  const baseList = useMemo(
-    () => (dateFilter === 'today' ? todayPayments : payments),
-    [dateFilter, todayPayments, payments]
-  );
-
-  const totalSales = useMemo(
-    () => baseList.reduce((s, p) => s + p.total, 0),
-    [baseList]
-  );
+  const baseList = useMemo(() => {
+    let list = [...payments].sort((a, b) => b.createdAt - a.createdAt);
+    if (dateFilter === 'today') {
+      list = list.filter((p) => isToday(new Date(p.createdAt)));
+    } else if (dateFilter === 'yesterday') {
+      list = list.filter((p) => isYesterday(new Date(p.createdAt)));
+    } else if (dateFilter === 'custom' && customDate) {
+      const target = new Date(customDate);
+      list = list.filter((p) => isSameDay(new Date(p.createdAt), target));
+    }
+    return list;
+  }, [payments, dateFilter, customDate]);
 
   const filtered = useMemo(() => {
-    let list = [...baseList].sort((a, b) => b.createdAt - a.createdAt);
+    let list = baseList;
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
         (p) =>
           `table ${p.tableNumber}`.includes(q) ||
-          p.reference.toLowerCase().includes(q) ||
+          p.reference?.toLowerCase().includes(q) ||
           p.billNumber.toString().includes(q)
       );
     }
@@ -50,7 +50,7 @@ const BillHistory = () => {
     return list;
   }, [baseList, search, methodFilter]);
 
-  const handleReprint = async (p: typeof payments[0]) => {
+  const handleReprint = async (p: Payment) => {
     if (!printer.isConnected) return;
     await printer.print(
       formatReceipt({
@@ -62,6 +62,9 @@ const BillHistory = () => {
           p.discountType === 'percent'
             ? Math.round((p.subtotal * p.discount) / 100)
             : p.discount,
+        vatAmount: p.vatAmount,
+        vatRate: p.vatRate,
+        vatEnabled: p.vatEnabled,
         total: p.total,
         method: p.method,
         date: format(p.createdAt, 'yyyy-MM-dd HH:mm'),
@@ -72,8 +75,9 @@ const BillHistory = () => {
 
   const methodBadgeColor = (method: string) => {
     if (method === 'cash') return 'bg-success/15 text-success';
-    if (method === 'esewa') return 'bg-blue-500/15 text-blue-400';
+    if (method === 'esewa') return 'bg-green-500/15 text-green-400';
     if (method === 'khalti') return 'bg-purple-500/15 text-purple-400';
+    if (method === 'fonepay') return 'bg-red-500/15 text-red-400';
     return 'bg-accent/15 text-accent';
   };
 
@@ -81,43 +85,11 @@ const BillHistory = () => {
     <AppLayout title="Bill History">
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto">
-          {/* Stats bar */}
-          <div className="grid grid-cols-3 gap-3 p-4 border-b border-border">
-            <div className="bg-card rounded-xl border border-border p-3 text-center">
-              <div className="flex items-center justify-center gap-1 text-muted-foreground text-xs mb-1">
-                <Receipt size={12} />
-                {dateFilter === 'today' ? "Today's Bills" : 'Total Bills'}
-              </div>
-              <p className="text-2xl font-black text-foreground" data-testid="stat-bill-count">
-                {baseList.length}
-              </p>
-            </div>
-            <div className="bg-card rounded-xl border border-border p-3 text-center">
-              <div className="flex items-center justify-center gap-1 text-muted-foreground text-xs mb-1">
-                <TrendingUp size={12} />
-                {dateFilter === 'today' ? "Today's Sales" : 'Total Sales'}
-              </div>
-              <p className="text-xl font-black text-accent" data-testid="stat-total-sales">
-                Rs. {fmt(totalSales)}
-              </p>
-            </div>
-            <div className="bg-card rounded-xl border border-border p-3 text-center">
-              <div className="flex items-center justify-center gap-1 text-muted-foreground text-xs mb-1">
-                <Calendar size={12} />
-                Today
-              </div>
-              <p className="text-2xl font-black text-foreground">
-                {todayPayments.length}
-              </p>
-            </div>
-          </div>
-
           <div className="p-4 space-y-3">
-            {/* Today / All toggle */}
+            {/* Date filter */}
             <div className="flex gap-2 bg-secondary rounded-xl p-1">
               <button
                 onClick={() => setDateFilter('today')}
-                data-testid="button-filter-today"
                 className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
                   dateFilter === 'today'
                     ? 'bg-card text-foreground shadow-sm'
@@ -127,17 +99,37 @@ const BillHistory = () => {
                 Today
               </button>
               <button
-                onClick={() => setDateFilter('all')}
-                data-testid="button-filter-all"
+                onClick={() => setDateFilter('yesterday')}
                 className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
-                  dateFilter === 'all'
+                  dateFilter === 'yesterday'
                     ? 'bg-card text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                All Time
+                Yesterday
+              </button>
+              <button
+                onClick={() => setDateFilter('custom')}
+                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  dateFilter === 'custom'
+                    ? 'bg-card text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Calendar size={13} />
+                Custom
               </button>
             </div>
+
+            {/* Custom date picker */}
+            {dateFilter === 'custom' && (
+              <input
+                type="date"
+                value={customDate}
+                onChange={(e) => setCustomDate(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl bg-card border border-border text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+              />
+            )}
 
             {/* Search + Method filter */}
             <div className="flex gap-2">
@@ -148,20 +140,18 @@ const BillHistory = () => {
                 />
                 <input
                   type="text"
-                  placeholder="Search bill, table..."
+                  placeholder="Search bill ID, table..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  data-testid="input-search-bills"
                   className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-card border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
                 />
               </div>
               <select
                 value={methodFilter}
                 onChange={(e) => setMethodFilter(e.target.value)}
-                data-testid="select-filter-method"
                 className="px-3 py-2.5 rounded-xl bg-card border border-border text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-accent"
               >
-                <option value="">All</option>
+                <option value="">Filter: All</option>
                 <option value="cash">Cash</option>
                 <option value="esewa">eSewa</option>
                 <option value="khalti">Khalti</option>
@@ -169,84 +159,39 @@ const BillHistory = () => {
               </select>
             </div>
 
-            <p className="text-xs text-muted-foreground" data-testid="text-bills-count">
+            <p className="text-xs text-muted-foreground">
               {filtered.length} {filtered.length === 1 ? 'bill' : 'bills'} found
             </p>
 
             {/* Bill list */}
             <div className="space-y-2">
               {filtered.map((p) => (
-                <div
+                <button
                   key={p.id}
-                  className="bg-card rounded-xl border border-border overflow-hidden"
-                  data-testid={`bill-card-${p.id}`}
+                  onClick={() => setSelectedBill(p)}
+                  className="w-full bg-card rounded-xl border border-border px-4 py-3.5 flex items-center gap-3 text-left hover:bg-secondary/30 transition-colors"
                 >
-                  <button
-                    onClick={() => setExpandedId(expandedId === p.id ? null : p.id)}
-                    className="w-full flex items-center px-4 py-3.5 gap-3 text-left hover:bg-secondary/30 transition-colors"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-black text-accent">#{p.billNumber}</span>
+                  <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs font-black text-accent">#{p.billNumber}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-foreground text-sm">Table {p.tableNumber}</span>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${methodBadgeColor(p.method)}`}
+                      >
+                        {resolvePaymentLabel(p.method, settings)}
+                      </span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-foreground text-sm">
-                          Table {p.tableNumber}
-                        </span>
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${methodBadgeColor(p.method)}`}
-                        >
-                          {resolvePaymentLabel(p.method, settings)}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {format(p.createdAt, 'MMM dd · hh:mm a')} ·{' '}
-                        {p.items.length} item{p.items.length !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="font-black text-accent">Rs. {fmt(p.total)}</p>
-                      {p.discount > 0 && (
-                        <p className="text-[10px] text-success">
-                          -{p.discountType === 'percent' ? `${p.discount}%` : `Rs. ${fmt(p.discount)}`} off
-                        </p>
-                      )}
-                    </div>
-                    {expandedId === p.id ? (
-                      <ChevronUp size={15} className="text-muted-foreground flex-shrink-0" />
-                    ) : (
-                      <ChevronDown size={15} className="text-muted-foreground flex-shrink-0" />
-                    )}
-                  </button>
-
-                  {expandedId === p.id && (
-                    <div className="border-t border-border p-4 space-y-3 bg-background/30">
-                      <ReceiptPreview
-                        cafeName={p.cafeName}
-                        tableNumber={p.tableNumber}
-                        items={p.items}
-                        subtotal={p.subtotal}
-                        discount={p.discount}
-                        discountType={p.discountType}
-                        vatAmount={p.vatAmount}
-                        vatRate={p.vatRate}
-                        vatEnabled={p.vatEnabled}
-                        total={p.total}
-                        method={p.method}
-                        billNumber={p.billNumber}
-                        date={p.createdAt}
-                      />
-                      {printer.isConnected && (
-                        <button
-                          onClick={() => handleReprint(p)}
-                          className="w-full py-2.5 rounded-xl bg-secondary text-secondary-foreground text-sm font-medium flex items-center justify-center gap-2 hover:bg-accent/15 hover:text-accent transition-colors"
-                        >
-                          <Printer size={15} /> Reprint Receipt
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {format(p.createdAt, 'hh:mm a')} &middot;{' '}
+                      {p.items.length} item{p.items.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="font-black text-accent">Rs. {fmt(p.total)}</p>
+                  </div>
+                </button>
               ))}
             </div>
 
@@ -257,13 +202,78 @@ const BillHistory = () => {
                 <p className="text-sm mt-1">
                   {dateFilter === 'today'
                     ? 'No sales recorded today yet.'
-                    : 'Try a different search or filter.'}
+                    : 'Try a different date or filter.'}
                 </p>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Bill Detail Modal */}
+      {selectedBill && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => setSelectedBill(null)}
+        >
+          <div
+            className="w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-2xl bg-background border border-border shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <div>
+                <h2 className="font-black text-foreground text-base">Bill #{selectedBill.billNumber}</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {format(selectedBill.createdAt, 'MMM dd, yyyy · hh:mm a')}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedBill(null)}
+                className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Receipt preview */}
+            <div className="p-4">
+              <ReceiptPreview
+                cafeName={selectedBill.cafeName}
+                tableNumber={selectedBill.tableNumber}
+                items={selectedBill.items}
+                subtotal={selectedBill.subtotal}
+                discount={selectedBill.discount}
+                discountType={selectedBill.discountType}
+                vatAmount={selectedBill.vatAmount}
+                vatRate={selectedBill.vatRate}
+                vatEnabled={selectedBill.vatEnabled}
+                total={selectedBill.total}
+                method={selectedBill.method}
+                billNumber={selectedBill.billNumber}
+                date={selectedBill.createdAt}
+              />
+            </div>
+
+            {/* Print button */}
+            <div className="px-4 pb-4">
+              <button
+                onClick={() => handleReprint(selectedBill)}
+                disabled={!printer.isConnected}
+                className="w-full py-3 rounded-xl bg-accent text-accent-foreground font-bold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Printer size={16} />
+                Print Bill
+              </button>
+              {!printer.isConnected && (
+                <p className="text-center text-xs text-muted-foreground mt-2">
+                  Connect a printer in Admin settings to enable printing
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </AppLayout>
   );
 };

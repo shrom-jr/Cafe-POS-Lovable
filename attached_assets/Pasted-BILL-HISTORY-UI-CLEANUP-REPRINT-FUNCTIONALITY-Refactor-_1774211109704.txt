@@ -1,0 +1,161 @@
+BILL HISTORY — UI CLEANUP + REPRINT FUNCTIONALITY
+
+Refactor the Bill History page to improve usability and enable bill recovery.
+
+---
+
+🎯 GOAL
+
+* Make bill lookup fast
+* Support reprinting lost bills
+* Keep UI clean and compact
+
+---
+
+🧹 REMOVE
+
+* Remove “Today’s Sales” card
+* Remove extra “Today” metric card
+* Remove “All Time” toggle
+* Remove inline expanded bill preview (dropdown view)
+
+---
+
+📅 DATE FILTER
+
+Add:
+
+* Today (default)
+* Yesterday
+* Custom date picker
+
+---
+
+🔍 SEARCH
+
+Keep search bar.
+
+Support:
+
+* Bill ID
+* Table name
+
+---
+
+🔽 PAYMENT FILTER
+
+Keep existing dropdown.
+
+Change label:
+
+* “All” → “Filter: All”
+
+Options:
+
+* All
+* Cash
+* eSewa
+* Khalti
+* Fonepay
+
+---
+
+📦 BILL LIST (COMPACT)
+
+Each row shows:
+
+* Bill ID
+* Table name
+* Time
+* Number of items
+* Payment method (tag)
+* Total amount (right aligned)
+
+---
+
+🖱️ INTERACTION
+
+On clicking a bill row:
+
+→ Open a centered modal (popup)
+
+---
+
+📄 BILL DETAIL MODAL
+
+Show full receipt layout:
+
+* Café name
+* Bill ID
+* Table
+* Date & time
+* Item list (qty, rate, total)
+* Subtotal
+* VAT
+* Discount (if any)
+* Total
+* Payment method
+
+---
+
+🖨️ REPRINT FEATURE (IMPORTANT)
+
+Inside modal:
+
+Add button:
+
+* “Print Bill”
+
+Behavior:
+
+* Reprint same bill using existing print logic
+* No modification to data
+* Works for old bills (bill recovery)
+
+---
+
+PRINT CONSISTENCY — GLOBAL RULE
+
+Ensure the existing print layout is used consistently across the entire app.
+
+---
+
+🎯 REQUIREMENT
+
+* Use the SAME print template for:
+
+  * initial bill print (checkout)
+  * reprint from Bill History
+
+---
+
+⚠️ RULES
+
+* Do NOT create a new print layout
+* Do NOT modify structure for reprint
+* Do NOT depend on UI (modal, screen, etc.)
+
+---
+
+🎯 RESULT
+
+* Every print and reprint looks identical
+* Consistent and reliable receipts
+
+---
+
+🎨 PAYMENT TAG COLORS
+
+* eSewa → green
+* Khalti → purple
+* Fonepay → red
+
+---
+
+🎯 RESULT
+
+* Cleaner list view
+* Faster navigation
+* No UI clutter
+* Proper bill recovery system
+* Real café-ready workflow
