@@ -209,45 +209,6 @@ const compressImage = (file: File, maxPx = 400): Promise<string> =>
     img.src = url;
   });
 
-const IMAGE_PRESETS = [
-  { emoji: '☕', label: 'Coffee',    bg: ['#2c1a0e', '#4a2c1a'] },
-  { emoji: '🍵', label: 'Tea',       bg: ['#1a2c1a', '#2d4a2d'] },
-  { emoji: '🧋', label: 'Boba',      bg: ['#1a1530', '#2d2558'] },
-  { emoji: '🥤', label: 'Cold',      bg: ['#0a1a2c', '#1a3a5a'] },
-  { emoji: '🧃', label: 'Juice',     bg: ['#2c1a00', '#5a3a00'] },
-  { emoji: '🫖', label: 'Pot',       bg: ['#1a2a2c', '#2d4a4d'] },
-  { emoji: '🍰', label: 'Cake',      bg: ['#2c1020', '#4a1838'] },
-  { emoji: '🧁', label: 'Cupcake',   bg: ['#2c0a20', '#4a1035'] },
-  { emoji: '🥐', label: 'Croissant', bg: ['#2c2010', '#4a3820'] },
-  { emoji: '🍫', label: 'Choco',     bg: ['#1e1008', '#3a2010'] },
-  { emoji: '🍳', label: 'Eggs',      bg: ['#2c2000', '#4a3800'] },
-  { emoji: '🥗', label: 'Salad',     bg: ['#102c10', '#1a4a1a'] },
-  { emoji: '🍜', label: 'Noodles',   bg: ['#2c1800', '#4a2c00'] },
-  { emoji: '🧇', label: 'Waffle',    bg: ['#2c1c00', '#4a3000'] },
-  { emoji: '🍦', label: 'Dessert',   bg: ['#2a0a1e', '#481535'] },
-  { emoji: '🥪', label: 'Sandwich',  bg: ['#2c1c08', '#4a3010'] },
-  { emoji: '🍕', label: 'Pizza',     bg: ['#2c0a0a', '#4a1515'] },
-  { emoji: '🥞', label: 'Pancake',   bg: ['#28180a', '#4a2e14'] },
-];
-
-const generatePresetDataUrl = (emoji: string, bg: string[]): string => {
-  const size = 400;
-  const canvas = document.createElement('canvas');
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext('2d')!;
-  const grad = ctx.createLinearGradient(0, 0, size, size);
-  grad.addColorStop(0, bg[0]);
-  grad.addColorStop(1, bg[1]);
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, size, size);
-  ctx.font = `${Math.round(size * 0.5)}px serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(emoji, size / 2, size / 2 + size * 0.025);
-  return canvas.toDataURL('image/jpeg', 0.88);
-};
-
 const ItemImageField = ({
   image,
   onChange,
@@ -272,27 +233,33 @@ const ItemImageField = ({
     if (file) handleFile(file);
   };
 
-  const handlePreset = (preset: typeof IMAGE_PRESETS[0]) => {
-    const dataUrl = generatePresetDataUrl(preset.emoji, preset.bg);
-    onChange(dataUrl);
-  };
-
   return (
-    <div className="space-y-2.5">
-      {/* Upload row */}
-      <div className="flex items-center gap-3">
-        <label
-          className={`relative w-16 h-16 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer overflow-hidden transition-colors flex-shrink-0
-            ${dragging ? 'border-accent bg-accent/10' : 'border-border hover:border-accent/50 bg-secondary/50'}`}
-          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={handleDrop}
-        >
-          {image ? (
-            <img src={image} alt="Item" className="w-full h-full object-cover" />
-          ) : (
-            <Image size={20} className="text-muted-foreground" />
-          )}
+    <div className="flex items-center gap-3">
+      {/* Preview / drop zone */}
+      <label
+        className={`relative w-16 h-16 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer overflow-hidden transition-colors flex-shrink-0
+          ${dragging ? 'border-accent bg-accent/10' : 'border-border hover:border-accent/50 bg-secondary/50'}`}
+        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={handleDrop}
+      >
+        {image ? (
+          <img src={image} alt="Item" className="w-full h-full object-cover" />
+        ) : (
+          <Image size={20} className="text-muted-foreground" />
+        )}
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+        />
+      </label>
+
+      {/* Actions */}
+      <div className="flex flex-col gap-1.5">
+        <label className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-secondary text-secondary-foreground text-xs font-medium cursor-pointer hover:bg-accent/15 hover:text-accent transition-colors">
+          <Upload size={12} /> {image ? 'Replace' : 'Upload'}
           <input
             type="file"
             accept="image/*"
@@ -300,48 +267,14 @@ const ItemImageField = ({
             onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
           />
         </label>
-        <div className="flex flex-col gap-1.5">
-          <label className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-secondary text-secondary-foreground text-xs font-medium cursor-pointer hover:bg-accent/15 hover:text-accent transition-colors">
-            <Upload size={12} /> {image ? 'Replace photo' : 'Upload photo'}
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
-            />
-          </label>
-          {image && (
-            <button
-              onClick={onRemove}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-danger/70 hover:text-danger hover:bg-danger/10 transition-colors"
-            >
-              <X size={12} /> Remove
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Preset grid */}
-      <div>
-        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-1.5">
-          Quick presets
-        </p>
-        <div className="flex flex-wrap gap-1.5">
-          {IMAGE_PRESETS.map((preset) => (
-            <button
-              key={preset.emoji}
-              type="button"
-              title={preset.label}
-              onClick={() => handlePreset(preset)}
-              className="w-9 h-9 rounded-lg overflow-hidden transition-all hover:scale-110 hover:ring-2 hover:ring-accent active:scale-95 flex-shrink-0"
-              style={{
-                background: `linear-gradient(135deg, ${preset.bg[0]}, ${preset.bg[1]})`,
-              }}
-            >
-              <span className="text-lg leading-none">{preset.emoji}</span>
-            </button>
-          ))}
-        </div>
+        {image && (
+          <button
+            onClick={onRemove}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-danger/70 hover:text-danger hover:bg-danger/10 transition-colors"
+          >
+            <X size={12} /> Remove
+          </button>
+        )}
       </div>
     </div>
   );
