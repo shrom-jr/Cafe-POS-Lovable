@@ -770,7 +770,7 @@ const ReviewScreen = () => {
           <div className="bg-card rounded-3xl border border-border w-full max-w-sm shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <h3 className="font-black text-foreground text-base">
-                {selectedMethod.charAt(0).toUpperCase() + selectedMethod.slice(1)} Payment
+                {(methods.find((m) => m.id === selectedMethod)?.label ?? selectedMethod)} Payment
               </h3>
               <button
                 onClick={() => { setShowQRModal(false); setSelectedMethod(null); setConfirming(false); }}
