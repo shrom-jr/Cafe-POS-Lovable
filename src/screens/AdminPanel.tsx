@@ -526,6 +526,8 @@ const PaymentsSection = () => {
 
   const [cafeName, setCafeName] = useState(settings.cafeName);
   const [adminPin, setAdminPin] = useState(settings.adminPin);
+  const [showAddWallet, setShowAddWallet] = useState(false);
+  const [newWalletName, setNewWalletName] = useState('');
 
   const toggleWallet = (key: 'esewa' | 'khalti' | 'fonepay') => {
     updateSettings({
@@ -548,6 +550,45 @@ const PaymentsSection = () => {
     updateSettings({ wallets: { ...settings.wallets, [key]: { ...settings.wallets[key], [field]: undefined } } });
   };
 
+  const addCustomWallet = () => {
+    if (!newWalletName.trim()) return;
+    const id = `custom-${Date.now()}`;
+    const customWallets = [...(settings.customWallets || []), { id, name: newWalletName.trim(), enabled: true }];
+    updateSettings({ customWallets });
+    setNewWalletName('');
+    setShowAddWallet(false);
+  };
+
+  const removeCustomWallet = (id: string) => {
+    const customWallets = (settings.customWallets || []).filter((w) => w.id !== id);
+    updateSettings({ customWallets });
+  };
+
+  const toggleCustomWallet = (id: string) => {
+    const customWallets = (settings.customWallets || []).map((w) =>
+      w.id === id ? { ...w, enabled: !w.enabled } : w
+    );
+    updateSettings({ customWallets });
+  };
+
+  const updateCustomWalletImage = (id: string, field: 'qrImage' | 'logoImage', file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const customWallets = (settings.customWallets || []).map((w) =>
+        w.id === id ? { ...w, [field]: reader.result as string } : w
+      );
+      updateSettings({ customWallets });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const clearCustomWalletImage = (id: string, field: 'qrImage' | 'logoImage') => {
+    const customWallets = (settings.customWallets || []).map((w) =>
+      w.id === id ? { ...w, [field]: undefined } : w
+    );
+    updateSettings({ customWallets });
+  };
+
   const walletLabels: Record<string, string> = { esewa: 'eSewa', khalti: 'Khalti', fonepay: 'Fonepay' };
 
   return (
@@ -568,6 +609,7 @@ const PaymentsSection = () => {
 
       <div className="bg-card rounded-xl border border-border p-4 space-y-3">
         <h3 className="font-bold text-foreground">Digital Wallets</h3>
+        <p className="text-xs text-muted-foreground">Built-in wallets</p>
         {(['esewa', 'khalti', 'fonepay'] as const).map((key) => (
           <div key={key} className="p-3 bg-secondary/50 rounded-lg space-y-3">
             {/* Header: name + toggle */}
@@ -629,6 +671,91 @@ const PaymentsSection = () => {
             )}
           </div>
         ))}
+
+        {/* Custom Wallets */}
+        <div className="border-t border-border pt-3 space-y-3">
+          <p className="text-xs text-muted-foreground">Custom wallets</p>
+
+          {(settings.customWallets || []).map((wallet) => (
+            <div key={wallet.id} className="p-3 bg-secondary/50 rounded-lg space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-foreground">{wallet.name}</span>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => toggleCustomWallet(wallet.id)} className="text-accent">
+                    {wallet.enabled ? <ToggleRight size={28} /> : <ToggleLeft size={28} className="text-muted-foreground" />}
+                  </button>
+                  <button onClick={() => removeCustomWallet(wallet.id)} className="w-7 h-7 rounded-full bg-danger/20 text-danger flex items-center justify-center hover:bg-danger/40 transition-colors">
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              </div>
+
+              {wallet.enabled && (
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-medium text-muted-foreground">Logo</p>
+                    <div className="flex items-center gap-3">
+                      {wallet.logoImage ? (
+                        <div className="relative w-12 h-12 flex-shrink-0">
+                          <img src={wallet.logoImage} alt={`${wallet.name} logo`} className="w-full h-full object-contain rounded-lg border border-border bg-white/5 p-1" />
+                          <button onClick={() => clearCustomWalletImage(wallet.id, 'logoImage')} className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-danger text-white flex items-center justify-center">
+                            <X size={10} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg border-2 border-dashed border-border flex items-center justify-center flex-shrink-0">
+                          <ImagePlus size={16} className="text-muted-foreground" />
+                        </div>
+                      )}
+                      <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-foreground text-xs font-medium cursor-pointer hover:bg-accent/20 transition-colors">
+                        <Upload size={12} /> {wallet.logoImage ? 'Replace' : 'Upload'} Logo
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) updateCustomWalletImage(wallet.id, 'logoImage', f); }} />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-medium text-muted-foreground">QR Image</p>
+                    {wallet.qrImage && (
+                      <div className="relative w-32 h-32 mx-auto">
+                        <img src={wallet.qrImage} alt={`${wallet.name} QR`} className="w-full h-full object-contain rounded-lg border border-border bg-foreground p-1" />
+                        <button onClick={() => clearCustomWalletImage(wallet.id, 'qrImage')} className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-danger text-white flex items-center justify-center">
+                          <X size={12} />
+                        </button>
+                      </div>
+                    )}
+                    <label className="flex items-center justify-center gap-2 w-full py-2 rounded-lg bg-primary text-foreground text-sm font-medium cursor-pointer hover:bg-accent/20 transition-colors">
+                      <Upload size={14} /> {wallet.qrImage ? 'Replace' : 'Upload'} QR Image
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) updateCustomWalletImage(wallet.id, 'qrImage', f); }} />
+                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+
+          {showAddWallet ? (
+            <div className="flex items-center gap-2">
+              <input
+                autoFocus
+                value={newWalletName}
+                onChange={(e) => setNewWalletName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') addCustomWallet(); if (e.key === 'Escape') { setShowAddWallet(false); setNewWalletName(''); } }}
+                placeholder="Wallet name (e.g. Connect IPS)"
+                className="flex-1 px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+              />
+              <button onClick={addCustomWallet} className="px-3 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent/80 transition-colors">Add</button>
+              <button onClick={() => { setShowAddWallet(false); setNewWalletName(''); }} className="px-3 py-2 rounded-lg bg-secondary text-muted-foreground text-sm hover:bg-secondary/80 transition-colors">Cancel</button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowAddWallet(true)}
+              className="flex items-center gap-2 w-full py-2 rounded-lg border-2 border-dashed border-border text-muted-foreground text-sm hover:border-accent hover:text-accent transition-colors justify-center"
+            >
+              <Plus size={16} /> Add Custom Wallet
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

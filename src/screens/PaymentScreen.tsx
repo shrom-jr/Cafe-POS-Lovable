@@ -101,6 +101,7 @@ const PaymentScreen = () => {
     ...(settings.wallets.esewa.enabled ? [{ id: 'esewa', label: 'eSewa', icon: Smartphone, isQR: true }] : []),
     ...(settings.wallets.khalti.enabled ? [{ id: 'khalti', label: 'Khalti', icon: Smartphone, isQR: true }] : []),
     ...(settings.wallets.fonepay.enabled ? [{ id: 'fonepay', label: 'Fonepay', icon: Smartphone, isQR: true }] : []),
+    ...(settings.customWallets || []).filter((w) => w.enabled).map((w) => ({ id: w.id, label: w.name, icon: Smartphone, isQR: true })),
   ];
 
   const getQRData = (method: string) => {
@@ -110,8 +111,12 @@ const PaymentScreen = () => {
   };
 
   const getQRImage = (method: string) => {
-    const k = method as 'esewa' | 'khalti' | 'fonepay';
-    return settings.wallets[k]?.qrImage || null;
+    const builtIn = ['esewa', 'khalti', 'fonepay'] as const;
+    if (builtIn.includes(method as 'esewa' | 'khalti' | 'fonepay')) {
+      return settings.wallets[method as 'esewa' | 'khalti' | 'fonepay']?.qrImage || null;
+    }
+    const custom = (settings.customWallets || []).find((w) => w.id === method);
+    return custom?.qrImage || null;
   };
 
   const handleConfirmPayment = async (method: string) => {

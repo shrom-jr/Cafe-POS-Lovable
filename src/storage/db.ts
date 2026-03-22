@@ -71,6 +71,7 @@ const defaultSettings: Settings = {
     khalti: { enabled: true },
     fonepay: { enabled: true },
   },
+  customWallets: [],
   billCounter: 1000,
   vatEnabled: true,
   vatRate: 0.13,

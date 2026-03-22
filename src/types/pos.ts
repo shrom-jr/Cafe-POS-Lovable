@@ -63,6 +63,14 @@ export interface WalletConfig {
   logoImage?: string;
 }
 
+export interface CustomWallet {
+  id: string;
+  name: string;
+  enabled: boolean;
+  qrImage?: string;
+  logoImage?: string;
+}
+
 export interface Settings {
   cafeName: string;
   cafeLogo?: string;
@@ -78,6 +86,7 @@ export interface Settings {
     khalti: WalletConfig;
     fonepay: WalletConfig;
   };
+  customWallets?: CustomWallet[];
   printerAddress?: string;
   billCounter: number;
   vatEnabled: boolean;
