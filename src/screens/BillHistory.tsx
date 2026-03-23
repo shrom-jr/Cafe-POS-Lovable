@@ -202,11 +202,11 @@ const BillHistory = () => {
           onClick={closeModal}
         >
           <div
-            className="w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-2xl bg-background border border-border shadow-2xl"
+            className="w-full max-w-sm max-h-[90dvh] overflow-hidden rounded-2xl bg-background border border-border shadow-2xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+            {/* Modal header — always visible */}
+            <div className="flex-shrink-0 flex items-center justify-between px-5 py-4 border-b border-border">
               <div>
                 <h2 className="font-black text-foreground text-base">Bill #{selectedBill.billNumber}</h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -221,8 +221,8 @@ const BillHistory = () => {
               </button>
             </div>
 
-            {/* Receipt preview */}
-            <div className="p-4">
+            {/* Receipt content — ONLY this scrolls */}
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4">
               <ReceiptPreview
                 cafeName={selectedBill.cafeName}
                 tableNumber={selectedBill.tableNumber}
@@ -240,11 +240,17 @@ const BillHistory = () => {
               />
             </div>
 
-            {/* Print button */}
-            <div className="px-4 pb-4">
+            {/* Footer — always visible, pinned */}
+            <div
+              className="flex-shrink-0 px-4 pt-3 pb-4"
+              style={{
+                background: 'hsl(var(--background))',
+                boxShadow: '0 -4px 12px rgba(0,0,0,0.3)',
+              }}
+            >
               <button
                 onClick={handlePrint}
-                className="w-full py-3 rounded-xl bg-accent text-accent-foreground font-bold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+                className="w-full py-3.5 rounded-xl bg-accent text-accent-foreground font-bold text-sm flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all"
               >
                 <Printer size={16} />
                 Print Bill

@@ -1,0 +1,98 @@
+The bill history receipt modal needs a professional UX fix and visual polish.
+
+DO NOT redesign everything.
+ONLY improve layout behavior and add premium-level polish.
+
+-----------------------------------
+CORE PROBLEM
+-----------------------------------
+
+Currently:
+- Entire modal scrolls
+- "Print Bill" button goes out of view
+- Poor usability for fast POS workflow
+
+-----------------------------------
+GOAL
+-----------------------------------
+
+- Only receipt content should scroll
+- Print button must ALWAYS be visible
+- Add subtle visual separation (sticky shadow)
+
+-----------------------------------
+REQUIRED STRUCTURE
+-----------------------------------
+
+Refactor modal into 3 sections:
+
+1. HEADER (optional)
+2. RECEIPT CONTENT (scrollable ONLY)
+3. FOOTER (fixed Print button)
+
+-----------------------------------
+LAYOUT RULES
+-----------------------------------
+
+MODAL CONTAINER:
+- flex flex-col
+- max-h-[90dvh] (use dynamic viewport height)
+- overflow-hidden
+- rounded corners + padding (keep existing design)
+
+-----------------------------------
+RECEIPT CONTENT:
+- flex-1 min-h-0 overflow-y-auto
+- Smooth scrolling
+- No nested scroll containers
+
+-----------------------------------
+FOOTER (PRINT BUTTON AREA):
+- shrink-0
+- Always visible
+- Contains:
+  - Print button (full width)
+- Add top padding for spacing
+
+-----------------------------------
+🔥 PREMIUM POLISH (IMPORTANT)
+-----------------------------------
+
+Add a subtle sticky shadow above the footer:
+
+- Apply:
+  shadow-[0_-4px_12px_rgba(0,0,0,0.3)]
+  OR similar soft top shadow
+
+Purpose:
+- Creates separation between receipt and button
+- Improves readability
+- Feels like modern POS / mobile apps
+
+-----------------------------------
+EXTRA DETAIL (OPTIONAL BUT NICE)
+-----------------------------------
+
+- Add slight background contrast to footer (e.g. darker layer)
+- Keep button large and touch-friendly
+
+-----------------------------------
+STRICT RULES
+-----------------------------------
+
+- DO NOT allow full modal scrolling
+- ONLY receipt content scrolls
+- Print button must ALWAYS be visible
+- Shadow must appear ONLY when content scrolls behind it
+
+-----------------------------------
+EXPECTED RESULT
+-----------------------------------
+
+- Receipt scrolls smoothly
+- Print button always visible
+- No scrolling needed to print
+- Clean visual separation with soft shadow
+- Feels like a premium production POS
+
+This should match real-world POS usability standards.
