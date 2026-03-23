@@ -108,7 +108,7 @@ const OrderScreen = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col" style={{ background: 'linear-gradient(180deg, #0d1525 0%, #060e1a 100%)' }}>
+    <div className="h-screen flex flex-col overflow-hidden" style={{ background: 'linear-gradient(180deg, #0d1525 0%, #060e1a 100%)' }}>
       <TopBar title={`Table ${table.number}`} showBack onBack={() => navigate('/')} />
 
       {/* Payment-in-progress info banner */}
@@ -202,7 +202,7 @@ const OrderScreen = () => {
 
         {/* ── Cart panel — hidden on mobile, always visible on tablet+ ── */}
         <div
-          className="hidden sm:flex sm:w-1/3 lg:w-[360px] flex-shrink-0 flex-col min-h-0"
+          className="hidden sm:flex sm:w-1/3 lg:w-[360px] flex-col min-h-0 overflow-hidden"
           style={{
             borderLeft: '1px solid rgba(255,255,255,0.10)',
             boxShadow: '-10px 0 30px rgba(0,0,0,0.4)',

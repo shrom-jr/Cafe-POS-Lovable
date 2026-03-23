@@ -1,0 +1,103 @@
+The cart panel STILL does not behave correctly on iPad.
+
+Even after adding min-h-0 to the items list, the "Review Order" button is not always visible.
+This means the problem is NOT only inside OrderPanel — the parent layout chain is broken.
+
+STOP focusing only on OrderPanel.
+Fix the FULL HEIGHT CHAIN from OrderScreen → Cart Container → OrderPanel.
+
+-----------------------------------
+ROOT PROBLEM
+-----------------------------------
+
+The flex height chain is broken.
+
+Even if OrderPanel is correct:
+- If any parent is missing min-h-0 or proper flex constraints
+- The cart can still overflow and push the footer off screen
+
+-----------------------------------
+MANDATORY FULL FIX
+-----------------------------------
+
+You MUST fix ALL levels:
+
+-----------------------------------
+1. ORDER SCREEN ROOT
+-----------------------------------
+
+- Must use:
+  flex h-screen overflow-hidden
+
+-----------------------------------
+2. MAIN CONTENT WRAPPER
+-----------------------------------
+
+- Must use:
+  flex-1 min-h-0 flex
+
+This is CRITICAL.
+
+-----------------------------------
+3. CART PANEL CONTAINER (RIGHT SIDE)
+-----------------------------------
+
+- Must use:
+  flex flex-col min-h-0
+
+- MUST NOT have:
+  overflow-y-auto
+  h-auto
+
+-----------------------------------
+4. ORDER PANEL (INSIDE CART)
+-----------------------------------
+
+- Root:
+  flex flex-col h-full overflow-hidden
+
+- Items list:
+  flex-1 min-h-0 overflow-y-auto
+
+- Footer:
+  shrink-0
+
+-----------------------------------
+5. GLOBAL RULE
+-----------------------------------
+
+Search entire OrderScreen and REMOVE:
+
+- Any extra overflow-y-auto (except items list)
+- Any nested scroll containers
+- Any h-screen inside children
+- Any max-height hacks
+
+-----------------------------------
+6. VISUAL TEST (MANDATORY)
+-----------------------------------
+
+After fix:
+
+- Add 15+ items to cart
+- Confirm:
+  - Only items list scrolls
+  - Footer NEVER disappears
+  - "Review Order" is ALWAYS visible
+
+If user can scroll entire cart → FIX IS WRONG
+
+-----------------------------------
+EXPECTED RESULT
+-----------------------------------
+
+On iPad (10.2 inch):
+
+- Cart panel fills full height
+- Items scroll independently
+- Footer is pinned and ALWAYS visible
+- No scrolling needed to access "Review Order"
+
+This must behave like a real POS system.
+
+Do not stop until this is visually confirmed working.

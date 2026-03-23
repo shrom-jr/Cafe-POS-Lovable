@@ -47,7 +47,7 @@ const OrderPanel = ({
 
   return (
     <div
-      className="flex flex-col h-full overflow-hidden relative"
+      className="flex-1 flex flex-col min-h-0 overflow-hidden relative"
       style={{
         background: 'linear-gradient(180deg, #141e30 0%, #0c1522 100%)',
       }}
