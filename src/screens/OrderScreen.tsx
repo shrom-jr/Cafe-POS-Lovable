@@ -7,14 +7,12 @@ import { useTables } from '@/hooks/useTables';
 import { TopBar } from '@/components/ui/Navigation';
 import MenuItemCard from '@/components/orders/MenuItemCard';
 import OrderPanel from '@/components/orders/OrderPanel';
-import { Search, ShoppingBag, X, Info } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { Search, ShoppingCart, X, Info } from 'lucide-react';
 import { playClick } from '@/utils/sounds';
 
 const OrderScreen = () => {
   const { tableId } = useParams<{ tableId: string }>();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
 
   const { tables } = useTables();
   const updateTable = usePOSStore((s) => s.updateTable);
@@ -30,7 +28,6 @@ const OrderScreen = () => {
   const categories = usePOSStore((s) => s.categories);
   const menuItems = usePOSStore((s) => s.menuItems);
   const payments = usePOSStore((s) => s.payments);
-  const settings = usePOSStore((s) => s.settings);
 
   const table = tables.find((t) => t.id === tableId);
   const [activeCat, setActiveCat] = useState(categories[0]?.id || '');
@@ -58,11 +55,6 @@ const OrderScreen = () => {
     (order?.items || []).forEach((i) => { map[i.menuItemId] = i.quantity; });
     return map;
   }, [order]);
-
-  const hasLastOrder = useMemo(() => {
-    if (!table) return false;
-    return payments.some((p) => p.tableNumber === table.number);
-  }, [payments, table]);
 
   if (!table || !tableId) {
     return (
@@ -121,17 +113,24 @@ const OrderScreen = () => {
 
       {/* Payment-in-progress info banner */}
       {table.status === 'billing' && (
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-accent/10 border-b border-accent/20 text-accent/90">
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-accent/10 border-b border-accent/20 text-accent/90 flex-shrink-0">
           <Info size={14} className="flex-shrink-0" />
           <p className="text-xs font-medium">Payment in progress — you can still modify the order</p>
         </div>
       )}
 
-      <div className="flex-1 flex overflow-hidden min-h-0">
-        {/* Left: Menu */}
-        <div className="flex-1 flex flex-col min-w-0">
+      {/* ── Main content area ──
+          Mobile (<640px): full-width menu, floating cart button + drawer
+          Tablet (sm, >=640px): side-by-side 2/3 menu + 1/3 cart
+          Desktop (lg, >=1024px): same as tablet, larger cart panel
+      */}
+      <div className="flex-1 flex flex-col sm:flex-row overflow-hidden min-h-0">
+
+        {/* ── Menu area ── */}
+        <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
+
           {/* Search */}
-          <div className="p-3 border-b border-border bg-card/60">
+          <div className="p-3 border-b border-border bg-card/60 flex-shrink-0">
             <div className="relative">
               <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
@@ -153,9 +152,9 @@ const OrderScreen = () => {
             </div>
           </div>
 
-          {/* Categories */}
+          {/* Category tabs — horizontal scroll on mobile, wrapping on tablet+ */}
           {!search && (
-            <div className="flex gap-2 p-3 overflow-x-auto border-b border-border no-scrollbar bg-card/40">
+            <div className="flex gap-2 p-3 border-b border-border no-scrollbar bg-card/40 flex-shrink-0 overflow-x-auto sm:overflow-x-visible sm:flex-wrap">
               {categories.map((cat) => (
                 <button
                   key={cat.id}
@@ -179,9 +178,9 @@ const OrderScreen = () => {
             </div>
           )}
 
-          {/* Items grid */}
-          <div className="flex-1 overflow-y-auto p-3 bg-background">
-            <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3'} gap-2.5`}>
+          {/* Items grid — only this section scrolls */}
+          <div className="flex-1 min-h-0 overflow-y-auto p-3 lg:p-4 bg-background pb-24 sm:pb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
               {filteredItems.map((item) => (
                 <MenuItemCard
                   key={item.id}
@@ -193,78 +192,86 @@ const OrderScreen = () => {
             </div>
             {filteredItems.length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-                <ShoppingBag size={36} className="mb-3 opacity-20" />
+                <ShoppingCart size={36} className="mb-3 opacity-20" />
                 <p className="text-sm font-medium">No items found</p>
-                <p className="text-xs opacity-60 mt-1">Try a different category or search</p>
+                <p className="text-xs opacity-60 mt-1.5 text-center">Try a different category or search</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Right: Order Panel — desktop only */}
-        {!isMobile && (
-          <div
-            className="w-[340px] lg:w-[380px] flex-shrink-0 flex flex-col"
-            style={{
-              borderLeft: '1px solid rgba(255,255,255,0.10)',
-              boxShadow: '-10px 0 30px rgba(0,0,0,0.4)',
-            }}
-          >
-            <OrderPanel
-              order={order}
-              onUpdateQty={(menuItemId, delta) =>
-                order && updateItemQuantity(order.id, menuItemId, delta)
-              }
-              onRemove={(menuItemId) =>
-                order && removeItemFromOrder(order.id, menuItemId)
-              }
-              onPay={handlePay}
-              onClear={handleClear}
-              pax={table.pax ?? 1}
-              onPaxChange={handlePaxChange}
-            />
-          </div>
-        )}
+        {/* ── Cart panel — hidden on mobile, always visible on tablet+ ── */}
+        <div
+          className="hidden sm:flex sm:w-1/3 lg:w-[360px] flex-shrink-0 flex-col"
+          style={{
+            borderLeft: '1px solid rgba(255,255,255,0.10)',
+            boxShadow: '-10px 0 30px rgba(0,0,0,0.4)',
+          }}
+        >
+          <OrderPanel
+            order={order}
+            onUpdateQty={(menuItemId, delta) =>
+              order && updateItemQuantity(order.id, menuItemId, delta)
+            }
+            onRemove={(menuItemId) =>
+              order && removeItemFromOrder(order.id, menuItemId)
+            }
+            onPay={handlePay}
+            onClear={handleClear}
+            pax={table.pax ?? 1}
+            onPaxChange={handlePaxChange}
+          />
+        </div>
       </div>
 
-      {/* Mobile: Cart summary button (opens slide-up panel) */}
-      {isMobile && (
-        <button
-          onClick={() => setShowCart(true)}
-          data-testid="button-view-order"
-          className={`flex-shrink-0 flex items-center gap-3 px-4 py-3 border-t border-border safe-bottom transition-all ${
-            hasItems
-              ? 'bg-card/95 backdrop-blur-sm'
-              : 'bg-card/70'
-          }`}
-        >
-          <div className="relative">
-            <ShoppingBag size={20} className={hasItems ? 'text-accent' : 'text-muted-foreground'} />
-            {hasItems && (
-              <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-0.5 rounded-full bg-accent text-accent-foreground text-[10px] font-black flex items-center justify-center leading-none">
-                {itemCount}
-              </span>
-            )}
-          </div>
-          <span className="flex-1 text-sm font-medium text-left text-muted-foreground">
-            {hasItems ? `${itemCount} item${itemCount !== 1 ? 's' : ''} in order` : 'No items yet — tap to add'}
-          </span>
+      {/* ── Mobile only: Floating cart button (bottom-right) ── */}
+      <button
+        onClick={() => setShowCart(true)}
+        data-testid="button-view-order"
+        className="sm:hidden fixed bottom-4 right-4 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl transition-all active:scale-95"
+        style={{
+          background: hasItems
+            ? 'linear-gradient(135deg, #1e50d0 0%, #4186f5 100%)'
+            : 'rgba(15,23,42,0.92)',
+          border: hasItems
+            ? '1px solid rgba(65,134,245,0.5)'
+            : '1px solid rgba(255,255,255,0.10)',
+          boxShadow: hasItems
+            ? '0 8px 32px -4px rgba(59,130,246,0.55)'
+            : '0 4px 24px -4px rgba(0,0,0,0.6)',
+          color: hasItems ? '#ffffff' : 'rgba(255,255,255,0.5)',
+        }}
+      >
+        <div className="relative">
+          <ShoppingCart size={20} />
           {hasItems && (
-            <span className="font-black text-accent text-base">Rs. {fmt(runningTotal)}</span>
+            <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] px-0.5 rounded-full bg-white text-blue-600 text-[10px] font-black flex items-center justify-center leading-none">
+              {itemCount}
+            </span>
           )}
-        </button>
-      )}
+        </div>
+        {hasItems ? (
+          <span className="text-sm font-bold">Rs. {fmt(runningTotal)}</span>
+        ) : (
+          <span className="text-xs font-medium">Cart</span>
+        )}
+      </button>
 
-      {/* Mobile: Cart slide-up sheet */}
-      {isMobile && showCart && (
-        <div className="fixed inset-0 z-50 flex flex-col">
+      {/* ── Mobile only: Cart bottom drawer (75vh) ── */}
+      {showCart && (
+        <div className="sm:hidden fixed inset-0 z-50 flex flex-col justify-end">
           <div
-            className="flex-1 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setShowCart(false)}
           />
-          <div className="bg-card border-t border-border rounded-t-2xl max-h-[88vh] flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-              <h3 className="font-bold text-foreground">Table {table.number} — Order</h3>
+          <div
+            className="relative bg-card border-t border-border rounded-t-2xl flex flex-col animate-slide-up"
+            style={{ height: '75vh' }}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
+              <h3 className="font-bold text-foreground">
+                Cart{itemCount > 0 ? ` (${itemCount} item${itemCount !== 1 ? 's' : ''})` : ''}
+              </h3>
               <button
                 onClick={() => setShowCart(false)}
                 className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary transition-colors"
@@ -273,7 +280,7 @@ const OrderScreen = () => {
                 <X size={18} />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="flex-1 min-h-0 overflow-y-auto">
               <OrderPanel
                 order={order}
                 onUpdateQty={(menuItemId, delta) =>

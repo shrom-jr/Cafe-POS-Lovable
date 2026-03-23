@@ -68,7 +68,8 @@ const TableOverview = () => {
 
   return (
     <AppLayout title={settings.cafeName || 'Café Brew'} headerRight={headerRight}>
-      <div className="flex-1 overflow-y-auto px-5 py-4">
+      {/* Single scroll container — no nested scrollers */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-5 py-4 pb-20">
         {tables.length === 0 ? (
           <div className="text-center text-muted-foreground py-20">
             <p className="text-lg">No tables configured.</p>
@@ -78,7 +79,7 @@ const TableOverview = () => {
           <div
             onMouseEnter={() => setPanelHovered(true)}
             onMouseLeave={() => setPanelHovered(false)}
-            className="rounded-2xl p-4 transition-all duration-500"
+            className="rounded-2xl p-3 sm:p-4 transition-all duration-500"
             style={{
               background: 'linear-gradient(180deg, rgba(15,23,42,0.85) 0%, rgba(2,6,23,0.75) 100%)',
               border: '1px solid rgba(59,130,246,0.12)',
@@ -86,7 +87,7 @@ const TableOverview = () => {
               filter: panelHovered ? 'brightness(1.03)' : 'brightness(1)',
             }}
           >
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
               {tables
                 .sort((a, b) => a.number - b.number)
                 .map((table) => {

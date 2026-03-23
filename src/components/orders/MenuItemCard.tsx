@@ -54,9 +54,9 @@ const MenuItemCard = ({ item, quantityInOrder = 0, onAdd, disabled = false }: Me
           </span>
         )}
 
-        {/* Add button — solid, bottom right */}
-        <div className="absolute bottom-2 right-2 w-7 h-7 rounded-full bg-accent text-accent-foreground flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
-          <Plus size={14} strokeWidth={2.5} />
+        {/* Add button — solid, bottom right — enlarged tap area */}
+        <div className="absolute bottom-2 right-2 w-9 h-9 rounded-full bg-accent text-accent-foreground flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
+          <Plus size={16} strokeWidth={2.5} />
         </div>
       </div>
 

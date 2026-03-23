@@ -1,0 +1,206 @@
+This is a UI/UX refactor for a café POS system.
+
+GOAL:
+Make the app TABLET-FIRST (primary experience),
+while automatically adapting to MOBILE and DESKTOP.
+
+Target devices:
+- Mobile (6.1–6.9 inch phones)
+- Tablet (7–10 inch POS devices) ← PRIMARY TARGET
+- Desktop (admin / large screens)
+
+-----------------------------------
+1. RESPONSIVE STRATEGY (CRITICAL)
+-----------------------------------
+
+Use Tailwind breakpoints:
+
+- Mobile: default (<640px)
+- Tablet: sm/md (>=640px) ← PRIMARY LAYOUT
+- Desktop: lg+ (>=1024px)
+
+The layout must automatically switch using responsive classes (no device detection hacks).
+
+-----------------------------------
+2. TABLET LAYOUT (PRIMARY EXPERIENCE)
+-----------------------------------
+
+Design the main POS like a professional system:
+
+Layout:
+
+<div className="flex h-screen">
+  <div className="w-2/3 flex flex-col">
+    <Header />
+    <MenuArea />
+  </div>
+
+  <div className="w-1/3 border-l flex flex-col">
+    <CartArea />
+  </div>
+</div>
+
+Rules:
+- Menu and Cart must ALWAYS be visible together
+- No drawer, no floating cart button
+- Cart should have:
+  - Items list (scrollable)
+  - Sticky bottom section with total + "Proceed to Payment"
+- Menu area should scroll independently
+- Keep interactions fast and visible at all times
+
+-----------------------------------
+3. MOBILE LAYOUT (SUPPORT EXPERIENCE)
+-----------------------------------
+
+Switch to vertical layout:
+
+<div className="flex flex-col h-screen">
+  <Header />
+  <MenuArea />
+</div>
+
+Cart behavior:
+- Hidden by default
+- Add FLOATING CART BUTTON (bottom-right)
+
+Button:
+- fixed bottom-4 right-4 z-50
+- Shows: 🛒 item count + total
+
+On click:
+- Open BOTTOM DRAWER
+
+Drawer:
+- height: 75vh
+- rounded-t-2xl
+- overlay background
+- z-50
+
+Structure:
+- Header: "Cart (X items)" + close
+- Body: scrollable items
+- Footer (sticky): total + checkout button
+
+IMPORTANT:
+- Only cart items scroll inside drawer
+- Remove any existing floating/minimized cart panel
+
+-----------------------------------
+4. DESKTOP LAYOUT
+-----------------------------------
+
+Same as tablet layout but:
+
+- Wrap with:
+  max-w-6xl mx-auto
+- Add more spacing (padding, gaps)
+- Keep centered layout
+- Maintain side-by-side Menu + Cart
+
+-----------------------------------
+5. SCROLL SYSTEM (FIX HARD SCROLL ISSUE)
+-----------------------------------
+
+CRITICAL:
+- Avoid nested scroll containers
+
+Use this pattern:
+
+<div className="flex flex-col h-screen">
+  <Header />
+  <div className="flex-1 min-h-0 overflow-hidden">
+    <div className="h-full overflow-y-auto">
+      Content
+    </div>
+  </div>
+</div>
+
+Rules:
+- Only ONE vertical scroll per section
+- No overflow-y-auto inside cards or grids
+- Scrolling must feel light and natural
+
+-----------------------------------
+6. MENU AREA IMPROVEMENTS
+-----------------------------------
+
+- Grid:
+  grid-cols-2 (mobile)
+  sm:grid-cols-3 (tablet)
+  lg:grid-cols-4 (desktop)
+
+- Gap:
+  gap-3 mobile
+  gap-4 tablet+
+
+- Make entire card clickable
+- Increase tap area for + button
+
+-----------------------------------
+7. CATEGORY TABS
+-----------------------------------
+
+Mobile:
+- overflow-x-auto
+- whitespace-nowrap
+- smooth horizontal scroll
+
+Tablet/Desktop:
+- normal wrapping
+- no horizontal scroll needed
+
+-----------------------------------
+8. TABLE SCREEN (IMPORTANT FIX)
+-----------------------------------
+
+- Use grid-cols-2 consistently
+- Reduce vertical spacing
+- Add padding-bottom: 80px
+- Ensure smooth scroll (no nested scroll containers)
+
+-----------------------------------
+9. TOUCH OPTIMIZATION
+-----------------------------------
+
+Globally apply:
+
+button {
+  min-height: 44px;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+-----------------------------------
+10. DO NOT MODIFY
+-----------------------------------
+
+- Business logic
+- Zustand store
+- Billing / receipt system
+- Data flow
+
+Only refactor UI/UX and layout.
+
+-----------------------------------
+EXPECTED RESULT
+-----------------------------------
+
+TABLET:
+- Professional POS layout
+- Menu + Cart always visible
+- Fast operation during rush
+
+MOBILE:
+- Clean vertical flow
+- Easy cart access (floating button + drawer)
+- Smooth scrolling
+
+DESKTOP:
+- Clean expanded layout
+- Centered and well spaced
+
+The app should feel natural and optimized on ALL devices,
+with TABLET as the primary experience.
