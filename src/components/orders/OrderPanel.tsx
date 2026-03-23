@@ -144,13 +144,20 @@ const OrderPanel = ({
 
       {/* Footer */}
       <div
-        className="px-4 pt-3 pb-4 space-y-3 flex-shrink-0"
+        className="px-4 pt-3 pb-4 space-y-3 flex-shrink-0 relative"
         style={{
-          borderTop: '1px solid rgba(255,255,255,0.07)',
           background: 'linear-gradient(180deg, #0f1a2e 0%, #0c1522 100%)',
-          boxShadow: '0 -6px 20px rgba(0,0,0,0.35)',
         }}
       >
+        {/* Gradient fade — bleeds upward into scroll area, no layout impact */}
+        <div
+          className="absolute inset-x-0 pointer-events-none"
+          style={{
+            top: '-48px',
+            height: '48px',
+            background: 'linear-gradient(to bottom, transparent, #0c1522)',
+          }}
+        />
         <div className="flex items-center justify-between py-1">
           <span className="text-xs font-semibold uppercase tracking-wider text-white/30">Total</span>
           <span

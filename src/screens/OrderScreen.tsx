@@ -391,13 +391,20 @@ const OrderScreen = () => {
 
           {/* Footer — always pinned, never scrolls */}
           <div
-            className="flex-shrink-0 px-4 pt-3 pb-4"
+            className="flex-shrink-0 px-4 pt-3 pb-4 relative"
             style={{
-              borderTop: '1px solid rgba(255,255,255,0.08)',
               background: '#0c1828',
-              boxShadow: '0 -6px 20px rgba(0,0,0,0.4)',
             }}
           >
+            {/* Gradient fade — bleeds upward into scroll area, no layout impact */}
+            <div
+              className="absolute inset-x-0 pointer-events-none"
+              style={{
+                top: '-48px',
+                height: '48px',
+                background: 'linear-gradient(to bottom, transparent, #0c1828)',
+              }}
+            />
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-semibold uppercase tracking-wider text-white/35">Total</span>
               <span className="text-2xl font-black text-white/95">
