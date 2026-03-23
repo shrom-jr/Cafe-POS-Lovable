@@ -290,8 +290,8 @@ const ReviewScreen = () => {
 
               {/* Right (60%): receipt + buttons */}
               <div
-                className="flex flex-col justify-between p-4 gap-2"
-                style={{ width: '60%' }}
+                className="flex flex-col justify-between pt-4 px-4 gap-2"
+                style={{ width: '60%', paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))' }}
               >
                 {receiptCard(true)}
                 <div className="flex flex-col gap-1.5">
