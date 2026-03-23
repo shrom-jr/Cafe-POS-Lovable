@@ -147,7 +147,8 @@ const OrderPanel = ({
         className="px-4 pt-3 pb-4 space-y-3 flex-shrink-0"
         style={{
           borderTop: '1px solid rgba(255,255,255,0.07)',
-          background: 'rgba(0,0,0,0.25)',
+          background: 'linear-gradient(180deg, #0f1a2e 0%, #0c1522 100%)',
+          boxShadow: '0 -6px 20px rgba(0,0,0,0.35)',
         }}
       >
         <div className="flex items-center justify-between py-1">

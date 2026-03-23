@@ -257,7 +257,7 @@ const OrderScreen = () => {
         )}
       </button>
 
-      {/* ── Mobile only: Cart bottom drawer (75vh) ── */}
+      {/* ── Mobile only: Cart bottom drawer ── */}
       {showCart && (
         <div className="sm:hidden short:flex fixed inset-0 z-50 flex flex-col justify-end">
           <div
@@ -265,8 +265,7 @@ const OrderScreen = () => {
             onClick={() => setShowCart(false)}
           />
           <div
-            className="relative bg-card border-t border-border rounded-t-2xl flex flex-col animate-slide-up"
-            style={{ height: '75vh' }}
+            className="relative bg-card border-t border-border rounded-t-2xl flex flex-col animate-slide-up max-h-[100dvh] overflow-hidden"
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
               <h3 className="font-bold text-foreground">
