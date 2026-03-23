@@ -1,0 +1,83 @@
+We are working on the REVIEW ORDER SCREEN (/review/table-2)
+
+Landscape mode layout already exists but has a UX issue:
+Payment methods are not fully visible.
+
+-----------------------------------
+CORE PROBLEM
+-----------------------------------
+
+- Bill section (subtotal, discount, VAT) is too large
+- Payment section gets pushed down
+- Even with compact mode, it doesn't fit
+
+-----------------------------------
+NEW LAYOUT STRATEGY (PRIORITY-BASED)
+-----------------------------------
+
+LANDSCAPE MODE ONLY:
+
+LEFT SIDE (flex-1, scrollable):
+- Order items list
+
+RIGHT SIDE (fixed width, NO scroll):
+- Must fit everything inside screen height
+
+-----------------------------------
+RIGHT PANEL STRUCTURE (TOP → BOTTOM)
+-----------------------------------
+
+1. TOTAL SECTION (very important)
+   - Show total amount prominently (large font)
+   - Minimal spacing
+
+2. PAYMENT METHODS (main focus)
+   - Cash, eSewa, Khalti, Fonepay
+   - Fully visible without scrolling
+
+3. BILL DETAILS (secondary, compact)
+   - Subtotal
+   - Discount controls
+   - VAT
+
+-----------------------------------
+IMPORTANT CHANGES
+-----------------------------------
+
+- Move TOTAL above payment methods
+- Reduce height of bill section significantly
+- Keep discount UI but make it compact
+- Reduce vertical padding and gaps in bill section
+- Do NOT reduce readability
+
+- Right panel:
+   - NO overflow-y-auto
+   - NO scrolling
+   - Must fit fully
+
+-----------------------------------
+RULES
+-----------------------------------
+
+- Payment must ALWAYS be visible
+- Total must ALWAYS be visible
+- No vertical scroll on right panel
+- Only left (items) can scroll
+
+-----------------------------------
+DEBUG (TEMPORARY)
+-----------------------------------
+
+- Show label: "LANDSCAPE REVIEW MODE"
+- REMOVE after testing
+
+-----------------------------------
+EXPECTED RESULT
+-----------------------------------
+
+Landscape:
+✅ Items scroll on left
+✅ Total always visible
+✅ Payment always visible
+✅ Bill details compact but usable
+✅ Feels like real POS
