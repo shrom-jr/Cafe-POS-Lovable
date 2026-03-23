@@ -797,62 +797,145 @@ const ReviewScreen = () => {
 
       {/* QR Modal */}
       {showQRModal && selectedMethod && selectedMethod !== 'cash' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="bg-card rounded-3xl border border-border w-full max-w-sm shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-              <h3 className="font-black text-foreground text-base">
-                {resolvePaymentLabel(selectedMethod, settings)} Payment
-              </h3>
-              <button
-                onClick={() => { setShowQRModal(false); setSelectedMethod(null); setConfirming(false); }}
-                className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-all active:scale-90"
-              >
-                <X size={17} />
-              </button>
-            </div>
-            <div className="px-6 pt-5 pb-6 flex flex-col items-center gap-4">
-              <div className="text-center">
-                <p className="text-[11px] text-muted-foreground uppercase tracking-widest font-semibold">Amount Due</p>
-                <p className="text-5xl font-black text-foreground mt-1 tabular-nums">Rs. {fmt(bill.total)}</p>
-                {bill.discountAmount > 0 && (
-                  <p className="text-xs text-success font-semibold mt-1">Saved Rs. {fmt(bill.discountAmount)}</p>
-                )}
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/80 backdrop-blur-md">
+
+          {isLandscapeMobile ? (
+            /* ── LANDSCAPE: 2-column layout ── */
+            <div
+              className="bg-card border border-border shadow-2xl overflow-hidden flex flex-row w-full"
+              style={{ borderRadius: 20, maxWidth: 640, maxHeight: 'calc(100dvh - 24px)' }}
+            >
+              {/* Left — QR code, centered, fills column */}
               <div
-                className="p-4 bg-white rounded-2xl"
-                style={{ boxShadow: '0 0 0 1px rgba(0,0,0,0.06), 0 4px 20px -4px rgba(0,0,0,0.3)' }}
+                className="flex items-center justify-center p-4"
+                style={{ width: '55%', borderRight: '1px solid rgba(255,255,255,0.07)', background: 'rgba(0,0,0,0.15)' }}
               >
-                {getQRImage(selectedMethod) ? (
-                  <img src={getQRImage(selectedMethod)!} alt={`${selectedMethod} QR`} className="w-56 h-56 object-contain" />
-                ) : (
-                  <QRCodeSVG value={getQRData(selectedMethod)} size={224} bgColor="#ffffff" fgColor="#000000" level="M" />
-                )}
+                <div
+                  className="p-3 bg-white rounded-2xl"
+                  style={{ boxShadow: '0 0 0 1px rgba(0,0,0,0.06), 0 4px 20px -4px rgba(0,0,0,0.3)' }}
+                >
+                  {getQRImage(selectedMethod) ? (
+                    <img
+                      src={getQRImage(selectedMethod)!}
+                      alt={`${selectedMethod} QR`}
+                      style={{ width: 160, height: 160, objectFit: 'contain' }}
+                    />
+                  ) : (
+                    <QRCodeSVG value={getQRData(selectedMethod)} size={160} bgColor="#ffffff" fgColor="#000000" level="M" />
+                  )}
+                </div>
               </div>
-              <p className="text-sm font-semibold text-foreground text-center">
-                Scan QR and confirm after payment
-              </p>
-              <button
-                onClick={async () => {
-                  if (confirming) return;
-                  setConfirming(true);
-                  await handleConfirmPayment(selectedMethod);
-                }}
-                disabled={confirming}
-                data-testid="button-confirm-payment"
-                className="w-full py-4 rounded-2xl text-white font-black text-base transition-all active:scale-[0.97] disabled:opacity-80 flex items-center justify-center gap-2"
-                style={{
-                  background: 'linear-gradient(135deg, #1e50d0 0%, #4186f5 100%)',
-                  boxShadow: '0 4px 16px -4px rgba(59,130,246,0.5)',
-                }}
-              >
-                {confirming ? (
-                  <><Loader2 size={18} className="animate-spin" /> Processing...</>
-                ) : (
-                  'Confirm Payment'
-                )}
-              </button>
+
+              {/* Right — info + confirm button */}
+              <div className="flex flex-col justify-between p-4" style={{ width: '45%' }}>
+                {/* Top: close + wallet name + amount */}
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-black text-foreground text-sm leading-tight">
+                      {resolvePaymentLabel(selectedMethod, settings)} Payment
+                    </h3>
+                    <button
+                      onClick={() => { setShowQRModal(false); setSelectedMethod(null); setConfirming(false); }}
+                      className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-all active:scale-90 flex-shrink-0"
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Amount Due</p>
+                    <p className="text-3xl font-black text-foreground tabular-nums leading-tight">Rs. {fmt(bill.total)}</p>
+                    {bill.discountAmount > 0 && (
+                      <p className="text-xs text-success font-semibold mt-0.5">Saved Rs. {fmt(bill.discountAmount)}</p>
+                    )}
+                  </div>
+                  <p className="text-xs font-semibold text-muted-foreground">
+                    Scan the QR code and confirm after payment
+                  </p>
+                </div>
+
+                {/* Bottom: confirm button */}
+                <button
+                  onClick={async () => {
+                    if (confirming) return;
+                    setConfirming(true);
+                    await handleConfirmPayment(selectedMethod);
+                  }}
+                  disabled={confirming}
+                  data-testid="button-confirm-payment"
+                  className="w-full py-3 rounded-2xl text-white font-black text-sm transition-all active:scale-[0.97] disabled:opacity-80 flex items-center justify-center gap-2"
+                  style={{
+                    background: 'linear-gradient(135deg, #1e50d0 0%, #4186f5 100%)',
+                    boxShadow: '0 4px 16px -4px rgba(59,130,246,0.5)',
+                  }}
+                >
+                  {confirming ? (
+                    <><Loader2 size={16} className="animate-spin" /> Processing...</>
+                  ) : (
+                    'Confirm Payment'
+                  )}
+                </button>
+              </div>
             </div>
-          </div>
+
+          ) : (
+            /* ── PORTRAIT: original stacked layout ── */
+            <div className="bg-card rounded-3xl border border-border w-full max-w-sm shadow-2xl overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+                <h3 className="font-black text-foreground text-base">
+                  {resolvePaymentLabel(selectedMethod, settings)} Payment
+                </h3>
+                <button
+                  onClick={() => { setShowQRModal(false); setSelectedMethod(null); setConfirming(false); }}
+                  className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-all active:scale-90"
+                >
+                  <X size={17} />
+                </button>
+              </div>
+              <div className="px-6 pt-5 pb-6 flex flex-col items-center gap-4">
+                <div className="text-center">
+                  <p className="text-[11px] text-muted-foreground uppercase tracking-widest font-semibold">Amount Due</p>
+                  <p className="text-5xl font-black text-foreground mt-1 tabular-nums">Rs. {fmt(bill.total)}</p>
+                  {bill.discountAmount > 0 && (
+                    <p className="text-xs text-success font-semibold mt-1">Saved Rs. {fmt(bill.discountAmount)}</p>
+                  )}
+                </div>
+                <div
+                  className="p-4 bg-white rounded-2xl"
+                  style={{ boxShadow: '0 0 0 1px rgba(0,0,0,0.06), 0 4px 20px -4px rgba(0,0,0,0.3)' }}
+                >
+                  {getQRImage(selectedMethod) ? (
+                    <img src={getQRImage(selectedMethod)!} alt={`${selectedMethod} QR`} className="w-56 h-56 object-contain" />
+                  ) : (
+                    <QRCodeSVG value={getQRData(selectedMethod)} size={224} bgColor="#ffffff" fgColor="#000000" level="M" />
+                  )}
+                </div>
+                <p className="text-sm font-semibold text-foreground text-center">
+                  Scan QR and confirm after payment
+                </p>
+                <button
+                  onClick={async () => {
+                    if (confirming) return;
+                    setConfirming(true);
+                    await handleConfirmPayment(selectedMethod);
+                  }}
+                  disabled={confirming}
+                  data-testid="button-confirm-payment"
+                  className="w-full py-4 rounded-2xl text-white font-black text-base transition-all active:scale-[0.97] disabled:opacity-80 flex items-center justify-center gap-2"
+                  style={{
+                    background: 'linear-gradient(135deg, #1e50d0 0%, #4186f5 100%)',
+                    boxShadow: '0 4px 16px -4px rgba(59,130,246,0.5)',
+                  }}
+                >
+                  {confirming ? (
+                    <><Loader2 size={18} className="animate-spin" /> Processing...</>
+                  ) : (
+                    'Confirm Payment'
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
         </div>
       )}
     </>

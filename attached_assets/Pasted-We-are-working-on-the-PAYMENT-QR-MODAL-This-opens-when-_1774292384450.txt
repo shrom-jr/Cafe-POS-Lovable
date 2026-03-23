@@ -1,0 +1,77 @@
+We are working on the PAYMENT QR MODAL
+(This opens when selecting eSewa / Khalti / Fonepay)
+
+-----------------------------------
+CURRENT PROBLEM
+-----------------------------------
+
+In landscape mode on mobile:
+
+- QR code is visible
+- But wallet name, amount, and confirm button are hidden
+- Modal is still using vertical (portrait) layout
+- This breaks usability completely
+
+-----------------------------------
+GOAL
+-----------------------------------
+
+Create a dedicated LANDSCAPE layout for the QR modal.
+
+-----------------------------------
+LANDSCAPE LAYOUT (IMPORTANT)
+-----------------------------------
+
+Instead of stacking vertically,
+split the modal into TWO COLUMNS:
+
+LEFT SIDE (60% width):
+- Large QR code
+- Centered both vertically and horizontally
+- Should scale to fit available height without overflow
+
+RIGHT SIDE (40% width):
+- Wallet name (e.g. eSewa Payment)
+- Amount due (Rs. XXXX)
+- Instruction text (Scan QR and confirm)
+- Confirm Payment button at the bottom
+
+-----------------------------------
+BEHAVIOR RULES
+-----------------------------------
+
+- NO vertical scrolling in landscape
+- Everything must fit inside the modal
+- Confirm button must always be visible
+- QR must not overflow or crop
+
+-----------------------------------
+RESPONSIVE SWITCH
+-----------------------------------
+
+- Keep current layout EXACTLY as-is for portrait
+- Apply new 2-column layout ONLY in landscape mode
+- Use same detection logic already used in Review screen
+
+-----------------------------------
+UI DETAILS
+-----------------------------------
+
+- Keep same styling (dark theme, rounded corners)
+- Maintain spacing balance between QR and right panel
+- Confirm button should feel prominent and clickable
+- Right panel should use flex column with:
+    justify-between (to push button to bottom)
+
+-----------------------------------
+EXPECTED RESULT
+-----------------------------------
+
+Portrait:
+✅ Same as current (no change)
+
+Landscape:
+✅ QR fully visible on left
+✅ Wallet + amount + button visible on right
+✅ No hidden content
+✅ No scrolling
