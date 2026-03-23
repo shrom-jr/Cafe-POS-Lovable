@@ -583,13 +583,6 @@ const ReviewScreen = () => {
                 className="w-[300px] flex-shrink-0 flex flex-col overflow-y-auto gap-2 pb-2"
                 style={{ borderLeft: '1px solid rgba(255,255,255,0.06)', paddingLeft: '12px' }}
               >
-                {/* DEBUG — remove once confirmed */}
-                <div
-                  className="flex-shrink-0 flex items-center justify-center py-1 rounded-lg text-[10px] font-black tracking-widest uppercase"
-                  style={{ background: '#7c3aed', color: '#fff' }}
-                >
-                  LANDSCAPE REVIEW MODE
-                </div>
                 {billCard}
                 {paymentCard}
               </div>
