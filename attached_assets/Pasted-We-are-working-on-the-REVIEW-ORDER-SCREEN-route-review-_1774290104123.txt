@@ -1,0 +1,92 @@
+We are working on the REVIEW ORDER SCREEN (route: /review/table-2).
+
+The screen is already responsive:
+- Portrait mode = stacked layout (correct)
+- Landscape mode = 2-column layout (already implemented)
+
+-----------------------------------
+CURRENT PROBLEM
+-----------------------------------
+
+In LANDSCAPE MODE:
+
+- Right panel (summary + payment) is scrollable
+- Payment methods section is pushed below the screen
+- User must scroll to see payment options ❌
+
+This is BAD for POS UX
+
+-----------------------------------
+GOAL (VERY IMPORTANT)
+-----------------------------------
+
+In LANDSCAPE MODE:
+
+RIGHT PANEL must be FULLY VISIBLE without scrolling
+
+- Summary (Subtotal, Discount, VAT, Total)
+- Payment Methods (Cash, eSewa, Khalti, Fonepay)
+
+ALL visible at once
+
+-----------------------------------
+REQUIRED LAYOUT CHANGE
+-----------------------------------
+
+LANDSCAPE MODE ONLY:
+
+LEFT SIDE:
+- Order items list
+- This is the ONLY scrollable area
+
+RIGHT SIDE:
+- Fixed height panel (no scrolling)
+- Stack:
+   1. Summary section
+   2. Payment methods section
+
+-----------------------------------
+HOW TO FIX
+-----------------------------------
+
+- REMOVE overflow scrolling from the right panel
+- DO NOT use overflow-y-auto on right panel
+
+- Make right panel:
+  - display: flex
+  - flex-direction: column
+  - justify-content: space-between OR proper spacing
+
+- Ensure both sections fit inside screen height:
+  - Reduce vertical spacing slightly if needed
+  - Make payment cards slightly compact if needed
+
+-----------------------------------
+IMPORTANT RULES
+-----------------------------------
+
+- Payment methods MUST always be visible
+- No vertical scrolling on right side
+- No content should be cut off
+- Do NOT shrink text too much
+- Keep UI premium and readable
+
+-----------------------------------
+DEBUG (TEMPORARY ONLY)
+-----------------------------------
+
+- Show label: "LANDSCAPE REVIEW MODE"
+- After confirming layout works → REMOVE IT
+
+-----------------------------------
+EXPECTED RESULT
+-----------------------------------
+
+Landscape:
+✅ Left = scrollable items
+✅ Right = fully visible summary + payment
+✅ No scroll needed for payment
+✅ Feels like real POS system
+
+Portrait:
+✅ No changes

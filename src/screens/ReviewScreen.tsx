@@ -349,7 +349,7 @@ const ReviewScreen = () => {
     </div>
   );
 
-  const billCard = (
+  const getBillCard = (compact = false) => (
     <div
       className="rounded-2xl overflow-hidden flex-shrink-0"
       style={{
@@ -357,7 +357,7 @@ const ReviewScreen = () => {
         border: '1px solid rgba(255,255,255,0.09)',
       }}
     >
-      <div className="px-4 pt-2 pb-1.5 space-y-1.5">
+      <div className={`px-4 ${compact ? 'pt-1.5 pb-1 space-y-1' : 'pt-2 pb-1.5 space-y-1.5'}`}>
         <div className="flex justify-between items-center">
           <span className="text-xs" style={{ color: 'rgba(255,255,255,0.42)' }}>Subtotal</span>
           <span className="text-sm font-semibold tabular-nums" style={{ color: 'rgba(255,255,255,0.94)' }}>
@@ -381,7 +381,7 @@ const ReviewScreen = () => {
                 <button
                   key={pct}
                   onClick={() => handlePreset(pct)}
-                  className="flex-1 py-1 rounded-md text-[11px] font-bold transition-all active:scale-95"
+                  className={`flex-1 ${compact ? 'py-0.5' : 'py-1'} rounded-md text-[11px] font-bold transition-all active:scale-95`}
                   style={
                     isActive
                       ? { background: 'rgba(59,130,246,0.22)', color: 'rgba(147,197,253,0.95)', border: '1px solid rgba(59,130,246,0.38)' }
@@ -400,12 +400,12 @@ const ReviewScreen = () => {
             >
               <button
                 onClick={() => handleModeToggle('percent')}
-                className="px-2.5 py-1 transition-colors"
+                className={`px-2.5 ${compact ? 'py-0.5' : 'py-1'} transition-colors`}
                 style={discountMode === 'percent' ? { background: 'rgba(59,130,246,0.25)', color: 'rgba(147,197,253,0.95)' } : { color: 'rgba(255,255,255,0.36)' }}
               >%</button>
               <button
                 onClick={() => handleModeToggle('fixed')}
-                className="px-2.5 py-1 transition-colors"
+                className={`px-2.5 ${compact ? 'py-0.5' : 'py-1'} transition-colors`}
                 style={discountMode === 'fixed' ? { background: 'rgba(59,130,246,0.25)', color: 'rgba(147,197,253,0.95)' } : { color: 'rgba(255,255,255,0.36)', borderLeft: '1px solid rgba(255,255,255,0.08)' }}
               >Rs</button>
             </div>
@@ -416,7 +416,7 @@ const ReviewScreen = () => {
               placeholder={discountMode === 'percent' ? 'Custom %' : 'Custom Rs.'}
               value={discountInput}
               onChange={(e) => handleInputChange(e.target.value)}
-              className="flex-1 px-3 py-1 rounded-md text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none transition-all"
+              className={`flex-1 px-3 ${compact ? 'py-0.5' : 'py-1'} rounded-md text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none transition-all`}
               style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
               onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(59,130,246,0.5)'; }}
               onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
@@ -435,36 +435,45 @@ const ReviewScreen = () => {
         )}
       </div>
       <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', margin: '0 16px' }} />
-      <div className="flex items-center justify-between px-4 py-2">
+      <div className={`flex items-center justify-between px-4 ${compact ? 'py-1.5' : 'py-2'}`}>
         <span className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: 'rgba(255,255,255,0.35)' }}>
           Total
         </span>
-        <span className="text-[26px] font-black tracking-tight leading-none tabular-nums" style={{ color: '#ffffff' }}>
+        <span
+          className={`${compact ? 'text-[22px]' : 'text-[26px]'} font-black tracking-tight leading-none tabular-nums`}
+          style={{ color: '#ffffff' }}
+        >
           Rs. {fmt(bill.total)}
         </span>
       </div>
     </div>
   );
+  const billCard = getBillCard();
 
-  const paymentCard = (
+  const getPaymentCard = (compact = false) => (
     <div
-      className="rounded-2xl px-4 pt-1.5 pb-2 flex-shrink-0"
+      className="rounded-2xl px-4 flex-shrink-0"
       style={{
         background: 'rgba(255,255,255,0.04)',
         border: '1px solid rgba(255,255,255,0.09)',
         boxShadow: '0 4px 20px -6px rgba(0,0,0,0.4)',
+        paddingTop: compact ? '8px' : '6px',
+        paddingBottom: compact ? '8px' : '8px',
       }}
     >
-      <p className="text-[10px] font-black uppercase tracking-[0.14em] mb-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+      <p
+        className="font-black uppercase tracking-[0.14em]"
+        style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10, marginBottom: compact ? 6 : 6 }}
+      >
         Payment Method
       </p>
-      <div className="space-y-1.5">
+      <div className={compact ? 'space-y-1' : 'space-y-1.5'}>
 
               {/* Cash */}
               <button
                 onClick={() => handleConfirmPayment('cash')}
                 data-testid="button-payment-method-cash"
-                className="w-full flex items-center gap-3 px-4 py-2 rounded-xl transition-all active:scale-[0.97]"
+                className={`w-full flex items-center gap-3 px-4 ${compact ? 'py-1.5' : 'py-2'} rounded-xl transition-all active:scale-[0.97]`}
                 style={{
                   background: 'rgba(52,211,153,0.07)',
                   border: '1px solid rgba(52,211,153,0.25)',
@@ -485,7 +494,7 @@ const ReviewScreen = () => {
 
               {/* Digital wallets */}
               {qrMethods.length > 0 && (
-                <div className={`grid gap-1.5 ${qrMethods.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                <div className={`grid ${compact ? 'gap-1' : 'gap-1.5'} ${qrMethods.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
                   {qrMethods.map(({ id, label }) => {
                     const builtInKeys = ['esewa', 'khalti', 'fonepay'] as const;
                     const isBuiltIn = builtInKeys.includes(id as 'esewa' | 'khalti' | 'fonepay');
@@ -502,7 +511,7 @@ const ReviewScreen = () => {
                         key={id}
                         onClick={() => { setSelectedMethod(id); setShowQRModal(true); }}
                         data-testid={`button-payment-method-${id}`}
-                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all active:scale-[0.97]"
+                        className={`flex items-center gap-2.5 px-3 ${compact ? 'py-1.5' : 'py-2'} rounded-xl transition-all active:scale-[0.97]`}
                         style={{
                           background: 'rgba(255,255,255,0.04)',
                           border: '1px solid rgba(255,255,255,0.09)',
@@ -530,6 +539,7 @@ const ReviewScreen = () => {
       </div>
     </div>
   );
+  const paymentCard = getPaymentCard();
 
   // ── Main review + payment screen ──
   return (
@@ -575,16 +585,22 @@ const ReviewScreen = () => {
 
               {/* Left: items list (scrollable) */}
               <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                {/* DEBUG LABEL — remove after confirming layout */}
+                <div className="flex-shrink-0 mb-1 px-1">
+                  <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded" style={{ background: 'rgba(234,179,8,0.15)', color: 'rgba(234,179,8,0.8)', border: '1px solid rgba(234,179,8,0.25)' }}>
+                    LANDSCAPE REVIEW MODE
+                  </span>
+                </div>
                 {itemsCard}
               </div>
 
-              {/* Right: bill summary + payment (fixed width, scrolls if content tall) */}
+              {/* Right: bill summary + payment — no scrolling, fully visible */}
               <div
-                className="w-[300px] flex-shrink-0 flex flex-col overflow-y-auto gap-2 pb-2"
+                className="w-[300px] flex-shrink-0 flex flex-col overflow-hidden gap-1.5"
                 style={{ borderLeft: '1px solid rgba(255,255,255,0.06)', paddingLeft: '12px' }}
               >
-                {billCard}
-                {paymentCard}
+                {getBillCard(true)}
+                {getPaymentCard(true)}
               </div>
             </div>
           ) : (
