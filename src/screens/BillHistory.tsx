@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { usePOSStore } from '@/store/usePOSStore';
 import { fmt, resolvePaymentLabel } from '@/utils/format';
 import AppLayout from '@/components/ui/AppLayout';
+import ReceiptPreview from '@/components/ReceiptPreview';
 import ThermalReceiptLayout from '@/components/ThermalReceiptLayout';
 import { Search, Printer, Receipt, X, Calendar } from 'lucide-react';
 import { format, isToday, isYesterday, isSameDay } from 'date-fns';
