@@ -1,0 +1,139 @@
+You already implemented a responsive POS layout, but there are still critical UX bugs on mobile that must be FIXED precisely.
+
+DO NOT redesign everything again.
+ONLY fix the following issues carefully.
+
+-----------------------------------
+ISSUE 1: TABLE SCREEN HEADER IS BROKEN
+-----------------------------------
+
+Problem:
+- Header looks compressed / messy on mobile
+- Tabs (Tables, History, Admin) are not properly aligned
+- Feels cramped and overlapping
+
+Fix:
+
+- Convert header into TWO ROWS on mobile (<640px)
+
+Structure:
+
+ROW 1:
+- Left: Back button + "Table X"
+- Right: time/status
+
+ROW 2:
+- Tabs (Tables, History, Admin)
+
+Rules:
+- Tabs must be horizontally scrollable on mobile
+- Add spacing between tabs
+- No overlapping or compression
+- Proper padding (px-3 py-2 minimum)
+
+Tablet/Desktop:
+- Keep header in ONE ROW if space allows
+
+-----------------------------------
+ISSUE 2: CART REQUIRES HARD PULL (CRITICAL BUG)
+-----------------------------------
+
+Problem:
+- User must drag/pull to reveal "items in order"
+- Cart is partially hidden
+- Interaction feels broken and frustrating
+
+This is NOT acceptable for POS usage.
+
+Fix:
+
+- COMPLETELY REMOVE any:
+  - draggable cart
+  - half-visible cart panel
+  - pull-to-open behavior
+
+Replace with:
+
+MOBILE ONLY:
+- Floating cart button (bottom-right)
+- On tap → open FULL bottom drawer
+
+Drawer rules:
+- Opens instantly (no drag required)
+- Height ~75% of screen
+- Has backdrop overlay
+- Close on:
+  - tapping outside
+  - close button
+
+IMPORTANT:
+- Cart must NEVER be partially visible
+- Cart must NEVER require dragging to open
+
+-----------------------------------
+ISSUE 3: SCROLL STILL FEELS HEAVY
+-----------------------------------
+
+Problem:
+- User must scroll hard on table screen and order screen
+
+Root cause:
+- Multiple nested scroll containers
+
+Fix:
+
+- Ensure ONLY ONE vertical scroll per screen
+
+Rules:
+- Keep scroll ONLY on main content container
+- REMOVE extra overflow-y-auto from inner elements
+- DO NOT use h-screen inside child components
+
+Expected:
+- Smooth, light scrolling like a normal app
+
+-----------------------------------
+ISSUE 4: FLOATING CART VISIBILITY
+-----------------------------------
+
+Problem:
+- Cart access is not obvious or easy
+
+Fix:
+
+- Add floating cart button:
+  - bottom-right
+  - always visible when cart has items
+
+Button shows:
+- item count
+- total price
+
+Example:
+[🛒 4 | Rs. 860]
+
+-----------------------------------
+IMPORTANT RULES
+-----------------------------------
+
+- DO NOT change business logic
+- DO NOT change Zustand/store
+- DO NOT touch billing/receipt system
+- ONLY fix UI/UX and layout issues
+
+-----------------------------------
+EXPECTED RESULT
+-----------------------------------
+
+Mobile experience must:
+
+- Have clean, readable header
+- NO broken or cramped layout
+- NO dragging required for cart
+- Cart opens instantly via button
+- Smooth scrolling (no resistance)
+- Easy one-hand usage
+
+This must feel like a real production POS app, not a prototype.
+
+Apply fixes precisely without introducing new layout issues.
