@@ -34,12 +34,18 @@ const OrderScreen = () => {
   const [search, setSearch] = useState('');
   const [showCart, setShowCart] = useState(false);
 
-  // Detect landscape mobile: height < 500px means short screen (landscape phone)
-  const [isShortScreen, setIsShortScreen] = useState(() => window.innerHeight < 500);
+  // Reliable landscape mobile detection: width > height AND height < 600px
+  const detectLandscape = () =>
+    window.innerWidth > window.innerHeight && window.innerHeight < 600;
+  const [isLandscapeMobile, setIsLandscapeMobile] = useState(detectLandscape);
   useEffect(() => {
-    const update = () => setIsShortScreen(window.innerHeight < 500);
+    const update = () => setIsLandscapeMobile(detectLandscape());
     window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
+    window.addEventListener('orientationchange', update);
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('orientationchange', update);
+    };
   }, []);
 
   const order = useMemo(() => {
@@ -117,6 +123,14 @@ const OrderScreen = () => {
 
   return (
     <div className="h-[100dvh] flex flex-col overflow-hidden" style={{ background: 'linear-gradient(180deg, #0d1525 0%, #060e1a 100%)' }}>
+      {/* DEBUG: landscape detection — remove once confirmed */}
+      <div
+        className="fixed bottom-20 left-3 z-[9999] text-[10px] font-bold px-2 py-1 rounded pointer-events-none"
+        style={{ background: isLandscapeMobile ? '#ef4444' : '#22c55e', color: '#fff', opacity: 0.9 }}
+      >
+        {isLandscapeMobile ? 'LANDSCAPE MODE' : 'NORMAL MODE'}
+      </div>
+
       <TopBar title={`Table ${table.number}`} showBack onBack={() => navigate('/')} />
 
       {/* Payment-in-progress info banner */}
@@ -266,7 +280,7 @@ const OrderScreen = () => {
       </button>
 
       {/* ── Portrait mobile: bottom sheet cart ── */}
-      {showCart && !isShortScreen && (
+      {showCart && !isLandscapeMobile && (
         <div className="sm:hidden fixed inset-0 z-50 flex flex-col justify-end">
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -307,7 +321,7 @@ const OrderScreen = () => {
       )}
 
       {/* ── Landscape mobile: full-screen cart ── */}
-      {showCart && isShortScreen && (
+      {showCart && isLandscapeMobile && (
         <div
           className="fixed inset-0 z-50 flex flex-col animate-fade-in"
           style={{ background: 'linear-gradient(180deg, #141e30 0%, #0c1522 100%)' }}
