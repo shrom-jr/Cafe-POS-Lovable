@@ -66,6 +66,19 @@ const ReviewScreen = () => {
   const [reprinting, setReprinting] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
+  // Landscape detection — matches OrderScreen logic
+  const detectLandscape = () => window.innerWidth > window.innerHeight && window.innerHeight < 600;
+  const [isLandscapeMobile, setIsLandscapeMobile] = useState(detectLandscape);
+  useEffect(() => {
+    const update = () => setIsLandscapeMobile(detectLandscape());
+    window.addEventListener('resize', update);
+    window.addEventListener('orientationchange', update);
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('orientationchange', update);
+    };
+  }, []);
+
   // ── Discount handlers ─────────────────────────────────────────
   const handlePreset = (pct: number) => {
     setActivePreset(pct);
@@ -287,230 +300,165 @@ const ReviewScreen = () => {
     );
   }
 
-  // ── Main review + payment screen ──────────────────────────────
-  return (
-    <>
-      {receiptPortal}
+  // ── Shared JSX sections (used in both portrait and landscape) ────
+
+  const itemsCard = (
+    <div
+      className="flex-1 min-h-0 rounded-xl overflow-hidden flex flex-col"
+      style={{
+        background: 'rgba(255,255,255,0.04)',
+        border: '1px solid rgba(255,255,255,0.06)',
+        boxShadow: '0 4px 16px -8px rgba(0,0,0,0.3)',
+      }}
+    >
       <div
-        className="h-[100dvh] flex flex-col overflow-hidden"
-        style={{ background: 'linear-gradient(180deg, #0d1525 0%, #060e1a 100%)' }}
+        className="flex-shrink-0 px-3 py-1.5 flex items-center"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
       >
-        {/* Header */}
+        <span className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.22)' }}>
+          Order Items
+        </span>
+      </div>
+      <div className="relative flex-1 min-h-0">
+        <div className="overflow-y-auto h-full">
+          {items.map((item, idx) => (
+            <div
+              key={item.menuItemId}
+              className="flex items-center gap-3 px-3 py-2"
+              style={idx < items.length - 1 ? { borderBottom: '1px solid rgba(255,255,255,0.04)' } : {}}
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold truncate leading-snug" style={{ color: 'rgba(255,255,255,0.95)' }}>
+                  {item.name}
+                </p>
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.38)' }}>
+                  {item.quantity} × Rs. {fmt(item.price)}
+                </p>
+              </div>
+              <p className="text-sm font-bold tabular-nums whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.88)' }}>
+                Rs. {fmt(item.price * item.quantity)}
+              </p>
+            </div>
+          ))}
+        </div>
         <div
-          className="flex-shrink-0 flex items-center gap-3 px-4 py-2.5"
-          style={{
-            borderBottom: '1px solid rgba(255,255,255,0.07)',
-            background: 'rgba(13,21,37,0.9)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-          }}
-        >
-          <button
-            onClick={() => navigate(`/order/${tableId}`)}
-            className="w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90"
-            style={{
-              background: 'rgba(255,255,255,0.07)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              color: 'rgba(255,255,255,0.55)',
-            }}
+          className="absolute bottom-0 inset-x-0 h-8 pointer-events-none"
+          style={{ background: 'linear-gradient(to bottom, transparent, rgba(9,14,28,0.95))' }}
+        />
+      </div>
+    </div>
+  );
+
+  const billCard = (
+    <div
+      className="rounded-2xl overflow-hidden flex-shrink-0"
+      style={{
+        background: 'rgba(255,255,255,0.05)',
+        border: '1px solid rgba(255,255,255,0.09)',
+      }}
+    >
+      <div className="px-4 pt-2 pb-1.5 space-y-1.5">
+        <div className="flex justify-between items-center">
+          <span className="text-xs" style={{ color: 'rgba(255,255,255,0.42)' }}>Subtotal</span>
+          <span className="text-sm font-semibold tabular-nums" style={{ color: 'rgba(255,255,255,0.94)' }}>
+            Rs. {fmt(bill.subtotal)}
+          </span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-xs" style={{ color: 'rgba(255,255,255,0.42)' }}>Discount</span>
+          <span
+            className="text-sm font-semibold tabular-nums"
+            style={{ color: bill.discountAmount > 0 ? 'rgba(52,211,153,0.9)' : 'rgba(255,255,255,0.22)' }}
           >
-            <ChevronLeft size={17} />
-          </button>
-          <div>
-            <p className="font-black text-white text-sm leading-tight">Review Order</p>
-            <p className="text-[11px] leading-tight" style={{ color: 'rgba(255,255,255,0.38)' }}>
-              Table {table.number}
-            </p>
+            −Rs. {fmt(bill.discountAmount)}
+          </span>
+        </div>
+        <div className="space-y-1">
+          <div className="flex gap-1.5">
+            {PRESETS.map((pct) => {
+              const isActive = activePreset === pct && discountMode === 'percent';
+              return (
+                <button
+                  key={pct}
+                  onClick={() => handlePreset(pct)}
+                  className="flex-1 py-1 rounded-md text-[11px] font-bold transition-all active:scale-95"
+                  style={
+                    isActive
+                      ? { background: 'rgba(59,130,246,0.22)', color: 'rgba(147,197,253,0.95)', border: '1px solid rgba(59,130,246,0.38)' }
+                      : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.07)' }
+                  }
+                >
+                  {pct}%
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex gap-1.5 items-center">
+            <div
+              className="flex rounded-md overflow-hidden flex-shrink-0 text-[11px] font-bold"
+              style={{ border: '1px solid rgba(255,255,255,0.09)', background: 'rgba(255,255,255,0.04)' }}
+            >
+              <button
+                onClick={() => handleModeToggle('percent')}
+                className="px-2.5 py-1 transition-colors"
+                style={discountMode === 'percent' ? { background: 'rgba(59,130,246,0.25)', color: 'rgba(147,197,253,0.95)' } : { color: 'rgba(255,255,255,0.36)' }}
+              >%</button>
+              <button
+                onClick={() => handleModeToggle('fixed')}
+                className="px-2.5 py-1 transition-colors"
+                style={discountMode === 'fixed' ? { background: 'rgba(59,130,246,0.25)', color: 'rgba(147,197,253,0.95)' } : { color: 'rgba(255,255,255,0.36)', borderLeft: '1px solid rgba(255,255,255,0.08)' }}
+              >Rs</button>
+            </div>
+            <input
+              type="number"
+              min="0"
+              inputMode="decimal"
+              placeholder={discountMode === 'percent' ? 'Custom %' : 'Custom Rs.'}
+              value={discountInput}
+              onChange={(e) => handleInputChange(e.target.value)}
+              className="flex-1 px-3 py-1 rounded-md text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none transition-all"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(59,130,246,0.5)'; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
+            />
           </div>
         </div>
+        {bill.vatEnabled && (
+          <div className="flex justify-between items-center">
+            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.42)' }}>
+              VAT ({Math.round(bill.vatRate * 100)}%)
+            </span>
+            <span className="text-sm font-semibold tabular-nums" style={{ color: 'rgba(255,255,255,0.94)' }}>
+              Rs. {fmt(bill.vatAmount)}
+            </span>
+          </div>
+        )}
+      </div>
+      <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', margin: '0 16px' }} />
+      <div className="flex items-center justify-between px-4 py-2">
+        <span className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          Total
+        </span>
+        <span className="text-[26px] font-black tracking-tight leading-none tabular-nums" style={{ color: '#ffffff' }}>
+          Rs. {fmt(bill.total)}
+        </span>
+      </div>
+    </div>
+  );
 
-        {/* Body */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="max-w-[460px] mx-auto w-full flex flex-col flex-1 min-h-0 px-4 pt-2.5 pb-2 gap-1.5">
-
-            {/* ── Items card (scrollable) ── */}
-            <div
-              className="flex-1 min-h-0 rounded-xl overflow-hidden flex flex-col"
-              style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.06)',
-                boxShadow: '0 4px 16px -8px rgba(0,0,0,0.3)',
-              }}
-            >
-              {/* Items header label */}
-              <div
-                className="flex-shrink-0 px-3 py-1.5 flex items-center"
-                style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
-              >
-                <span className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.22)' }}>
-                  Order Items
-                </span>
-              </div>
-              {/* Scroll area with bottom fade overlay */}
-              <div className="relative flex-1 min-h-0">
-                <div className="overflow-y-auto h-full">
-                  {items.map((item, idx) => (
-                    <div
-                      key={item.menuItemId}
-                      className="flex items-center gap-3 px-3 py-2"
-                      style={idx < items.length - 1 ? { borderBottom: '1px solid rgba(255,255,255,0.04)' } : {}}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold truncate leading-snug" style={{ color: 'rgba(255,255,255,0.95)' }}>
-                          {item.name}
-                        </p>
-                        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.38)' }}>
-                          {item.quantity} × Rs. {fmt(item.price)}
-                        </p>
-                      </div>
-                      <p className="text-sm font-bold tabular-nums whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.88)' }}>
-                        Rs. {fmt(item.price * item.quantity)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-                {/* Bottom fade — masks any partial row */}
-                <div
-                  className="absolute bottom-0 inset-x-0 h-8 pointer-events-none"
-                  style={{ background: 'linear-gradient(to bottom, transparent, rgba(9,14,28,0.95))' }}
-                />
-              </div>
-            </div>
-
-            {/* ── Bill + Payment section ── */}
-            <div className="flex-shrink-0 flex flex-col gap-1.5">
-
-              {/* ── Unified bill card: subtotal + discount controls + VAT + total ── */}
-              <div
-                className="rounded-2xl overflow-hidden"
-                style={{
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.09)',
-                }}
-              >
-                <div className="px-4 pt-2 pb-1.5 space-y-1.5">
-
-                  {/* Subtotal */}
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs" style={{ color: 'rgba(255,255,255,0.42)' }}>Subtotal</span>
-                    <span className="text-sm font-semibold tabular-nums" style={{ color: 'rgba(255,255,255,0.94)' }}>
-                      Rs. {fmt(bill.subtotal)}
-                    </span>
-                  </div>
-
-                  {/* Discount row */}
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs" style={{ color: 'rgba(255,255,255,0.42)' }}>Discount</span>
-                    <span
-                      className="text-sm font-semibold tabular-nums"
-                      style={{ color: bill.discountAmount > 0 ? 'rgba(52,211,153,0.9)' : 'rgba(255,255,255,0.22)' }}
-                    >
-                      −Rs. {fmt(bill.discountAmount)}
-                    </span>
-                  </div>
-
-                  {/* Discount controls */}
-                  <div className="space-y-1 pl-0">
-                    {/* Preset pills */}
-                    <div className="flex gap-1.5">
-                      {PRESETS.map((pct) => {
-                        const isActive = activePreset === pct && discountMode === 'percent';
-                        return (
-                          <button
-                            key={pct}
-                            onClick={() => handlePreset(pct)}
-                            className="flex-1 py-1 rounded-md text-[11px] font-bold transition-all active:scale-95"
-                            style={
-                              isActive
-                                ? { background: 'rgba(59,130,246,0.22)', color: 'rgba(147,197,253,0.95)', border: '1px solid rgba(59,130,246,0.38)' }
-                                : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.07)' }
-                            }
-                          >
-                            {pct}%
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {/* Mode toggle + custom input */}
-                    <div className="flex gap-1.5 items-center">
-                      <div
-                        className="flex rounded-md overflow-hidden flex-shrink-0 text-[11px] font-bold"
-                        style={{ border: '1px solid rgba(255,255,255,0.09)', background: 'rgba(255,255,255,0.04)' }}
-                      >
-                        <button
-                          onClick={() => handleModeToggle('percent')}
-                          className="px-2.5 py-1 transition-colors"
-                          style={
-                            discountMode === 'percent'
-                              ? { background: 'rgba(59,130,246,0.25)', color: 'rgba(147,197,253,0.95)' }
-                              : { color: 'rgba(255,255,255,0.36)' }
-                          }
-                        >%</button>
-                        <button
-                          onClick={() => handleModeToggle('fixed')}
-                          className="px-2.5 py-1 transition-colors"
-                          style={
-                            discountMode === 'fixed'
-                              ? { background: 'rgba(59,130,246,0.25)', color: 'rgba(147,197,253,0.95)' }
-                              : { color: 'rgba(255,255,255,0.36)', borderLeft: '1px solid rgba(255,255,255,0.08)' }
-                          }
-                        >Rs</button>
-                      </div>
-                      <input
-                        type="number"
-                        min="0"
-                        inputMode="decimal"
-                        placeholder={discountMode === 'percent' ? 'Custom %' : 'Custom Rs.'}
-                        value={discountInput}
-                        onChange={(e) => handleInputChange(e.target.value)}
-                        className="flex-1 px-3 py-1 rounded-md text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none transition-all"
-                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
-                        onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(59,130,246,0.5)'; }}
-                        onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* VAT */}
-                  {bill.vatEnabled && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs" style={{ color: 'rgba(255,255,255,0.42)' }}>
-                        VAT ({Math.round(bill.vatRate * 100)}%)
-                      </span>
-                      <span className="text-sm font-semibold tabular-nums" style={{ color: 'rgba(255,255,255,0.94)' }}>
-                        Rs. {fmt(bill.vatAmount)}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Divider */}
-                <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', margin: '0 16px' }} />
-
-                {/* Total */}
-                <div className="flex items-center justify-between px-4 py-2">
-                  <span className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                    Total
-                  </span>
-                  <span className="text-[26px] font-black tracking-tight leading-none tabular-nums" style={{ color: '#ffffff' }}>
-                    Rs. {fmt(bill.total)}
-                  </span>
-                </div>
-              </div>
-
-            {/* ── Payment Method card ── */}
-            <div
-              className="rounded-2xl px-4 pt-1.5 pb-2"
-              style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.09)',
-                boxShadow: '0 4px 20px -6px rgba(0,0,0,0.4)',
-              }}
-            >
-              <p className="text-[10px] font-black uppercase tracking-[0.14em] mb-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                Payment Method
-              </p>
-              <div className="overflow-y-auto max-h-48 space-y-1.5 pr-0.5">
+  const paymentCard = (
+    <div
+      className="rounded-2xl px-4 pt-1.5 pb-2 flex-shrink-0"
+      style={{
+        background: 'rgba(255,255,255,0.04)',
+        border: '1px solid rgba(255,255,255,0.09)',
+        boxShadow: '0 4px 20px -6px rgba(0,0,0,0.4)',
+      }}
+    >
+      <p className="text-[10px] font-black uppercase tracking-[0.14em] mb-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+        Payment Method
+      </p>
+      <div className="space-y-1.5">
 
               {/* Cash */}
               <button
@@ -579,13 +527,84 @@ const ReviewScreen = () => {
                   })}
                 </div>
               )}
-              </div>{/* end scrollable */}
-            </div>
+      </div>
+    </div>
+  );
 
-            </div>{/* end flex-shrink-0 bottom section */}
-          </div>{/* end max-w-[460px] container */}
-        </div>{/* end body */}
-      </div>{/* end main wrapper */}
+  // ── Main review + payment screen ──
+  return (
+    <>
+      {receiptPortal}
+      <div
+        className="h-[100dvh] flex flex-col overflow-hidden"
+        style={{ background: 'linear-gradient(180deg, #0d1525 0%, #060e1a 100%)' }}
+      >
+        {/* Header */}
+        <div
+          className="flex-shrink-0 flex items-center gap-3 px-4 py-2.5"
+          style={{
+            borderBottom: '1px solid rgba(255,255,255,0.07)',
+            background: 'rgba(13,21,37,0.9)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+          }}
+        >
+          <button
+            onClick={() => navigate(`/order/${tableId}`)}
+            className="w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90"
+            style={{
+              background: 'rgba(255,255,255,0.07)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              color: 'rgba(255,255,255,0.55)',
+            }}
+          >
+            <ChevronLeft size={17} />
+          </button>
+          <div>
+            <p className="font-black text-white text-sm leading-tight">Review Order</p>
+            <p className="text-[11px] leading-tight" style={{ color: 'rgba(255,255,255,0.38)' }}>
+              Table {table.number}
+            </p>
+          </div>
+        </div>
+
+        {/* Body — portrait: stacked column | landscape: 2-column side-by-side */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {isLandscapeMobile ? (
+            <div className="flex-1 flex flex-row overflow-hidden px-3 py-2 gap-3">
+
+              {/* Left: items list (scrollable) */}
+              <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                {itemsCard}
+              </div>
+
+              {/* Right: bill summary + payment (fixed width, scrolls if content tall) */}
+              <div
+                className="w-[300px] flex-shrink-0 flex flex-col overflow-y-auto gap-2 pb-2"
+                style={{ borderLeft: '1px solid rgba(255,255,255,0.06)', paddingLeft: '12px' }}
+              >
+                {/* DEBUG — remove once confirmed */}
+                <div
+                  className="flex-shrink-0 flex items-center justify-center py-1 rounded-lg text-[10px] font-black tracking-widest uppercase"
+                  style={{ background: '#7c3aed', color: '#fff' }}
+                >
+                  LANDSCAPE REVIEW MODE
+                </div>
+                {billCard}
+                {paymentCard}
+              </div>
+            </div>
+          ) : (
+            <div className="max-w-[460px] mx-auto w-full flex flex-col flex-1 min-h-0 px-4 pt-2.5 pb-2 gap-1.5">
+              {itemsCard}
+              <div className="flex-shrink-0 flex flex-col gap-1.5">
+                {billCard}
+                {paymentCard}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* QR Modal */}
       {showQRModal && selectedMethod && selectedMethod !== 'cash' && (
