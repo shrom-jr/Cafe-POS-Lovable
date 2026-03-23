@@ -123,14 +123,6 @@ const OrderScreen = () => {
 
   return (
     <div className="h-[100dvh] flex flex-col overflow-hidden" style={{ background: 'linear-gradient(180deg, #0d1525 0%, #060e1a 100%)' }}>
-      {/* DEBUG: landscape detection — remove once confirmed */}
-      <div
-        className="fixed bottom-20 left-3 z-[9999] text-[10px] font-bold px-2 py-1 rounded pointer-events-none"
-        style={{ background: isLandscapeMobile ? '#ef4444' : '#22c55e', color: '#fff', opacity: 0.9 }}
-      >
-        {isLandscapeMobile ? 'LANDSCAPE MODE' : 'NORMAL MODE'}
-      </div>
-
       <TopBar title={`Table ${table.number}`} showBack onBack={() => navigate('/')} />
 
       {/* Payment-in-progress info banner */}
@@ -320,47 +312,115 @@ const OrderScreen = () => {
         </div>
       )}
 
-      {/* ── Landscape mobile: full-screen cart ── */}
-      {showCart && isLandscapeMobile && (
+      {/* ── Landscape mobile: FULL SCREEN cart (completely separate from bottom sheet) ── */}
+      {isLandscapeMobile && showCart && (
         <div
-          className="fixed inset-0 z-50 flex flex-col animate-fade-in"
-          style={{ background: 'linear-gradient(180deg, #141e30 0%, #0c1522 100%)' }}
+          className="fixed inset-0 z-[100] flex flex-col"
+          style={{ background: '#0a1628' }}
         >
+          {/* DEBUG banner — remove once confirmed */}
+          <div
+            className="flex-shrink-0 flex items-center justify-center py-1 text-[11px] font-black tracking-widest uppercase"
+            style={{ background: '#7c3aed', color: '#fff', letterSpacing: '0.12em' }}
+          >
+            ✦ LANDSCAPE CART ACTIVE ✦
+          </div>
+
           {/* Header */}
           <div
-            className="flex items-center justify-between px-4 py-3 flex-shrink-0"
+            className="flex-shrink-0 flex items-center justify-between px-4 py-2"
             style={{
-              borderBottom: '1px solid rgba(255,255,255,0.09)',
-              background: 'rgba(255,255,255,0.02)',
+              borderBottom: '1px solid rgba(255,255,255,0.10)',
+              background: 'rgba(255,255,255,0.03)',
             }}
           >
-            <h3 className="font-bold text-foreground">
-              Cart{itemCount > 0 ? ` (${itemCount} item${itemCount !== 1 ? 's' : ''})` : ''}
+            <h3 className="font-bold text-white/90 text-sm">
+              Cart{itemCount > 0 ? ` · ${itemCount} item${itemCount !== 1 ? 's' : ''}` : ''}
             </h3>
             <button
               onClick={() => setShowCart(false)}
-              className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary transition-colors"
               data-testid="button-close-cart"
+              className="p-1.5 rounded-lg transition-colors"
+              style={{ color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.06)' }}
             >
-              <X size={18} />
+              <X size={16} />
             </button>
           </div>
 
-          {/* OrderPanel fills remaining space — items scroll, footer stays pinned */}
-          <div className="flex-1 min-h-0 flex flex-col">
-            <OrderPanel
-              order={order}
-              onUpdateQty={(menuItemId, delta) =>
-                order && updateItemQuantity(order.id, menuItemId, delta)
-              }
-              onRemove={(menuItemId) =>
-                order && removeItemFromOrder(order.id, menuItemId)
-              }
-              onPay={() => { setShowCart(false); handlePay(); }}
-              onClear={handleClear}
-              pax={table.pax ?? 1}
-              onPaxChange={handlePaxChange}
-            />
+          {/* Items — only this scrolls */}
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 space-y-2">
+            {(order?.items || []).length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full py-8" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                <ShoppingCart size={32} className="mb-2 opacity-30" />
+                <p className="text-sm font-semibold">No items yet</p>
+                <p className="text-xs opacity-60 mt-1">Tap items on the left to add</p>
+              </div>
+            ) : (
+              (order?.items || []).map((item) => (
+                <div
+                  key={item.menuItemId}
+                  className="flex items-center gap-2 rounded-xl px-3 py-2"
+                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.07)' }}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-white/90 truncate">{item.name}</p>
+                    <p className="text-xs text-white/40">Rs. {fmt(item.price)} each</p>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => order && updateItemQuantity(order.id, item.menuItemId, -1)}
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-white/50 active:scale-90"
+                      style={{ background: 'rgba(255,255,255,0.07)' }}
+                    >
+                      <span className="text-base leading-none">−</span>
+                    </button>
+                    <span className="w-6 text-center font-black text-sm text-white/85">{item.quantity}</span>
+                    <button
+                      onClick={() => order && updateItemQuantity(order.id, item.menuItemId, 1)}
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-white/50 active:scale-90"
+                      style={{ background: 'rgba(59,130,246,0.18)', border: '1px solid rgba(59,130,246,0.28)' }}
+                    >
+                      <span className="text-base leading-none">+</span>
+                    </button>
+                  </div>
+                  <p className="w-16 text-right text-sm font-bold text-white/80">Rs. {fmt(item.price * item.quantity)}</p>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Footer — always pinned, never scrolls */}
+          <div
+            className="flex-shrink-0 px-4 pt-3 pb-4"
+            style={{
+              borderTop: '1px solid rgba(255,255,255,0.08)',
+              background: '#0c1828',
+              boxShadow: '0 -6px 20px rgba(0,0,0,0.4)',
+            }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold uppercase tracking-wider text-white/35">Total</span>
+              <span className="text-2xl font-black text-white/95">
+                Rs. {fmt((order?.items || []).reduce((s, i) => s + i.price * i.quantity, 0))}
+              </span>
+            </div>
+            <button
+              onClick={() => { setShowCart(false); handlePay(); }}
+              disabled={!order || order.items.length === 0}
+              data-testid="button-proceed-to-bill"
+              className="w-full py-3 rounded-xl font-black text-base flex items-center justify-center gap-2 transition-all active:scale-[0.97] disabled:opacity-20 disabled:cursor-not-allowed"
+              style={{
+                background: order && order.items.length > 0
+                  ? 'linear-gradient(135deg, #1e50d0 0%, #4186f5 100%)'
+                  : 'rgba(59,130,246,0.12)',
+                color: order && order.items.length > 0 ? '#ffffff' : 'rgba(255,255,255,0.3)',
+                boxShadow: order && order.items.length > 0
+                  ? '0 4px 20px -4px rgba(59,130,246,0.55)'
+                  : 'none',
+              }}
+            >
+              {order && order.items.length > 0 ? 'Review Order →' : 'Add items to order'}
+            </button>
           </div>
         </div>
       )}

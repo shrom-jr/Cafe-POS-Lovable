@@ -128,7 +128,7 @@
    regardless of screen width. Uses !important to override
    Tailwind's width-based sm: breakpoint classes.
 ──────────────────────────────────────────────────────── */
-@media (max-height: 500px) {
+@media (max-height: 600px) {
   /* Force single-column stacking layout */
   .short\:col {
     flex-direction: column !important;

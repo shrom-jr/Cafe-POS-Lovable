@@ -1,0 +1,83 @@
+The cart UI is broken on mobile landscape.
+
+The problem is NOT detection — landscape mode is already correctly detected.
+
+The real issue is that the SAME bottom sheet UI is still being used in landscape, which does not work due to limited height.
+
+-----------------------------------
+GOAL
+-----------------------------------
+
+Completely change cart behavior in landscape mobile.
+
+-----------------------------------
+REQUIRED BEHAVIOR
+-----------------------------------
+
+PORTRAIT MOBILE:
+- Keep existing bottom sheet cart
+- No changes
+
+LANDSCAPE MOBILE:
+- DO NOT use bottom sheet at all
+- Completely replace it with a FULL SCREEN cart
+
+-----------------------------------
+IMPORTANT
+-----------------------------------
+
+This is NOT a styling fix.
+
+This is a RENDERING SWITCH.
+
+In landscape:
+- Bottom sheet must NOT exist in DOM
+- It must be fully replaced by a different layout
+
+-----------------------------------
+FULL SCREEN CART REQUIREMENTS
+-----------------------------------
+
+- Takes entire screen (edge-to-edge)
+- Clean app-like layout (like POS system)
+
+Structure:
+
+1. HEADER (fixed top)
+   - Cart title
+   - Close button
+
+2. ITEMS AREA (scrollable)
+   - Only this section scrolls
+   - Must not push footer
+
+3. FOOTER (fixed bottom)
+   - TOTAL
+   - Action button (Review / Checkout)
+   - Always visible
+
+-----------------------------------
+STRICT RULES
+-----------------------------------
+
+- Do NOT resize bottom sheet
+- Do NOT try to “fit” it
+- Do NOT allow overflow clipping
+- Do NOT reuse bottom sheet container
+
+-----------------------------------
+EXPECTED RESULT
+-----------------------------------
+
+Portrait → smooth bottom sheet ✅  
+Landscape → full screen cart (clean & usable) ✅  
+No hidden buttons, no broken layout
+
+-----------------------------------
+DEBUG REQUIREMENT
+-----------------------------------
+
+Temporarily show a visible label:
+"LANDSCAPE CART ACTIVE"
+
+This confirms the correct layout is being rendered.
