@@ -123,6 +123,33 @@
   .animate-pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }
 }
 
+/* ── HEIGHT-BASED RESPONSIVE OVERRIDES ───────────────────
+   Forces mobile layout on landscape phones (height < 500px)
+   regardless of screen width. Uses !important to override
+   Tailwind's width-based sm: breakpoint classes.
+──────────────────────────────────────────────────────── */
+@media (max-height: 500px) {
+  /* Force single-column stacking layout */
+  .short\:col {
+    flex-direction: column !important;
+  }
+
+  /* Hide the side cart panel */
+  .short\:hidden {
+    display: none !important;
+  }
+
+  /* Show elements that are hidden on wide screens via sm:hidden */
+  .short\:flex {
+    display: flex !important;
+  }
+
+  /* Remove the tall bottom padding used on desktop (replace with mobile FAB padding) */
+  .short\:pb-20 {
+    padding-bottom: 5rem !important;
+  }
+}
+
 /* ── PRINT STYLES ─────────────────────────────────────── */
 @media print {
   @page { margin: 0; size: auto; }

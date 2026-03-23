@@ -1,0 +1,85 @@
+The POS layout currently breaks on mobile landscape (short height screens).
+
+DO NOT rely only on screen width.
+You must also consider screen HEIGHT.
+
+-----------------------------------
+PROBLEM
+-----------------------------------
+
+On devices like 6.7" phones in landscape:
+- Width is large → triggers tablet layout (2 columns)
+- Height is small → cart panel becomes cramped
+- "Review Order" button gets cut off
+
+-----------------------------------
+GOAL
+-----------------------------------
+
+- Use tablet layout ONLY when there is enough height
+- Force mobile layout when height is small
+- Ensure cart panel always has usable vertical space
+
+-----------------------------------
+SOLUTION
+-----------------------------------
+
+Use HEIGHT-BASED responsive logic (not just width)
+
+-----------------------------------
+IMPLEMENTATION RULES
+-----------------------------------
+
+1. Detect viewport height using:
+   - window.innerHeight OR CSS dvh units
+
+2. Apply this condition:
+
+👉 IF height < 500px (or similar threshold)
+THEN:
+   - Switch to MOBILE layout
+   - Stack layout vertically
+   - Hide side cart panel
+   - Use bottom sheet / full screen cart instead
+
+-----------------------------------
+CSS APPROACH (PREFERRED)
+-----------------------------------
+
+Use media query based on height:
+
+@media (max-height: 500px) {
+  // Force mobile layout
+}
+
+-----------------------------------
+LAYOUT BEHAVIOR
+-----------------------------------
+
+NORMAL (Tablet/Desktop):
+- 2-column layout (menu + cart)
+
+SMALL HEIGHT (Landscape phones):
+- Single column layout
+- Cart opens as:
+  - bottom sheet OR
+  - full screen modal
+
+-----------------------------------
+STRICT RULES
+-----------------------------------
+
+- DO NOT force 2-column layout on small height
+- DO NOT shrink cart panel to fit
+- DO NOT allow button to be clipped
+
+-----------------------------------
+EXPECTED RESULT
+-----------------------------------
+
+- Portrait phone → perfect (already working)
+- Landscape phone → switches to mobile layout automatically
+- Tablet → keeps 2-column layout
+- No UI clipping anywhere
+
+This must feel natural and device-aware like a real POS system.

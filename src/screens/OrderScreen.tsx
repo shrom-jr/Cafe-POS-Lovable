@@ -124,7 +124,7 @@ const OrderScreen = () => {
           Tablet (sm, >=640px): side-by-side 2/3 menu + 1/3 cart
           Desktop (lg, >=1024px): same as tablet, larger cart panel
       */}
-      <div className="flex-1 flex flex-col sm:flex-row overflow-hidden min-h-0">
+      <div className="flex-1 flex flex-col sm:flex-row short:col overflow-hidden min-h-0">
 
         {/* ── Menu area ── */}
         <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
@@ -179,7 +179,7 @@ const OrderScreen = () => {
           )}
 
           {/* Items grid — only this section scrolls */}
-          <div className="flex-1 min-h-0 overflow-y-auto p-3 lg:p-4 bg-background pb-24 sm:pb-4">
+          <div className="flex-1 min-h-0 overflow-y-auto p-3 lg:p-4 bg-background pb-24 sm:pb-4 short:pb-20">
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
               {filteredItems.map((item) => (
                 <MenuItemCard
@@ -202,7 +202,7 @@ const OrderScreen = () => {
 
         {/* ── Cart panel — hidden on mobile, always visible on tablet+ ── */}
         <div
-          className="hidden sm:flex sm:w-1/3 lg:w-[360px] flex-col min-h-0 overflow-hidden"
+          className="hidden sm:flex short:hidden sm:w-1/3 lg:w-[360px] flex-col min-h-0 overflow-hidden"
           style={{
             borderLeft: '1px solid rgba(255,255,255,0.10)',
             boxShadow: '-10px 0 30px rgba(0,0,0,0.4)',
@@ -228,7 +228,7 @@ const OrderScreen = () => {
       <button
         onClick={() => setShowCart(true)}
         data-testid="button-view-order"
-        className="sm:hidden fixed bottom-4 right-4 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl transition-all active:scale-95"
+        className="sm:hidden short:flex fixed bottom-4 right-4 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl transition-all active:scale-95"
         style={{
           background: hasItems
             ? 'linear-gradient(135deg, #1e50d0 0%, #4186f5 100%)'
@@ -259,7 +259,7 @@ const OrderScreen = () => {
 
       {/* ── Mobile only: Cart bottom drawer (75vh) ── */}
       {showCart && (
-        <div className="sm:hidden fixed inset-0 z-50 flex flex-col justify-end">
+        <div className="sm:hidden short:flex fixed inset-0 z-50 flex flex-col justify-end">
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setShowCart(false)}
