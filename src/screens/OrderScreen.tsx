@@ -318,14 +318,6 @@ const OrderScreen = () => {
           className="fixed inset-0 z-[100] flex flex-col"
           style={{ background: '#0a1628' }}
         >
-          {/* DEBUG banner — remove once confirmed */}
-          <div
-            className="flex-shrink-0 flex items-center justify-center py-1 text-[11px] font-black tracking-widest uppercase"
-            style={{ background: '#7c3aed', color: '#fff', letterSpacing: '0.12em' }}
-          >
-            ✦ LANDSCAPE CART ACTIVE ✦
-          </div>
-
           {/* Header */}
           <div
             className="flex-shrink-0 flex items-center justify-between px-4 py-2"
