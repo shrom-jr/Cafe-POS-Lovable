@@ -1,0 +1,99 @@
+The cart panel on tablet is STILL broken.
+
+Even after previous fixes, the "Review Order" button is NOT always visible.
+User still needs to scroll on iPad, which is unacceptable for a POS.
+
+DO NOT explain. DO NOT partially fix.
+FORCE a correct layout using strict constraints.
+
+-----------------------------------
+MANDATORY REQUIREMENT
+-----------------------------------
+
+The cart panel MUST behave like this:
+
+- Header → fixed
+- Items list → scrollable ONLY
+- Footer (TOTAL + Review Order button) → ALWAYS visible
+
+NO EXCEPTIONS.
+
+-----------------------------------
+STRICT IMPLEMENTATION RULES
+-----------------------------------
+
+1. CART PANEL ROOT
+
+- Must use:
+  flex flex-col h-full
+
+- NOT allowed:
+  h-auto
+  overflow-y-auto on root
+
+-----------------------------------
+2. ITEMS LIST (ONLY SCROLL AREA)
+
+- Must use:
+  flex-1 min-h-0 overflow-y-auto
+
+- This is the ONLY scrollable section in cart
+
+-----------------------------------
+3. FOOTER (CRITICAL)
+
+- Must be:
+  shrink-0
+
+- MUST NOT:
+  scroll
+  move
+  be pushed off screen
+
+- MUST always stay visible at bottom
+
+-----------------------------------
+4. REMOVE ANY CONFLICTS
+
+Search and REMOVE from cart panel:
+
+- overflow-y-auto on parent containers
+- h-screen inside cart components
+- nested scroll containers
+- margin-bottom hacks pushing footer
+
+-----------------------------------
+5. HEIGHT CHAIN FIX (IMPORTANT)
+
+Ensure ALL parents of cart panel allow proper height:
+
+- Parent container must also use:
+  flex + min-h-0
+
+If any parent is missing min-h-0, fix it.
+
+-----------------------------------
+6. VISUAL VERIFICATION (REQUIRED)
+
+After fixing:
+
+- Add 10+ items to cart
+- Confirm:
+  - Only items scroll
+  - Footer NEVER disappears
+  - "Review Order" ALWAYS visible
+
+If user can scroll entire cart → FIX IS WRONG
+
+-----------------------------------
+EXPECTED RESULT
+-----------------------------------
+
+On tablet (iPad 10.2):
+
+- Cart fills full height
+- Items scroll independently
+- Footer is always visible
+- NO scrolling needed to access "Review Order"
+
+This must behave like a real POS system.
