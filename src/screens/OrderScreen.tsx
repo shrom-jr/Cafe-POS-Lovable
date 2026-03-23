@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fmt } from '@/utils/format';
 import { usePOSStore } from '@/store/usePOSStore';
@@ -33,6 +33,14 @@ const OrderScreen = () => {
   const [activeCat, setActiveCat] = useState(categories[0]?.id || '');
   const [search, setSearch] = useState('');
   const [showCart, setShowCart] = useState(false);
+
+  // Detect landscape mobile: height < 500px means short screen (landscape phone)
+  const [isShortScreen, setIsShortScreen] = useState(() => window.innerHeight < 500);
+  useEffect(() => {
+    const update = () => setIsShortScreen(window.innerHeight < 500);
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
 
   const order = useMemo(() => {
     if (!tableId || !table) return null;
@@ -257,9 +265,9 @@ const OrderScreen = () => {
         )}
       </button>
 
-      {/* ── Mobile only: Cart bottom drawer ── */}
-      {showCart && (
-        <div className="sm:hidden short:flex fixed inset-0 z-50 flex flex-col justify-end">
+      {/* ── Portrait mobile: bottom sheet cart ── */}
+      {showCart && !isShortScreen && (
+        <div className="sm:hidden fixed inset-0 z-50 flex flex-col justify-end">
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setShowCart(false)}
@@ -294,6 +302,51 @@ const OrderScreen = () => {
                 onPaxChange={handlePaxChange}
               />
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Landscape mobile: full-screen cart ── */}
+      {showCart && isShortScreen && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col animate-fade-in"
+          style={{ background: 'linear-gradient(180deg, #141e30 0%, #0c1522 100%)' }}
+        >
+          {/* Header */}
+          <div
+            className="flex items-center justify-between px-4 py-3 flex-shrink-0"
+            style={{
+              borderBottom: '1px solid rgba(255,255,255,0.09)',
+              background: 'rgba(255,255,255,0.02)',
+            }}
+          >
+            <h3 className="font-bold text-foreground">
+              Cart{itemCount > 0 ? ` (${itemCount} item${itemCount !== 1 ? 's' : ''})` : ''}
+            </h3>
+            <button
+              onClick={() => setShowCart(false)}
+              className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary transition-colors"
+              data-testid="button-close-cart"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          {/* OrderPanel fills remaining space — items scroll, footer stays pinned */}
+          <div className="flex-1 min-h-0 flex flex-col">
+            <OrderPanel
+              order={order}
+              onUpdateQty={(menuItemId, delta) =>
+                order && updateItemQuantity(order.id, menuItemId, delta)
+              }
+              onRemove={(menuItemId) =>
+                order && removeItemFromOrder(order.id, menuItemId)
+              }
+              onPay={() => { setShowCart(false); handlePay(); }}
+              onClear={handleClear}
+              pax={table.pax ?? 1}
+              onPaxChange={handlePaxChange}
+            />
           </div>
         </div>
       )}
