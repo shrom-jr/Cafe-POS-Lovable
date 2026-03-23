@@ -202,7 +202,7 @@ const OrderScreen = () => {
 
         {/* ── Cart panel — hidden on mobile, always visible on tablet+ ── */}
         <div
-          className="hidden sm:flex sm:w-1/3 lg:w-[360px] flex-shrink-0 flex-col"
+          className="hidden sm:flex sm:w-1/3 lg:w-[360px] flex-shrink-0 flex-col min-h-0"
           style={{
             borderLeft: '1px solid rgba(255,255,255,0.10)',
             boxShadow: '-10px 0 30px rgba(0,0,0,0.4)',
