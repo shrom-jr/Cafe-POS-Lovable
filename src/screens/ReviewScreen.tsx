@@ -226,76 +226,138 @@ const ReviewScreen = () => {
       setTimeout(() => setReprinting(false), 1800);
     };
 
+    /* ── Shared receipt card content ── */
+    const receiptCard = (compact = false) => (
+      <div
+        className={`w-full bg-card border border-border rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4)] ${compact ? 'p-3 space-y-1.5' : 'p-4 space-y-2'}`}
+      >
+        <div className={`text-center border-b border-dashed border-border/60 ${compact ? 'pb-1' : 'pb-1'}`}>
+          <p className={`font-black text-foreground ${compact ? 'text-xs' : 'text-sm'}`}>{settings.cafeName}</p>
+          <p className="text-xs text-muted-foreground font-mono">#{billNum} · Table {tableNumber}</p>
+        </div>
+        <div className={compact ? 'space-y-0.5' : 'space-y-1'}>
+          {displayItems.map((item) => (
+            <div key={item.menuItemId} className={`flex justify-between ${compact ? 'text-xs' : 'text-sm'}`}>
+              <span className="text-muted-foreground truncate pr-2">
+                {item.name} <span className="text-foreground font-semibold">×{item.quantity}</span>
+              </span>
+              <span className="font-semibold text-foreground whitespace-nowrap">Rs. {fmt(item.price * item.quantity)}</span>
+            </div>
+          ))}
+          {extraCount > 0 && (
+            <p className="text-xs text-muted-foreground">+{extraCount} more item{extraCount > 1 ? 's' : ''}</p>
+          )}
+        </div>
+        <div className="flex justify-between items-center border-t border-dashed border-border/60 pt-1.5">
+          <span className={`font-semibold text-muted-foreground ${compact ? 'text-xs' : 'text-sm'}`}>Total</span>
+          <span className={`font-black text-foreground ${compact ? 'text-base' : 'text-lg'}`}>Rs. {fmt(bill.total)}</span>
+        </div>
+      </div>
+    );
+
     return (
       <>
         {receiptPortal}
-        <div className="h-[100dvh] bg-background flex flex-col overflow-hidden">
-          <div className="flex-1 flex flex-col items-center justify-center p-5 gap-4 overflow-hidden">
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-16 h-16 rounded-full bg-success/15 flex items-center justify-center shadow-[0_0_32px_-4px_hsl(var(--success)/0.4)]">
-                <CheckCircle2 size={36} className="text-success" />
-              </div>
-              <h2 className="text-xl font-black text-foreground">Payment Successful</h2>
-              <div className="flex items-center gap-2">
-                <span className="text-3xl font-black text-foreground">Rs. {fmt(bill.total)}</span>
-                <span className="px-2.5 py-0.5 rounded-full bg-success/15 text-success text-xs font-bold uppercase">
-                  {paidMethod}
-                </span>
-              </div>
-              {bill.discountAmount > 0 && (
-                <span className="text-xs text-success font-medium">Saved Rs. {fmt(bill.discountAmount)}</span>
-              )}
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Printer size={12} />
-                <span>Printing receipt...</span>
-              </div>
-            </div>
+        <div className="h-[100dvh] bg-background overflow-hidden">
 
-            <div className="w-full max-w-sm bg-card border border-border rounded-2xl p-4 space-y-2 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4)]">
-              <div className="text-center pb-1 border-b border-dashed border-border/60">
-                <p className="font-black text-sm text-foreground">{settings.cafeName}</p>
-                <p className="text-xs text-muted-foreground font-mono">
-                  #{billNum} · Table {tableNumber}
-                </p>
-              </div>
-              <div className="space-y-1">
-                {displayItems.map((item) => (
-                  <div key={item.menuItemId} className="flex justify-between text-sm">
-                    <span className="text-muted-foreground truncate pr-2">
-                      {item.name} <span className="text-foreground font-semibold">×{item.quantity}</span>
-                    </span>
-                    <span className="font-semibold text-foreground whitespace-nowrap">
-                      Rs. {fmt(item.price * item.quantity)}
-                    </span>
-                  </div>
-                ))}
-                {extraCount > 0 && (
-                  <p className="text-xs text-muted-foreground">+{extraCount} more item{extraCount > 1 ? 's' : ''}</p>
+          {isLandscapeMobile ? (
+            /* ── LANDSCAPE: 2-column layout ── */
+            <div className="h-full flex flex-row">
+
+              {/* Left (40%): success icon + amount + badge */}
+              <div
+                className="flex flex-col items-center justify-center gap-2 px-5"
+                style={{ width: '40%', borderRight: '1px solid rgba(255,255,255,0.07)' }}
+              >
+                <div className="w-14 h-14 rounded-full bg-success/15 flex items-center justify-center shadow-[0_0_32px_-4px_hsl(var(--success)/0.4)]">
+                  <CheckCircle2 size={30} className="text-success" />
+                </div>
+                <h2 className="text-base font-black text-foreground text-center leading-tight">Payment Successful</h2>
+                <div className="flex items-center gap-2 flex-wrap justify-center">
+                  <span className="text-2xl font-black text-foreground tabular-nums">Rs. {fmt(bill.total)}</span>
+                  <span className="px-2 py-0.5 rounded-full bg-success/15 text-success text-xs font-bold uppercase">
+                    {paidMethod}
+                  </span>
+                </div>
+                {bill.discountAmount > 0 && (
+                  <span className="text-xs text-success font-medium">Saved Rs. {fmt(bill.discountAmount)}</span>
                 )}
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Printer size={11} />
+                  <span>Printing receipt...</span>
+                </div>
               </div>
-              <div className="flex justify-between items-center border-t border-dashed border-border/60 pt-2">
-                <span className="text-sm font-semibold text-muted-foreground">Total</span>
-                <span className="text-lg font-black text-foreground">Rs. {fmt(bill.total)}</span>
+
+              {/* Right (60%): receipt + buttons */}
+              <div
+                className="flex flex-col justify-between p-4 gap-2"
+                style={{ width: '60%' }}
+              >
+                {receiptCard(true)}
+                <div className="flex flex-col gap-1.5">
+                  <button
+                    onClick={handleReprint}
+                    disabled={reprinting}
+                    className="w-full py-2.5 rounded-2xl border border-border bg-secondary text-foreground font-bold text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.97] hover:bg-secondary/80 disabled:opacity-60"
+                  >
+                    <Printer size={14} />
+                    {reprinting ? 'Reprinting...' : 'Reprint Receipt'}
+                  </button>
+                  <button
+                    onClick={() => navigate('/', { replace: true })}
+                    className="w-full py-3 rounded-2xl bg-success text-white font-black text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.97] hover:brightness-110 shadow-[0_4px_16px_-4px_hsl(var(--success)/0.4)]"
+                  >
+                    <Home size={16} /> Back to Tables
+                  </button>
+                </div>
               </div>
+
             </div>
 
-            <div className="w-full max-w-sm space-y-2.5">
-              <button
-                onClick={handleReprint}
-                disabled={reprinting}
-                className="w-full py-3.5 rounded-2xl border border-border bg-secondary text-foreground font-bold text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.97] hover:bg-secondary/80 disabled:opacity-60"
-              >
-                <Printer size={15} />
-                {reprinting ? 'Reprinting...' : 'Reprint Receipt'}
-              </button>
-              <button
-                onClick={() => navigate('/', { replace: true })}
-                className="w-full py-4 rounded-2xl bg-success text-white font-black text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.97] hover:brightness-110 shadow-[0_4px_16px_-4px_hsl(var(--success)/0.4)]"
-              >
-                <Home size={18} /> Back to Tables
-              </button>
+          ) : (
+            /* ── PORTRAIT: original stacked layout ── */
+            <div className="flex-1 h-full flex flex-col items-center justify-center p-5 gap-4 overflow-hidden">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-16 h-16 rounded-full bg-success/15 flex items-center justify-center shadow-[0_0_32px_-4px_hsl(var(--success)/0.4)]">
+                  <CheckCircle2 size={36} className="text-success" />
+                </div>
+                <h2 className="text-xl font-black text-foreground">Payment Successful</h2>
+                <div className="flex items-center gap-2">
+                  <span className="text-3xl font-black text-foreground">Rs. {fmt(bill.total)}</span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-success/15 text-success text-xs font-bold uppercase">
+                    {paidMethod}
+                  </span>
+                </div>
+                {bill.discountAmount > 0 && (
+                  <span className="text-xs text-success font-medium">Saved Rs. {fmt(bill.discountAmount)}</span>
+                )}
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Printer size={12} />
+                  <span>Printing receipt...</span>
+                </div>
+              </div>
+
+              {receiptCard()}
+
+              <div className="w-full max-w-sm space-y-2.5">
+                <button
+                  onClick={handleReprint}
+                  disabled={reprinting}
+                  className="w-full py-3.5 rounded-2xl border border-border bg-secondary text-foreground font-bold text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.97] hover:bg-secondary/80 disabled:opacity-60"
+                >
+                  <Printer size={15} />
+                  {reprinting ? 'Reprinting...' : 'Reprint Receipt'}
+                </button>
+                <button
+                  onClick={() => navigate('/', { replace: true })}
+                  className="w-full py-4 rounded-2xl bg-success text-white font-black text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.97] hover:brightness-110 shadow-[0_4px_16px_-4px_hsl(var(--success)/0.4)]"
+                >
+                  <Home size={18} /> Back to Tables
+                </button>
+              </div>
             </div>
-          </div>
+          )}
+
         </div>
       </>
     );

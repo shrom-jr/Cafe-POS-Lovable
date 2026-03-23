@@ -1,0 +1,83 @@
+We are working on the PAYMENT SUCCESS / CONFIRMATION SCREEN
+
+-----------------------------------
+CURRENT PROBLEM
+-----------------------------------
+
+In landscape mode on mobile:
+
+- Only the receipt card is visible
+- Success icon and "Payment Successful" text are cut off
+- Action buttons (Reprint, Back to Tables) are hidden
+- Layout is still vertical (portrait-style)
+- Content overflows vertically and becomes unusable
+
+-----------------------------------
+GOAL
+-----------------------------------
+
+Create a proper LANDSCAPE layout for the success screen
+so ALL important elements are visible without scrolling.
+
+-----------------------------------
+LANDSCAPE LAYOUT (IMPORTANT)
+-----------------------------------
+
+Replace vertical stacking with a TWO-COLUMN layout:
+
+LEFT SIDE (40% width):
+- Success icon (centered, slightly large)
+- "Payment Successful" text
+- Amount (Rs. XXXX)
+- Wallet badge (e.g. ESEWA)
+
+This section should be vertically centered.
+
+RIGHT SIDE (60% width):
+- Receipt card (compact version)
+- Reprint Receipt button
+- Back to Tables button (primary action)
+
+Use flex column with justify-between so:
+- Receipt stays at top
+- Buttons stay at bottom
+
+-----------------------------------
+BEHAVIOR RULES
+-----------------------------------
+
+- NO vertical scrolling in landscape
+- Everything must fit inside viewport height
+- Buttons must ALWAYS be visible
+- No content should be cropped or hidden
+
+-----------------------------------
+PORTRAIT MODE
+-----------------------------------
+
+- Keep existing layout EXACTLY as-is
+- Do NOT change portrait design
+
+-----------------------------------
+UI DETAILS
+-----------------------------------
+
+- Maintain dark theme and spacing consistency
+- Keep hierarchy:
+    Success → Amount → Receipt → Actions
+- Buttons should remain large and clickable
+- Add comfortable spacing between sections
+
+-----------------------------------
+EXPECTED RESULT
+-----------------------------------
+
+Portrait:
+✅ No change (already perfect)
+
+Landscape:
+✅ Left side shows success + amount
+✅ Right side shows receipt + buttons
+✅ No hidden content
+✅ No scrolling
+✅ Clean, balanced layout
