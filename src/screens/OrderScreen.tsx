@@ -194,13 +194,17 @@ const OrderScreen = () => {
 
           {/* Items grid — only this section scrolls */}
           <div className="flex-1 min-h-0 overflow-y-auto p-3 lg:p-4 bg-background pb-24 sm:pb-4 short:pb-20">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
+            <div className={isLandscapeMobile
+              ? 'grid grid-cols-4 gap-1.5'
+              : 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4'
+            }>
               {filteredItems.map((item) => (
                 <MenuItemCard
                   key={item.id}
                   item={item}
                   quantityInOrder={orderQtyMap[item.id] || 0}
                   onAdd={() => handleAddItem(item)}
+                  compact={isLandscapeMobile}
                 />
               ))}
             </div>
