@@ -15,84 +15,84 @@ A professional Café Point of Sale (POS) system built with React, TypeScript, Vi
 ```
 src/
   store/
-    usePOSStore.ts        ← Zustand global store (all state + actions)
+    usePOSStore.ts            ← Zustand global store (all state + actions)
   hooks/
-    useOrders.ts          ← Order store selectors/actions (incl. clearOrder, addPayment)
-    useTables.ts          ← Table store selectors/actions
-    use-mobile.tsx        ← Mobile detection hook
-    use-toast.ts          ← Toast notification hook
+    useOrders.ts              ← Order store selectors/actions
+    useTables.ts              ← Table store selectors/actions
+    use-mobile.tsx            ← Mobile detection hook
+    use-toast.ts              ← Toast notification hook
   components/
-    ui/                   ← shadcn/ui + Navigation, TopBar
-    tables/               ← TableCard (timer, item count, running total)
-    orders/               ← MenuItemCard (qty badge, flash anim), OrderPanel (Clear + Repeat)
-    payment/              ← QRDisplay component
-    ReceiptPreview.tsx    ← Polished receipt card (used in BillHistory + AdminPanel)
+    ui/                       ← shadcn/ui + Navigation, TopBar
+    tables/                   ← TableCard (timer, item count, running total)
+    orders/                   ← MenuItemCard, OrderPanel
+    payment/                  ← QRDisplay component
+    ThermalReceiptLayout.tsx  ← ONE unified thermal receipt (used by all print portals)
+    ReceiptPreview.tsx        ← Admin bill preview (renders ThermalReceiptLayout in a card)
   screens/
-    TableOverview.tsx     ← / (all tables → /order/:tableId)
-    OrderScreen.tsx       ← /order/:tableId (calculates bill, navigates directly to payment)
-    PaymentScreen.tsx     ← /payment/:tableId (reads all financials from nav state)
-    BillHistory.tsx       ← /history
-    AdminPanel.tsx        ← /admin (PIN-protected)
+    TableOverview.tsx         ← / (all tables)
+    OrderScreen.tsx           ← /order/:tableId
+    ReviewScreen.tsx          ← /review/:tableId (discount, QR confirm, pay)
+    PaymentScreen.tsx         ← /payment/:tableId (reads financials from nav state)
+    BillHistory.tsx           ← /history
+    AdminPanel.tsx            ← /admin (PIN-protected)
   types/
-    pos.ts                ← All TypeScript types (Payment includes vatAmount/vatRate/vatMode/vatEnabled)
+    pos.ts                    ← All TypeScript types
   storage/
-    db.ts                 ← localStorage helpers + seed data
+    db.ts                     ← localStorage helpers + seed data
   utils/
-    sounds.ts             ← Web Audio API: playClick, playSuccess, playError
-    printer.ts            ← Bluetooth thermal printer utility
-    calcBill.ts           ← Shared bill calculation (subtotal, discount, VAT, total)
-    format.ts             ← fmt(n) helper: toLocaleString('en-IN') for Indian comma formatting
+    sounds.ts                 ← Web Audio API: playClick, playSuccess, playError
+    printer.ts                ← numberToWords() helper only (no Bluetooth)
+    print.ts                  ← triggerPrint() — single browser print trigger used everywhere
+    calcBill.ts               ← Shared bill calculation (subtotal, discount, VAT, total)
+    format.ts                 ← fmt(n) + resolvePaymentLabel()
+```
+
+## Print System (Unified)
+- **ONE template**: `ThermalReceiptLayout.tsx` — monospace, 80mm thermal receipt format
+- **ONE trigger**: `triggerPrint('receipt')` from `src/utils/print.ts`
+- **ONE print CSS rule**: `#print-receipt` in `index.css` (no invoice CSS)
+- Used as `createPortal` in: PaymentScreen, ReviewScreen, BillHistory
+- Used as inline preview in: ReceiptPreview (AdminPanel Company Profile tab)
+- **No Bluetooth** — browser print dialog only
+
+## Receipt Layout (Thermal Format)
+```
+[Centered] Cafe Name / Address / PAN
+------
+TAX INVOICE
+------
+Payment Mode | Bill No | Date | Table
+SN  Particulars  Qty  Rate  Amt
+------
+Basic Amount / Discount / Taxable Amount / VAT (if enabled) / Total
+------
+In word: Rs. XXXX only
+Cashier / Time
+------
+[Centered] Footer
 ```
 
 ## Payment Flow
-**Order Screen → Payment Screen** (BillingScreen removed)
 1. Cashier adds items in OrderScreen
 2. Taps Pay → `calcBill()` computes subtotal, discountAmount, vatAmount, total
-3. Navigates to `/payment/:tableId` with full financial state in `location.state`
-4. PaymentScreen reads all values from nav state (no recalculation)
-5. On confirm: saves Payment record, resets table, shows success
+3. Navigates to `/review/:tableId` (discount controls + QR payment) or `/payment/:tableId` (cash)
+4. On confirm: saves Payment record, resets table, shows success screen
+5. Auto-triggers `triggerPrint('receipt')` — receipt prints via browser dialog
 
 ## VAT System
 - `vatEnabled` (bool), `vatRate` (default 0.13 = 13%), `vatMode` ('excluded'|'included')
-- Stored in `Settings` type; defaults always merged in `db.getSettings()`
+- Stored in `Settings`; defaults merged in `db.getSettings()`
 - `calcBill()` in `src/utils/calcBill.ts` is the single source of truth
-- All Payment records store `vatAmount`, `vatRate`, `vatMode`, `vatEnabled` (optional for old records)
+- All Payment records store `vatAmount`, `vatRate`, `vatMode`, `vatEnabled`
 
-## Features
-
-### Tables
-- Table number, status badge (Available/Active) with green/yellow colors
-- Live timer since order start, item count, running total
-- All table clicks navigate to Order Screen
-
-### Order Screen
-- Instant item add with click sound + flash animation
-- Qty badge on MenuItemCards
-- "Clear Order" button — clears all items, resets table
-- "Repeat Last Order" button — re-adds items from last payment for this table
-- Pay button → calculates bill using shared utility → navigates directly to Payment
-
-### Payment Screen
-- Cash / eSewa / Khalti / Fonepay / custom wallet support
-- QR code display for digital wallets
-- VAT display (if enabled in settings)
-- Discount display (from nav state)
-- Bluetooth thermal printer support
-
-### Bill History
-- Expandable receipt view per payment (ReceiptPreview component)
-- VAT shown on historical records that have vatEnabled
-- Reprint receipt button if printer connected
-- Filter by today/all + search + method filter
-
-### Admin Panel
-- PIN-protected settings
-- Menu item and category management
-- Bill design preview (ReceiptPreview with sample data)
-- Wallet logo + QR image upload per wallet (eSewa, Khalti, Fonepay) — logos shown in payment buttons
-- Data export/import (JSON backup)
-- Sales chart
-- Number formatting via fmt() across all monetary displays
+## Admin Panel Tabs
+- **Dashboard** — sales charts
+- **Menu** — categories + menu items
+- **Tables** — table management
+- **Payments** — wallet config (eSewa, Khalti, Fonepay, custom)
+- **Company Profile** — café name, address, PAN, footer, bill counter, VAT toggle, logo, bill preview
+- **Reports** — revenue reports, CSV export
+- **Backup** — JSON export/import
 
 ## Running the App
 Port 5000 via `npm run dev`. Server: `host: "0.0.0.0"`, `allowedHosts: true`.

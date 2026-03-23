@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { usePOSStore } from '@/store/usePOSStore';
 import { fmt, resolvePaymentLabel } from '@/utils/format';
 import AppLayout from '@/components/ui/AppLayout';
-import ReceiptPreview from '@/components/ReceiptPreview';
+import ThermalReceiptLayout from '@/components/ThermalReceiptLayout';
 import { Search, Printer, Receipt, X, Calendar } from 'lucide-react';
 import { format, isToday, isYesterday, isSameDay } from 'date-fns';
 import { triggerPrint } from '@/utils/print';
@@ -253,7 +253,7 @@ const BillHistory = () => {
         </div>
       )}
 
-      {/* Print portal — same receipt template as checkout */}
+      {/* Print portal — unified thermal receipt */}
       {selectedBill && createPortal(
         <div
           id="print-receipt"
@@ -268,76 +268,27 @@ const BillHistory = () => {
             width: '80mm',
           }}
         >
-          <div style={{ textAlign: 'center', marginBottom: 6 }}>
-            <div style={{ fontSize: 15, fontWeight: 900 }}>{selectedBill.cafeName || settings.cafeName}</div>
-            {settings.cafeAddress && <div style={{ fontSize: 11 }}>{settings.cafeAddress}</div>}
-            {settings.cafePhone && <div style={{ fontSize: 11 }}>{settings.cafePhone}</div>}
-          </div>
-
-          <div style={{ borderTop: '1px dashed #000', margin: '5px 0' }} />
-
-          <div style={{ fontSize: 11, marginBottom: 5 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Bill #{selectedBill.billNumber}</span>
-              <span>Table {selectedBill.tableNumber}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>{format(selectedBill.createdAt, 'dd MMM yyyy')}</span>
-              <span>{format(selectedBill.createdAt, 'HH:mm')}</span>
-            </div>
-          </div>
-
-          <div style={{ borderTop: '1px dashed #000', margin: '5px 0' }} />
-
-          {selectedBill.items.map((item) => (
-            <div key={item.menuItemId} style={{ marginBottom: 2 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                <span style={{ flex: 1, paddingRight: 4 }}>{item.name}</span>
-                <span style={{ whiteSpace: 'nowrap' }}>Rs. {item.price * item.quantity}</span>
-              </div>
-              <div style={{ fontSize: 11, color: '#333' }}>
-                {item.quantity} × Rs. {item.price}
-              </div>
-            </div>
-          ))}
-
-          <div style={{ borderTop: '1px dashed #000', margin: '5px 0' }} />
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 2 }}>
-            <span>Subtotal</span><span>Rs. {selectedBill.subtotal}</span>
-          </div>
-          {(() => {
-            const discountAmount =
+          <ThermalReceiptLayout
+            cafeName={selectedBill.cafeName || settings.cafeName}
+            cafeAddress={settings.cafeAddress}
+            cafePan={settings.cafePan}
+            billFooter={settings.billFooter}
+            tableNumber={selectedBill.tableNumber}
+            billNumber={selectedBill.billNumber}
+            createdAt={selectedBill.createdAt}
+            items={selectedBill.items}
+            subtotal={selectedBill.subtotal}
+            discountAmount={
               selectedBill.discountType === 'percent'
                 ? Math.round((selectedBill.subtotal * selectedBill.discount) / 100)
-                : selectedBill.discount ?? 0;
-            return discountAmount > 0 ? (
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 2 }}>
-                <span>Discount</span><span>-Rs. {discountAmount}</span>
-              </div>
-            ) : null;
-          })()}
-          {(selectedBill.vatEnabled ?? false) && (selectedBill.vatAmount ?? 0) > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 2 }}>
-              <span>VAT ({Math.round((selectedBill.vatRate ?? 0.13) * 100)}%)</span>
-              <span>Rs. {selectedBill.vatAmount}</span>
-            </div>
-          )}
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 900, marginTop: 4 }}>
-            <span>TOTAL</span><span>Rs. {selectedBill.total}</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginTop: 2 }}>
-            <span>Payment</span>
-            <span style={{ textTransform: 'uppercase', fontWeight: 700 }}>
-              {resolvePaymentLabel(selectedBill.method, settings)}
-            </span>
-          </div>
-
-          <div style={{ borderTop: '1px dashed #000', margin: '5px 0' }} />
-
-          <div style={{ textAlign: 'center', fontSize: 11 }}>
-            {settings.billFooter || 'Thank you for visiting!'}
-          </div>
+                : selectedBill.discount ?? 0
+            }
+            vatEnabled={selectedBill.vatEnabled ?? false}
+            vatAmount={selectedBill.vatAmount ?? 0}
+            vatRate={selectedBill.vatRate ?? 0.13}
+            total={selectedBill.total}
+            method={resolvePaymentLabel(selectedBill.method, settings)}
+          />
         </div>,
         document.body
       )}
