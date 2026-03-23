@@ -271,6 +271,7 @@ const BillHistory = () => {
         >
           <ThermalReceiptLayout
             cafeName={selectedBill.cafeName || settings.cafeName}
+            cafeLogo={settings.cafeLogo}
             cafeAddress={settings.cafeAddress}
             cafePan={settings.cafePan}
             billFooter={settings.billFooter}

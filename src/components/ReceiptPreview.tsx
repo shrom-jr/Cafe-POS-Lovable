@@ -24,6 +24,7 @@ interface ReceiptPreviewProps {
 
 const ReceiptPreview = ({
   cafeName,
+  cafeLogo,
   cafeAddress,
   cafePan,
   billFooter,
@@ -60,6 +61,7 @@ const ReceiptPreview = ({
     >
       <ThermalReceiptLayout
         cafeName={cafeName}
+        cafeLogo={cafeLogo}
         cafeAddress={cafeAddress}
         cafePan={cafePan}
         billFooter={billFooter}

@@ -3,6 +3,7 @@ import { numberToWords } from '@/utils/printer';
 
 interface ThermalReceiptLayoutProps {
   cafeName: string;
+  cafeLogo?: string;
   cafeAddress?: string;
   cafePan?: string;
   billFooter?: string;
@@ -32,6 +33,7 @@ const Row = ({ label, value }: { label: string; value: string }) => (
 
 const ThermalReceiptLayout = ({
   cafeName,
+  cafeLogo,
   cafeAddress,
   cafePan,
   billFooter,
@@ -54,6 +56,20 @@ const ThermalReceiptLayout = ({
   return (
     <>
       <div style={{ textAlign: 'center', marginBottom: 6 }}>
+        {cafeLogo && (
+          <img
+            src={cafeLogo}
+            alt="Logo"
+            style={{
+              display: 'block',
+              margin: '0 auto 4px',
+              maxWidth: 80,
+              maxHeight: 80,
+              objectFit: 'contain',
+            }}
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
+        )}
         <div style={{ fontSize: 15, fontWeight: 900 }}>{cafeName}</div>
         {cafeAddress && <div style={{ fontSize: 11 }}>{cafeAddress}</div>}
         {cafePan && <div style={{ fontSize: 11 }}>PAN: {cafePan}</div>}
@@ -130,7 +146,7 @@ const ThermalReceiptLayout = ({
           <Row label="Discount :" value={`-Rs. ${discountAmount.toFixed(2)}`} />
         )}
         <Row label="Taxable Amount :" value={`Rs. ${taxableAmount.toFixed(2)}`} />
-        {vatEnabled && vatAmount > 0 && (
+        {(vatEnabled ?? false) && vatAmount > 0 && (
           <Row label={`VAT (${Math.round(vatRate * 100)}%) :`} value={`Rs. ${vatAmount.toFixed(2)}`} />
         )}
         <div

@@ -770,6 +770,7 @@ const BillDesignSection = () => {
   const [cafeAddress, setCafeAddress] = useState(settings.cafeAddress || '');
   const [cafePhone, setCafePhone] = useState(settings.cafePhone || '');
   const [cafePan, setCafePan] = useState(settings.cafePan || '');
+  const [vatEnabled, setVatEnabled] = useState(settings.vatEnabled ?? true);
   const [billFooter, setBillFooter] = useState(settings.billFooter || 'Thank you for visiting!');
   const [billCounter, setBillCounter] = useState(String(settings.billCounter));
 
@@ -787,11 +788,15 @@ const BillDesignSection = () => {
       cafeAddress: cafeAddress || undefined,
       cafePhone: cafePhone || undefined,
       cafePan: cafePan || undefined,
+      vatEnabled,
       billFooter: billFooter || undefined,
       billCounter: Number(billCounter) || settings.billCounter,
     });
   };
 
+  const sampleSubtotal = 680;
+  const sampleVatAmount = vatEnabled ? Math.round(sampleSubtotal * settings.vatRate) : 0;
+  const sampleTotal = vatEnabled ? sampleSubtotal + sampleVatAmount : sampleSubtotal;
   const sampleItems = [
     { menuItemId: '1', name: 'Cappuccino', price: 250, quantity: 2 },
     { menuItemId: '2', name: 'Croissant', price: 180, quantity: 1 },
@@ -799,33 +804,10 @@ const BillDesignSection = () => {
 
   return (
     <div className="space-y-4">
-      <div className="bg-card rounded-xl border border-border p-4 space-y-3">
-        <h3 className="font-bold text-foreground">Café Logo</h3>
-        <div className="flex items-center gap-4">
-          {settings.cafeLogo ? (
-            <div className="relative w-20 h-20">
-              <img src={settings.cafeLogo} alt="Logo" className="w-full h-full object-contain rounded-lg border border-border" />
-              <button
-                onClick={() => updateSettings({ cafeLogo: undefined })}
-                className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
-              >
-                <X size={12} />
-              </button>
-            </div>
-          ) : (
-            <div className="w-20 h-20 rounded-lg border-2 border-dashed border-border flex items-center justify-center text-muted-foreground">
-              <ImagePlus size={24} />
-            </div>
-          )}
-          <label className="flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-secondary-foreground text-sm font-medium cursor-pointer hover:bg-accent/20 transition-colors">
-            <Upload size={14} /> {settings.cafeLogo ? 'Replace' : 'Upload'} Logo
-            <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
-          </label>
-        </div>
-      </div>
 
+      {/* ── Business Info ── */}
       <div className="bg-card rounded-xl border border-border p-4 space-y-3">
-        <h3 className="font-bold text-foreground">Company Information</h3>
+        <h3 className="font-bold text-foreground">Business Info</h3>
         <div className="space-y-2">
           <div>
             <label className="text-xs text-muted-foreground">Café Name</label>
@@ -839,12 +821,40 @@ const BillDesignSection = () => {
             <label className="text-xs text-muted-foreground">Phone</label>
             <input value={cafePhone} onChange={(e) => setCafePhone(e.target.value)} placeholder="e.g. 01-XXXXXXX" className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
           </div>
+        </div>
+      </div>
+
+      {/* ── Tax Settings ── */}
+      <div className="bg-card rounded-xl border border-border p-4 space-y-3">
+        <h3 className="font-bold text-foreground">Tax Settings</h3>
+        <div className="space-y-2">
           <div>
-            <label className="text-xs text-muted-foreground">PAN Number <span className="text-muted-foreground/50">(for Tax Invoice)</span></label>
+            <label className="text-xs text-muted-foreground">PAN / VAT Number</label>
             <input value={cafePan} onChange={(e) => setCafePan(e.target.value)} placeholder="e.g. 123456789" className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
           </div>
+          <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-secondary border border-border">
+            <div>
+              <p className="text-sm font-medium text-foreground">Enable VAT (13%)</p>
+              <p className="text-xs text-muted-foreground">Applies 13% VAT to all orders</p>
+            </div>
+            <button
+              onClick={() => setVatEnabled((v) => !v)}
+              className="flex-shrink-0 transition-all active:scale-95"
+            >
+              {vatEnabled
+                ? <ToggleRight size={36} className="text-accent" />
+                : <ToggleLeft size={36} className="text-muted-foreground" />}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Receipt Settings ── */}
+      <div className="bg-card rounded-xl border border-border p-4 space-y-3">
+        <h3 className="font-bold text-foreground">Receipt Settings</h3>
+        <div className="space-y-2">
           <div>
-            <label className="text-xs text-muted-foreground">Bill Footer Message</label>
+            <label className="text-xs text-muted-foreground">Footer Message</label>
             <input value={billFooter} onChange={(e) => setBillFooter(e.target.value)} placeholder="Thank you for visiting!" className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
           </div>
           <div>
@@ -852,12 +862,38 @@ const BillDesignSection = () => {
             <input value={billCounter} onChange={(e) => setBillCounter(e.target.value)} type="number" className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-accent" />
             <p className="text-xs text-muted-foreground mt-1">Next bill will be #{Number(billCounter) + 1}</p>
           </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Logo</label>
+            <div className="flex items-center gap-4 mt-1">
+              {settings.cafeLogo ? (
+                <div className="relative w-20 h-20">
+                  <img src={settings.cafeLogo} alt="Logo" className="w-full h-full object-contain rounded-lg border border-border bg-white" />
+                  <button
+                    onClick={() => updateSettings({ cafeLogo: undefined })}
+                    className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ) : (
+                <div className="w-20 h-20 rounded-lg border-2 border-dashed border-border flex items-center justify-center text-muted-foreground">
+                  <ImagePlus size={24} />
+                </div>
+              )}
+              <label className="flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-secondary-foreground text-sm font-medium cursor-pointer hover:bg-accent/20 transition-colors">
+                <Upload size={14} /> {settings.cafeLogo ? 'Replace' : 'Upload'} Logo
+                <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+              </label>
+            </div>
+          </div>
         </div>
-        <button onClick={saveAll} data-testid="button-save-bill-design" className="w-full py-3 rounded-xl bg-accent text-accent-foreground font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
-          <Save size={16} /> Save Changes
-        </button>
       </div>
 
+      <button onClick={saveAll} data-testid="button-save-bill-design" className="w-full py-3 rounded-xl bg-accent text-accent-foreground font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
+        <Save size={16} /> Save Changes
+      </button>
+
+      {/* ── Bill Preview ── */}
       <div className="bg-card rounded-xl border border-border p-4 space-y-3">
         <h3 className="font-bold text-foreground">Bill Preview</h3>
         <ReceiptPreview
@@ -869,13 +905,13 @@ const BillDesignSection = () => {
           billFooter={billFooter}
           tableNumber={1}
           items={sampleItems}
-          subtotal={680}
+          subtotal={sampleSubtotal}
           discount={0}
           discountType="fixed"
-          vatEnabled={settings.vatEnabled}
+          vatEnabled={vatEnabled}
           vatRate={settings.vatRate}
-          vatAmount={settings.vatEnabled ? Math.round(680 * settings.vatRate) : 0}
-          total={settings.vatEnabled ? 680 + Math.round(680 * settings.vatRate) : 680}
+          vatAmount={sampleVatAmount}
+          total={sampleTotal}
           method="Cash"
           billNumber={Number(billCounter) + 1}
           date={Date.now()}

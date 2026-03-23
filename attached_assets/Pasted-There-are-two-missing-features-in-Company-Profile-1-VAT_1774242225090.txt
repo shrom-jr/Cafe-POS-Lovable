@@ -1,0 +1,111 @@
+There are two missing features in Company Profile:
+
+1) VAT Toggle is not implemented
+2) Uploaded logo is not working
+
+Fix both properly without breaking existing logic.
+
+========================
+1. VAT TOGGLE (GLOBAL)
+========================
+
+- In Settings (type + storage):
+  Add:
+    vatEnabled: boolean
+    vatRate: number (default 13)
+
+- Default values:
+    vatEnabled = true
+    vatRate = 13
+
+- In Admin → Company Profile:
+  Add a toggle switch:
+    Label: "Enable VAT (13%)"
+
+- Behavior:
+  IF vatEnabled = true:
+    - Show VAT row in receipt
+    - VAT = (taxableAmount * vatRate / 100)
+
+  IF vatEnabled = false:
+    - DO NOT render VAT row at all
+    - Total = taxableAmount (no VAT added)
+
+- Apply this logic inside:
+  ThermalReceiptLayout ONLY (single source)
+
+- Ensure:
+  - No undefined values
+  - Safe fallback (vatEnabled ?? true)
+
+========================
+2. LOGO UPLOAD FIX
+========================
+
+- Problem:
+  Logo is uploaded but not displayed
+
+- Fix:
+
+A) Store logo in Settings as:
+    logo: string (base64 or object URL)
+
+B) When user uploads:
+    - Convert file → base64 (FileReader)
+    - Save to settings.logo
+
+C) In Company Profile preview:
+    - Render logo ABOVE cafe name
+    - Center aligned
+    - Max width: 80px
+    - Maintain aspect ratio
+
+D) In ThermalReceiptLayout (IMPORTANT):
+    - Render logo ONLY IF available
+    - Keep it optional (some printers don’t support images)
+
+    Example:
+      {settings.logo && (
+        <img src={settings.logo} />
+      )}
+
+- DO NOT break print if logo fails
+- DO NOT make logo required
+
+========================
+3. ADMIN UI POLISH
+========================
+
+- Place VAT toggle near PAN/VAT fields
+- Group fields:
+
+  Section: Business Info
+    - Name
+    - Address
+    - Phone
+
+  Section: Tax Settings
+    - PAN
+    - VAT Number
+    - VAT Toggle
+
+  Section: Receipt Settings
+    - Footer Message
+    - Logo Upload
+
+========================
+4. IMPORTANT RULES
+========================
+
+- DO NOT modify:
+  - print trigger system
+  - receipt structure
+  - cart/payment logic
+
+- ONLY:
+  - add VAT toggle logic
+  - fix logo storage + rendering
+
+========================
+END
+========================
