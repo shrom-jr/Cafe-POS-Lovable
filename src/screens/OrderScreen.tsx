@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fmt } from '@/utils/format';
 import { usePOSStore } from '@/store/usePOSStore';
@@ -7,7 +7,7 @@ import { useTables } from '@/hooks/useTables';
 import { TopBar } from '@/components/ui/Navigation';
 import MenuItemCard from '@/components/orders/MenuItemCard';
 import OrderPanel from '@/components/orders/OrderPanel';
-import { Search, ShoppingCart, X, Info } from 'lucide-react';
+import { Search, ShoppingCart, ChevronUp, X, Info } from 'lucide-react';
 import { playClick } from '@/utils/sounds';
 
 const OrderScreen = () => {
@@ -33,6 +33,10 @@ const OrderScreen = () => {
   const [activeCat, setActiveCat] = useState(categories[0]?.id || '');
   const [search, setSearch] = useState('');
   const [showCart, setShowCart] = useState(false);
+
+  // Swipe-to-close refs (portrait drawer only)
+  const swipeTouchStartY = useRef(0);
+  const swipeTouchCurrentY = useRef(0);
 
   // Reliable landscape mobile detection: width > height AND height < 600px
   const detectLandscape = () =>
@@ -242,78 +246,158 @@ const OrderScreen = () => {
         </div>
       </div>
 
-      {/* ── Mobile only: Floating cart button (bottom-right) ── */}
-      <button
-        onClick={() => setShowCart(true)}
-        data-testid="button-view-order"
-        className="sm:hidden short:flex fixed bottom-4 right-4 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl transition-all active:scale-95"
-        style={{
-          background: hasItems
-            ? 'linear-gradient(135deg, #1e50d0 0%, #4186f5 100%)'
-            : 'rgba(15,23,42,0.92)',
-          border: hasItems
-            ? '1px solid rgba(65,134,245,0.5)'
-            : '1px solid rgba(255,255,255,0.10)',
-          boxShadow: hasItems
-            ? '0 8px 32px -4px rgba(59,130,246,0.55)'
-            : '0 4px 24px -4px rgba(0,0,0,0.6)',
-          color: hasItems ? '#ffffff' : 'rgba(255,255,255,0.5)',
-        }}
-      >
-        <div className="relative">
-          <ShoppingCart size={20} />
-          {hasItems && (
-            <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] px-0.5 rounded-full bg-white text-blue-600 text-[10px] font-black flex items-center justify-center leading-none">
-              {itemCount}
-            </span>
-          )}
+      {/* ── Portrait mobile: COLLAPSED ORDER BAR ── */}
+      {!isLandscapeMobile && hasItems && (
+        <div
+          onClick={() => setShowCart(true)}
+          className="sm:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between px-5 cursor-pointer active:brightness-110 transition-all select-none"
+          style={{
+            background: 'linear-gradient(90deg, #2563EB 0%, #3B82F6 100%)',
+            borderRadius: '18px 18px 0 0',
+            paddingTop: 14,
+            paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))',
+            boxShadow: '0 -4px 24px rgba(37,99,235,0.45)',
+          }}
+        >
+          <span className="text-white font-bold text-sm">
+            {itemCount} item{itemCount !== 1 ? 's' : ''}
+          </span>
+          <span className="text-white font-black text-base tracking-tight">
+            Rs. {fmt(runningTotal)}
+          </span>
+          <span className="flex items-center gap-1 text-white/90 font-semibold text-sm">
+            Review <ChevronUp size={15} strokeWidth={2.5} />
+          </span>
         </div>
-        {hasItems ? (
-          <span className="text-sm font-bold">Rs. {fmt(runningTotal)}</span>
-        ) : (
-          <span className="text-xs font-medium">Cart</span>
-        )}
-      </button>
+      )}
 
-      {/* ── Portrait mobile: bottom sheet cart ── */}
-      {showCart && !isLandscapeMobile && (
-        <div className="sm:hidden fixed inset-0 z-50 flex flex-col justify-end">
+      {/* ── Portrait mobile: EXPANDABLE ORDER DRAWER ── */}
+      {!isLandscapeMobile && (
+        <>
+          {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setShowCart(false)}
+            className="sm:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+            style={{ opacity: showCart ? 1 : 0, pointerEvents: showCart ? 'auto' : 'none' }}
           />
+
+          {/* Drawer panel */}
           <div
-            className="relative bg-card border-t border-border rounded-t-2xl flex flex-col animate-slide-up max-h-[100dvh] overflow-hidden"
+            className="sm:hidden fixed bottom-0 left-0 right-0 z-50 flex flex-col"
+            style={{
+              maxHeight: '75dvh',
+              minHeight: '40dvh',
+              borderRadius: '18px 18px 0 0',
+              background: '#0d1525',
+              border: '1px solid rgba(255,255,255,0.09)',
+              borderBottom: 'none',
+              boxShadow: '0 -8px 40px rgba(0,0,0,0.7)',
+              transform: showCart ? 'translateY(0)' : 'translateY(100%)',
+              transition: 'transform 300ms cubic-bezier(0.32, 0.72, 0, 1)',
+            }}
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
-              <h3 className="font-bold text-foreground">
-                Cart{itemCount > 0 ? ` (${itemCount} item${itemCount !== 1 ? 's' : ''})` : ''}
+            {/* Drag handle — swipe-to-close zone */}
+            <div
+              className="flex justify-center pt-3 pb-2 flex-shrink-0 cursor-grab active:cursor-grabbing"
+              onTouchStart={(e) => { swipeTouchStartY.current = e.touches[0].clientY; swipeTouchCurrentY.current = e.touches[0].clientY; }}
+              onTouchMove={(e) => { swipeTouchCurrentY.current = e.touches[0].clientY; }}
+              onTouchEnd={() => {
+                if (swipeTouchCurrentY.current - swipeTouchStartY.current > 60) setShowCart(false);
+                swipeTouchCurrentY.current = 0;
+              }}
+            >
+              <div className="w-10 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.2)' }} />
+            </div>
+
+            {/* Header */}
+            <div
+              className="flex items-center justify-between px-4 pb-3 flex-shrink-0"
+              style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}
+            >
+              <h3 className="font-bold text-white/90 text-sm">
+                Your Order{itemCount > 0 ? ` · ${itemCount} item${itemCount !== 1 ? 's' : ''}` : ''}
               </h3>
               <button
                 onClick={() => setShowCart(false)}
-                className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary transition-colors"
                 data-testid="button-close-cart"
+                className="p-1.5 rounded-lg transition-colors"
+                style={{ color: 'rgba(255,255,255,0.45)', background: 'rgba(255,255,255,0.07)' }}
               >
-                <X size={18} />
+                <X size={16} />
               </button>
             </div>
-            <div className="flex-1 min-h-0 flex flex-col">
-              <OrderPanel
-                order={order}
-                onUpdateQty={(menuItemId, delta) =>
-                  order && updateItemQuantity(order.id, menuItemId, delta)
-                }
-                onRemove={(menuItemId) =>
-                  order && removeItemFromOrder(order.id, menuItemId)
-                }
-                onPay={() => { setShowCart(false); handlePay(); }}
-                onClear={handleClear}
-                pax={table.pax ?? 1}
-                onPaxChange={handlePaxChange}
-              />
+
+            {/* Items list — scrollable */}
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 space-y-2">
+              {(order?.items || []).length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full py-12" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                  <ShoppingCart size={32} className="mb-2 opacity-30" />
+                  <p className="text-sm font-semibold">No items yet</p>
+                  <p className="text-xs opacity-60 mt-1">Tap items on the menu to add</p>
+                </div>
+              ) : (
+                (order?.items || []).map((item) => (
+                  <div
+                    key={item.menuItemId}
+                    className="flex items-center gap-2 rounded-xl px-3 py-2.5"
+                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.07)' }}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-white/90 truncate">{item.name}</p>
+                      <p className="text-xs text-white/40">Rs. {fmt(item.price)} each</p>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => order && updateItemQuantity(order.id, item.menuItemId, -1)}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-white/50 active:scale-90 transition-transform"
+                        style={{ background: 'rgba(255,255,255,0.07)' }}
+                      >
+                        <span className="text-base leading-none select-none">−</span>
+                      </button>
+                      <span className="w-7 text-center font-black text-sm text-white/90 select-none">{item.quantity}</span>
+                      <button
+                        onClick={() => order && updateItemQuantity(order.id, item.menuItemId, 1)}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center active:scale-90 transition-transform"
+                        style={{ background: 'rgba(59,130,246,0.20)', border: '1px solid rgba(59,130,246,0.30)' }}
+                      >
+                        <span className="text-base leading-none text-blue-300 select-none">+</span>
+                      </button>
+                    </div>
+                    <p className="w-16 text-right text-sm font-bold text-white/80">Rs. {fmt(item.price * item.quantity)}</p>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Footer — pinned */}
+            <div
+              className="flex-shrink-0 px-4 pt-3"
+              style={{
+                paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))',
+                borderTop: '1px solid rgba(255,255,255,0.07)',
+                background: '#0d1525',
+              }}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-semibold uppercase tracking-wider text-white/35">Total</span>
+                <span className="text-2xl font-black text-white/95">Rs. {fmt(runningTotal)}</span>
+              </div>
+              <button
+                onClick={() => { setShowCart(false); handlePay(); }}
+                disabled={!order || order.items.length === 0}
+                data-testid="button-proceed-to-bill"
+                className="w-full py-3.5 rounded-2xl font-black text-base transition-all active:scale-[0.97] disabled:opacity-20 disabled:cursor-not-allowed"
+                style={{
+                  background: 'linear-gradient(90deg, #2563EB 0%, #3B82F6 100%)',
+                  color: '#ffffff',
+                  boxShadow: '0 4px 20px -4px rgba(59,130,246,0.6)',
+                }}
+              >
+                Proceed to Payment →
+              </button>
             </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* ── Landscape mobile: FULL SCREEN cart (completely separate from bottom sheet) ── */}
