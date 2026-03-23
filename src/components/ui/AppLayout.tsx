@@ -44,7 +44,7 @@ const AppLayout = ({ title, headerRight, children }: AppLayoutProps) => {
 
   return (
     <div
-      className="h-screen flex flex-col overflow-hidden"
+      className="h-[100dvh] flex flex-col overflow-hidden"
       style={{ background: 'linear-gradient(180deg, #0f172a 0%, #020617 100%)' }}
     >
       {/* ── Header ── */}

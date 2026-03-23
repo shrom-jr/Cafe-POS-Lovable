@@ -148,7 +148,7 @@ const ReviewScreen = () => {
   // ── Early exits ───────────────────────────────────────────────
   if (!table || !tableId || items.length === 0) {
     return (
-      <div className="h-screen bg-background flex flex-col items-center justify-center gap-4 p-6">
+      <div className="h-[100dvh] bg-background flex flex-col items-center justify-center gap-4 p-6">
         <p className="text-muted-foreground text-sm text-center">No active order found.</p>
         <button
           onClick={() => navigate(tableId ? `/order/${tableId}` : '/')}
@@ -215,7 +215,7 @@ const ReviewScreen = () => {
     return (
       <>
         {receiptPortal}
-        <div className="h-screen bg-background flex flex-col overflow-hidden">
+        <div className="h-[100dvh] bg-background flex flex-col overflow-hidden">
           <div className="flex-1 flex flex-col items-center justify-center p-5 gap-4 overflow-hidden">
             <div className="flex flex-col items-center gap-2">
               <div className="w-16 h-16 rounded-full bg-success/15 flex items-center justify-center shadow-[0_0_32px_-4px_hsl(var(--success)/0.4)]">
@@ -292,7 +292,7 @@ const ReviewScreen = () => {
     <>
       {receiptPortal}
       <div
-        className="h-screen flex flex-col overflow-hidden"
+        className="h-[100dvh] flex flex-col overflow-hidden"
         style={{ background: 'linear-gradient(180deg, #0d1525 0%, #060e1a 100%)' }}
       >
         {/* Header */}

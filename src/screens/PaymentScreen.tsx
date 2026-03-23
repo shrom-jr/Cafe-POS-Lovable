@@ -198,7 +198,7 @@ const PaymentScreen = () => {
     return (
       <>
         {receiptPortal}
-        <div className="h-screen bg-background flex flex-col overflow-hidden">
+        <div className="h-[100dvh] bg-background flex flex-col overflow-hidden">
           <div className="flex-1 flex flex-col items-center justify-center p-5 gap-4 overflow-hidden">
 
             {/* Success icon + amount */}
