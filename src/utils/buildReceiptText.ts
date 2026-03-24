@@ -22,8 +22,15 @@ function center(text: string): string {
 }
 
 function formatLine(left: string, right: string): string {
+  if (left.length + right.length >= W) {
+    return (
+      left.slice(0, W - right.length - 1) +
+      ' ' +
+      right.slice(-right.length)
+    );
+  }
   const space = W - left.length - right.length;
-  return left + ' '.repeat(Math.max(1, space)) + right;
+  return left + ' '.repeat(space) + right;
 }
 
 function ljust(s: string, w: number): string {
