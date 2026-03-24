@@ -1,16 +1,24 @@
 import { format } from 'date-fns';
 import { numberToWords } from './printer';
 
+// Total line width
 const W = 42;
+
+// Column widths (SN=3, Item=16, Qty=5, Rate=8, Amt=8) — sums to 40, +2 trailing fill to W
+const C_SN   = 3;
+const C_ITEM = 16;
+const C_QTY  = 5;
+const C_RATE = 8;
+const C_AMT  = 8;
+
+function hr(char = '-'): string {
+  return char.repeat(W);
+}
 
 function center(text: string): string {
   if (text.length >= W) return text.slice(0, W);
   const pad = Math.floor((W - text.length) / 2);
   return ' '.repeat(pad) + text;
-}
-
-function hr(char = '-'): string {
-  return char.repeat(W);
 }
 
 function leftRight(l: string, r: string): string {
@@ -23,7 +31,18 @@ function ljust(s: string, w: number): string {
 }
 
 function rjust(s: string | number, w: number): string {
-  return String(s).length >= w ? String(s).slice(-w) : String(s).padStart(w);
+  const str = String(s);
+  return str.length >= w ? str.slice(-w) : str.padStart(w);
+}
+
+function itemRow(sn: string | number, name: string, qty: string | number, rate: string, amt: string): string {
+  return (
+    ljust(String(sn), C_SN) +
+    ljust(name,        C_ITEM) +
+    rjust(qty,         C_QTY) +
+    rjust(rate,        C_RATE) +
+    rjust(amt,         C_AMT)
+  );
 }
 
 export interface ReceiptData {
@@ -52,32 +71,38 @@ export function buildReceiptText(data: ReceiptData): string {
   const timeStr = format(data.createdAt, 'hh:mm aa');
   const taxableAmount = data.subtotal - data.discountAmount;
 
+  // ── Cafe header ──────────────────────────────────────────────
   push(hr('='));
   push(center(data.cafeName));
   if (data.cafeAddress) push(center(data.cafeAddress));
-  if (data.cafePan) push(center(`PAN: ${data.cafePan}`));
+  if (data.cafePan)     push(center(`PAN: ${data.cafePan}`));
   push(hr('='));
   push(center('TAX INVOICE'));
   push(hr('='));
+
+  // ── Bill meta — each on its own line, left-aligned ───────────
   push(`Payment: ${data.method}`);
-  push(leftRight(`Bill No: #${data.billNumber}`, `Date: ${dateStr}`));
+  push(`Date: ${dateStr}`);
+  push(`Bill No: #${data.billNumber}`);
   push(`Table: ${data.tableNumber}`);
   push(hr('-'));
 
-  // Header row: SN(3) + Item(20) + Qty(4) + Rate(7) + Amt(8) = 42
-  push(ljust('SN', 3) + ljust('Particulars', 20) + rjust('Qty', 4) + rjust('Rate', 7) + rjust('Amt', 8));
+  // ── Item table header ─────────────────────────────────────────
+  push(itemRow('SN', 'Particulars', 'Qty', 'Rate', 'Amt'));
   push(hr('-'));
 
+  // ── Item rows ────────────────────────────────────────────────
   data.items.forEach((item, idx) => {
-    push(
-      ljust(String(idx + 1), 3) +
-      ljust(item.name, 20) +
-      rjust(String(item.quantity), 4) +
-      rjust(item.price.toFixed(0), 7) +
-      rjust((item.price * item.quantity).toFixed(0), 8)
-    );
+    push(itemRow(
+      idx + 1,
+      item.name,
+      item.quantity,
+      item.price.toFixed(0),
+      (item.price * item.quantity).toFixed(0),
+    ));
   });
 
+  // ── Totals ───────────────────────────────────────────────────
   push(hr('-'));
   push(leftRight('Basic Amount:', `Rs. ${data.subtotal.toFixed(2)}`));
   if (data.discountAmount > 0) {
@@ -90,6 +115,8 @@ export function buildReceiptText(data: ReceiptData): string {
   push(hr('='));
   push(leftRight('TOTAL:', `Rs. ${data.total.toFixed(2)}`));
   push(hr('='));
+
+  // ── Footer ───────────────────────────────────────────────────
   push(`In words: ${numberToWords(Math.round(data.total))}`);
   push(hr('-'));
   push(leftRight(`Cashier: ${data.cafeName}`, `Time: ${timeStr}`));
