@@ -108,16 +108,10 @@ const ThermalReceiptLayout = ({
       <HR />
 
       <div style={{ fontSize: 11, marginBottom: 5 }}>
-        <div style={{ marginBottom: 2 }}>
-          <strong>Payment Mode:</strong> {method}
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span><strong>Bill No:</strong> #{billNumber}</span>
-          <span><strong>Date:</strong> {dateStr}</span>
-        </div>
-        <div>
-          <strong>Table:</strong> {tableNumber}
-        </div>
+        <div><strong>Payment:</strong> {method}</div>
+        <div><strong>Date:</strong> {dateStr}</div>
+        <div><strong>Bill No:</strong> #{billNumber}</div>
+        <div><strong>Table:</strong> {tableNumber}</div>
       </div>
 
       <HR />
