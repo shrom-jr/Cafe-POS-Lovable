@@ -33,6 +33,25 @@ function formatLine(left: string, right: string): string {
   return left + ' '.repeat(space) + right;
 }
 
+function wrapText(text: string, width: number): string[] {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let current = '';
+
+  for (const word of words) {
+    if ((current + word).length + 1 > width) {
+      lines.push(current.trim());
+      current = word + ' ';
+    } else {
+      current += word + ' ';
+    }
+  }
+
+  if (current.trim()) lines.push(current.trim());
+
+  return lines;
+}
+
 function ljust(s: string, w: number): string {
   return s.length >= w ? s.slice(0, w) : s.padEnd(w);
 }
@@ -124,7 +143,7 @@ export function buildReceiptText(data: ReceiptData): string {
   push(hr('='));
 
   // ── Footer ───────────────────────────────────────────────────
-  push(`In words: ${numberToWords(Math.round(data.total))}`);
+  wrapText(`In words: ${numberToWords(Math.round(data.total))}`, W).forEach(push);
   push(hr('-'));
   push(formatLine(`Cashier: ${data.cafeName}`, `Time: ${timeStr}`));
   push(hr('='));
