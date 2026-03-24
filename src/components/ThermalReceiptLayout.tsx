@@ -1,5 +1,8 @@
+import { useEffect } from 'react';
 import { format } from 'date-fns';
 import { numberToWords } from '@/utils/printer';
+import { buildReceiptText } from '@/utils/buildReceiptText';
+import { setReceiptText } from '@/utils/print';
 
 interface ThermalReceiptLayoutProps {
   cafeName: string;
@@ -52,6 +55,27 @@ const ThermalReceiptLayout = ({
   const taxableAmount = subtotal - discountAmount;
   const dateStr = format(createdAt, 'dd/MM/yyyy');
   const timeStr = format(createdAt, 'hh:mm aa');
+
+  // Register plain-text receipt so triggerPrint() can use it instead of HTML
+  useEffect(() => {
+    setReceiptText(buildReceiptText({
+      cafeName,
+      cafeAddress,
+      cafePan,
+      billFooter,
+      tableNumber,
+      billNumber,
+      createdAt,
+      items,
+      subtotal,
+      discountAmount,
+      vatEnabled,
+      vatAmount,
+      vatRate,
+      total,
+      method,
+    }));
+  }, [cafeName, cafeAddress, cafePan, billFooter, tableNumber, billNumber, createdAt, items, subtotal, discountAmount, vatEnabled, vatAmount, vatRate, total, method]);
 
   return (
     <>
