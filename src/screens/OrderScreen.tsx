@@ -327,6 +327,34 @@ const OrderScreen = () => {
               </button>
             </div>
 
+            {/* Guests (Pax) selector */}
+            <div
+              className="flex items-center justify-between px-4 py-2.5 flex-shrink-0"
+              style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}
+            >
+              <span className="text-sm font-semibold text-white/60">Guests</span>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => handlePaxChange(Math.max(1, (table.pax ?? 1) - 1))}
+                  disabled={(table.pax ?? 1) <= 1}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-white/50 active:scale-90 transition-transform disabled:opacity-30"
+                  style={{ background: 'rgba(255,255,255,0.07)' }}
+                >
+                  <span className="text-base leading-none select-none">−</span>
+                </button>
+                <span className="w-6 text-center font-black text-sm text-white/90 select-none tabular-nums">
+                  {table.pax ?? 1}
+                </span>
+                <button
+                  onClick={() => handlePaxChange((table.pax ?? 1) + 1)}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center active:scale-90 transition-transform"
+                  style={{ background: 'rgba(59,130,246,0.20)', border: '1px solid rgba(59,130,246,0.30)' }}
+                >
+                  <span className="text-base leading-none text-blue-300 select-none">+</span>
+                </button>
+              </div>
+            </div>
+
             {/* Items list — scrollable */}
             <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 space-y-2">
               {(order?.items || []).length === 0 ? (
@@ -382,6 +410,19 @@ const OrderScreen = () => {
                 <span className="text-xs font-semibold uppercase tracking-wider text-white/35">Total</span>
                 <span className="text-2xl font-black text-white/95">Rs. {fmt(runningTotal)}</span>
               </div>
+              {hasItems && (
+                <button
+                  onClick={() => { handleClear(); setShowCart(false); }}
+                  className="w-full py-2.5 rounded-xl font-semibold text-sm mb-2.5 transition-all active:scale-[0.97]"
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid #EF4444',
+                    color: '#EF4444',
+                  }}
+                >
+                  Clear Order
+                </button>
+              )}
               <button
                 onClick={() => { setShowCart(false); handlePay(); }}
                 disabled={!order || order.items.length === 0}
