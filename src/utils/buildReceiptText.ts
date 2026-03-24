@@ -21,9 +21,9 @@ function center(text: string): string {
   return ' '.repeat(pad) + text;
 }
 
-function leftRight(l: string, r: string): string {
-  const gap = Math.max(1, W - l.length - r.length);
-  return l + ' '.repeat(gap) + r;
+function formatLine(left: string, right: string): string {
+  const space = W - left.length - right.length;
+  return left + ' '.repeat(Math.max(1, space)) + right;
 }
 
 function ljust(s: string, w: number): string {
@@ -104,22 +104,22 @@ export function buildReceiptText(data: ReceiptData): string {
 
   // ── Totals ───────────────────────────────────────────────────
   push(hr('-'));
-  push(leftRight('Basic Amount:', `Rs. ${data.subtotal.toFixed(2)}`));
+  push(formatLine('Basic Amount:', `Rs. ${data.subtotal.toFixed(2)}`));
   if (data.discountAmount > 0) {
-    push(leftRight('Discount:', `-Rs. ${data.discountAmount.toFixed(2)}`));
+    push(formatLine('Discount:', `-Rs. ${data.discountAmount.toFixed(2)}`));
   }
-  push(leftRight('Taxable Amount:', `Rs. ${taxableAmount.toFixed(2)}`));
+  push(formatLine('Taxable Amount:', `Rs. ${taxableAmount.toFixed(2)}`));
   if (data.vatEnabled && data.vatAmount > 0) {
-    push(leftRight(`VAT (${Math.round(data.vatRate * 100)}%):`, `Rs. ${data.vatAmount.toFixed(2)}`));
+    push(formatLine(`VAT (${Math.round(data.vatRate * 100)}%):`, `Rs. ${data.vatAmount.toFixed(2)}`));
   }
   push(hr('='));
-  push(leftRight('TOTAL:', `Rs. ${data.total.toFixed(2)}`));
+  push(formatLine('TOTAL:', `Rs. ${data.total.toFixed(2)}`));
   push(hr('='));
 
   // ── Footer ───────────────────────────────────────────────────
   push(`In words: ${numberToWords(Math.round(data.total))}`);
   push(hr('-'));
-  push(leftRight(`Cashier: ${data.cafeName}`, `Time: ${timeStr}`));
+  push(formatLine(`Cashier: ${data.cafeName}`, `Time: ${timeStr}`));
   push(hr('='));
   push(center(data.billFooter || 'Thank you for visiting!'));
   push(hr('='));
