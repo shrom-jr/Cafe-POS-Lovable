@@ -246,8 +246,8 @@ const OrderScreen = () => {
         </div>
       </div>
 
-      {/* ── Portrait mobile: COLLAPSED ORDER BAR ── */}
-      {!isLandscapeMobile && hasItems && (
+      {/* ── Mobile: COLLAPSED ORDER BAR (portrait + landscape) ── */}
+      {hasItems && (
         <div
           onClick={() => setShowCart(true)}
           className="sm:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between px-5 cursor-pointer active:brightness-110 transition-all select-none"
