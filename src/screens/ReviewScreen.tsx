@@ -331,45 +331,54 @@ const ReviewScreen = () => {
             </div>
 
           ) : (
-            /* ── PORTRAIT: original stacked layout ── */
-            <div className="flex-1 h-full flex flex-col items-center justify-center p-5 gap-4 overflow-hidden">
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-16 h-16 rounded-full bg-success/15 flex items-center justify-center shadow-[0_0_32px_-4px_hsl(var(--success)/0.4)]">
-                  <CheckCircle2 size={36} className="text-success" />
-                </div>
-                <h2 className="text-xl font-black text-foreground">Payment Successful</h2>
-                <div className="flex items-center gap-2">
-                  <span className="text-3xl font-black text-foreground">Rs. {fmt(bill.total)}</span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-success/15 text-success text-xs font-bold uppercase">
-                    {paidMethod}
-                  </span>
-                </div>
-                {bill.discountAmount > 0 && (
-                  <span className="text-xs text-success font-medium">Saved Rs. {fmt(bill.discountAmount)}</span>
-                )}
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Printer size={12} />
-                  <span>Printing receipt...</span>
-                </div>
-              </div>
+            /* ── PORTRAIT: stacked layout, centred and width-constrained ── */
+            <div className="flex-1 h-full flex flex-col items-center justify-center p-5 overflow-hidden">
+              <div className="w-full max-w-sm mx-auto flex flex-col items-center gap-4">
 
-              {receiptCard()}
+                {/* Icon + amount */}
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <div className="w-16 h-16 rounded-full bg-success/15 flex items-center justify-center shadow-[0_0_32px_-4px_hsl(var(--success)/0.4)]">
+                    <CheckCircle2 size={36} className="text-success" />
+                  </div>
+                  <h2 className="text-xl font-black text-foreground">Payment Successful</h2>
+                  <div className="flex items-center gap-2 flex-wrap justify-center">
+                    <span className="text-3xl font-black text-foreground tabular-nums">Rs. {fmt(bill.total)}</span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-success/15 text-success text-xs font-bold uppercase">
+                      {paidMethod}
+                    </span>
+                  </div>
+                  {bill.discountAmount > 0 && (
+                    <span className="text-xs text-success font-medium">Saved Rs. {fmt(bill.discountAmount)}</span>
+                  )}
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Printer size={12} />
+                    <span>Printing receipt...</span>
+                  </div>
+                </div>
 
-              <div className="w-full max-w-sm space-y-2.5">
-                <button
-                  onClick={handleReprint}
-                  disabled={reprinting}
-                  className="w-full py-3.5 rounded-2xl border border-border bg-secondary text-foreground font-bold text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.97] hover:bg-secondary/80 disabled:opacity-60"
-                >
-                  <Printer size={15} />
-                  {reprinting ? 'Reprinting...' : 'Reprint Receipt'}
-                </button>
-                <button
-                  onClick={() => navigate('/', { replace: true })}
-                  className="w-full py-4 rounded-2xl bg-success text-white font-black text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.97] hover:brightness-110 shadow-[0_4px_16px_-4px_hsl(var(--success)/0.4)]"
-                >
-                  <Home size={18} /> Back to Tables
-                </button>
+                {/* Receipt card — constrained to parent max-w-sm */}
+                <div className="w-full">
+                  {receiptCard()}
+                </div>
+
+                {/* Buttons */}
+                <div className="w-full space-y-2.5">
+                  <button
+                    onClick={handleReprint}
+                    disabled={reprinting}
+                    className="w-full py-3.5 rounded-2xl border border-border bg-secondary text-foreground font-bold text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.97] hover:bg-secondary/80 disabled:opacity-60"
+                  >
+                    <Printer size={15} />
+                    {reprinting ? 'Reprinting...' : 'Reprint Receipt'}
+                  </button>
+                  <button
+                    onClick={() => navigate('/', { replace: true })}
+                    className="w-full py-4 rounded-2xl bg-success text-white font-black text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.97] hover:brightness-110 shadow-[0_4px_16px_-4px_hsl(var(--success)/0.4)]"
+                  >
+                    <Home size={18} /> Back to Tables
+                  </button>
+                </div>
+
               </div>
             </div>
           )}
