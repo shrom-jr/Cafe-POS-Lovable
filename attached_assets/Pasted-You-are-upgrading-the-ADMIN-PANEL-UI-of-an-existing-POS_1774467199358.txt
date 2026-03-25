@@ -1,0 +1,223 @@
+You are upgrading the ADMIN PANEL UI of an existing POS web app.
+
+⚠️ IMPORTANT RULES:
+
+* DO NOT change OrderScreen, ReviewScreen, PaymentScreen, or SuccessScreen (POS flow must remain untouched)
+* ONLY improve admin/dashboard-related pages
+* DO NOT break existing functionality
+* Focus on UI/UX, layout, and structure only
+
+---
+
+# 🎯 GOAL
+
+Transform the admin UI into a professional SaaS-style dashboard (like Stripe/Shopify), with:
+
+* Sidebar navigation
+* Consistent layout
+* Better hierarchy
+* Cleaner forms
+* Improved usability
+
+---
+
+# 📍 TARGET FILES / PAGES (VERY IMPORTANT)
+
+Apply improvements ONLY to these:
+
+1. Dashboard page
+2. Menu management page
+3. Tables page
+4. Reports page
+5. Settings pages (Company, Profile, Backup, etc.)
+6. Main layout / navigation component (where top nav currently exists)
+
+DO NOT modify:
+
+* OrderScreen.tsx
+* ReviewScreen.tsx
+* PaymentScreen.tsx
+* SuccessScreen.tsx
+
+---
+
+# 🔥 1. CONVERT TOP NAV → LEFT SIDEBAR
+
+Replace current top navigation with a fixed sidebar.
+
+Sidebar requirements:
+
+* width: 240px
+* full height (h-screen)
+* dark background (slightly lighter than main bg)
+* items with icons + labels
+* active item:
+
+  * blue background
+  * subtle glow
+* hover effect (bg + slight brightness)
+* collapsible on small screens
+
+Layout structure:
+
+<div class="flex">
+  <Sidebar />
+  <MainContent />
+</div>
+
+Main content:
+
+* class: flex-1 max-w-6xl mx-auto px-4 py-6
+
+---
+
+# 🔥 2. ADD CONSISTENT PAGE HEADERS
+
+Every admin page must start with:
+
+* Title (text-xl font-semibold)
+* Subtitle (text-sm text-muted)
+* Optional right-side actions
+
+Spacing:
+mb-6
+
+Examples:
+Dashboard → "Overview of your café performance"
+Menu → "Manage your items and categories"
+
+---
+
+# 🔥 3. STANDARDIZE PAGE WIDTH
+
+Wrap ALL admin content inside:
+
+max-w-6xl mx-auto px-4 py-6
+
+This applies to:
+
+* Dashboard
+* Menu
+* Tables
+* Reports
+* Settings
+
+---
+
+# 🔥 4. DASHBOARD IMPROVEMENTS
+
+* Improve stat cards:
+
+  * add icons
+  * add percentage change (e.g. +12%)
+  * add hover effect (scale + shadow)
+* Improve chart section:
+
+  * add header with title + filter (week/month)
+  * better spacing and padding
+
+---
+
+# 🔥 5. MENU PAGE (IMPORTANT)
+
+Refactor into 2-column layout:
+
+Left column:
+
+* category list
+* add/edit/delete category
+* sticky position
+
+Right column:
+
+* items of selected category
+
+Ensure:
+
+* good spacing
+* clear selection state
+
+---
+
+# 🔥 6. TABLES PAGE
+
+Enhance table cards:
+
+* show status badge:
+
+  * Active (green)
+  * Empty (gray)
+* increase spacing
+* add hover effect
+* make grid responsive
+
+---
+
+# 🔥 7. SETTINGS / FORMS
+
+Refactor forms into sections:
+
+Each section:
+
+* card container
+* title
+* short description
+
+Improve inputs:
+
+* height: h-11
+* focus ring (blue glow)
+* better spacing (gap-6 between sections)
+
+---
+
+# 🔥 8. ADD TOAST FEEDBACK SYSTEM
+
+Global behavior:
+
+* On save → show toast: "Changes saved successfully"
+* position: top-right
+* auto close after 2 seconds
+
+---
+
+# 🔥 9. REPORTS PAGE
+
+Improve layout:
+
+* add date filters (Today / Week / Month)
+* use grid layout for stats
+* add placeholders for charts
+
+---
+
+# 🔥 10. GENERAL UI POLISH
+
+Apply everywhere:
+
+* consistent button sizes
+* hover transitions
+* subtle shadows
+* rounded corners (xl or 2xl)
+* proper spacing system
+* empty states (not plain text)
+
+---
+
+# ✅ FINAL CHECK
+
+* POS ordering flow must remain EXACTLY the same
+* No broken navigation
+* Responsive on desktop + tablet
+* Clean, modern, professional look
+
+---
+
+# OUTPUT EXPECTATION
+
+Return:
+
+* Updated components
+* Any new components (Sidebar, PageHeader, Toast)
+* Clean, readable Tailwind code
+* No unnecessary complexity

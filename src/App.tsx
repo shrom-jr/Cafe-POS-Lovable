@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
+import { Toaster as SonnerToaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import TableOverview from '@/screens/TableOverview';
 import OrderScreen from '@/screens/OrderScreen';
@@ -22,6 +23,7 @@ const App = () => {
   return (
     <TooltipProvider>
       <Toaster />
+      <SonnerToaster position="top-right" richColors />
 
       {printBlocked && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-2 rounded-xl shadow-lg z-50 text-sm font-semibold whitespace-nowrap">
