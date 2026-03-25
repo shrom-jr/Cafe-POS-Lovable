@@ -1,0 +1,128 @@
+We are doing a FINAL stability and UX hardening pass for the POS app. Make all changes in one batch. No partial edits.
+
+---
+
+1. PREVENT DOUBLE PAYMENT CLICK
+
+---
+
+In PaymentScreen.tsx:
+
+* Add state:
+
+const [isProcessing, setIsProcessing] = useState(false);
+
+* At the start of handleConfirmPayment:
+
+if (isProcessing) return;
+setIsProcessing(true);
+
+* Disable the payment button:
+
+<Button disabled={isProcessing} ... />
+
+---
+
+2. GUARANTEE PRINT AFTER RECEIPT IS READY (NO TIMING GUESS)
+
+---
+
+Replace the current setTimeout print logic with a safe retry mechanism.
+
+Inside handleConfirmPayment AFTER setPaid(true):
+
+const attemptPrint = () => {
+if ((window as any)._receiptText) {
+triggerPrint('receipt');
+} else {
+setTimeout(attemptPrint, 50);
+}
+};
+
+setTimeout(attemptPrint, 50);
+
+---
+
+3. HANDLE POPUP BLOCKED (VISIBLE UI WARNING)
+
+---
+
+In print.ts:
+
+* Keep the alert, but ALSO dispatch a global flag:
+
+if (!printWindow) {
+alert('Please allow popups to print receipt');
+window.dispatchEvent(new Event('print-blocked'));
+return;
+}
+
+---
+
+In your main layout (App.tsx or root component):
+
+* Add a listener:
+
+const [printBlocked, setPrintBlocked] = useState(false);
+
+useEffect(() => {
+const handler = () => setPrintBlocked(true);
+window.addEventListener('print-blocked', handler);
+return () => window.removeEventListener('print-blocked', handler);
+}, []);
+
+* Show a small warning UI:
+
+{printBlocked && (
+
+  <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-2 rounded-xl shadow-lg z-50">
+    Enable popups to print receipt
+  </div>
+)}
+
+---
+
+4. ENSURE CART CLEARS ONLY AFTER PRINT TRIGGERED
+
+---
+
+Move clearCart() (or equivalent) so it runs AFTER triggerPrint() is called.
+
+DO NOT clear cart before print is triggered.
+
+---
+
+5. REMOVE UNUSED ROUTE (CLEANUP)
+
+---
+
+In App.tsx:
+
+* Remove /payment/:tableId route completely
+  OR
+* Add comment:
+
+// UNUSED ROUTE - DO NOT USE
+
+---
+
+6. ADD PRINT VERSION LOG (DEBUGGING)
+
+---
+
+In triggerPrint():
+
+console.log("PRINT VERSION: TEXT_V2");
+
+---
+
+## EXPECTED RESULT
+
+* No double payment clicks
+* Print ALWAYS triggers (no race condition)
+* Popup blocked is clearly visible to cashier
+* Cart is not lost before print
+* Cleaner codebase
+* Easier debugging
+
+Do not change UI design. Do not modify working features. Only apply above fixes.

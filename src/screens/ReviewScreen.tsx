@@ -6,7 +6,7 @@ import { useOrders } from '@/hooks/useOrders';
 import { useTables } from '@/hooks/useTables';
 import { calcBill } from '@/utils/calcBill';
 import { fmt, resolvePaymentLabel } from '@/utils/format';
-import { triggerPrint } from '@/utils/print';
+import { triggerPrint, isReceiptTextReady } from '@/utils/print';
 import { playSuccess } from '@/utils/sounds';
 import { QRCodeSVG } from 'qrcode.react';
 import {
@@ -125,6 +125,9 @@ const ReviewScreen = () => {
   };
 
   const handleConfirmPayment = async (method: string) => {
+    if (confirming) return;
+    setConfirming(true);
+
     const bn = getNextBillNumber();
     const now = Date.now();
     setBillNum(bn);
@@ -151,16 +154,25 @@ const ReviewScreen = () => {
     });
 
     updateOrderStatus(orderIdRef.current, 'paid');
-    if (tableId) resetTable(tableId);
     playSuccess();
     setShowQRModal(false);
     setPaid(true);
 
-    // Delay so React re-renders the receipt portal and ThermalReceiptLayout
-    // registers its text via setReceiptText() before triggerPrint() reads it.
-    setTimeout(() => {
-      if (items.length > 0) triggerPrint('receipt');
-    }, 100);
+    // Reset table AFTER setPaid so the receipt portal renders with snapshotted items first
+    if (tableId) resetTable(tableId);
+
+    // Retry until ThermalReceiptLayout has rendered and registered its text,
+    // then open the print popup — no fixed timing guess needed.
+    if (items.length > 0) {
+      const attemptPrint = () => {
+        if (isReceiptTextReady()) {
+          triggerPrint('receipt');
+        } else {
+          setTimeout(attemptPrint, 50);
+        }
+      };
+      setTimeout(attemptPrint, 50);
+    }
   };
 
   // ── Early exits ───────────────────────────────────────────────
@@ -539,8 +551,9 @@ const ReviewScreen = () => {
               {/* Cash */}
               <button
                 onClick={() => handleConfirmPayment('cash')}
+                disabled={confirming}
                 data-testid="button-payment-method-cash"
-                className={`w-full flex items-center gap-3 px-4 ${compact ? 'py-1.5' : 'py-2'} rounded-xl transition-all active:scale-[0.97]`}
+                className={`w-full flex items-center gap-3 px-4 ${compact ? 'py-1.5' : 'py-2'} rounded-xl transition-all active:scale-[0.97] disabled:opacity-60`}
                 style={{
                   background: 'rgba(52,211,153,0.07)',
                   border: '1px solid rgba(52,211,153,0.25)',
@@ -694,8 +707,9 @@ const ReviewScreen = () => {
                     {/* Cash — pinned first, always prominent */}
                     <button
                       onClick={() => handleConfirmPayment('cash')}
+                      disabled={confirming}
                       data-testid="button-payment-method-cash"
-                      className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg transition-all active:scale-[0.97]"
+                      className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg transition-all active:scale-[0.97] disabled:opacity-60"
                       style={{ background: 'rgba(52,211,153,0.07)', border: '1px solid rgba(52,211,153,0.25)' }}
                     >
                       <div className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(52,211,153,0.12)' }}>

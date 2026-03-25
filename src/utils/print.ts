@@ -5,8 +5,12 @@ export function setReceiptText(text: string) {
   _receiptText = text;
 }
 
+export function isReceiptTextReady(): boolean {
+  return !!_receiptText;
+}
+
 export function triggerPrint(_mode: 'receipt' | 'invoice') {
-  console.log('Using TEXT receipt print');
+  console.log('PRINT VERSION: TEXT_V2');
 
   if (!_receiptText) {
     console.warn('triggerPrint: no receipt text available yet');
@@ -51,6 +55,7 @@ export function triggerPrint(_mode: 'receipt' | 'invoice') {
 
   if (!win) {
     alert('Please allow popups to print receipt');
+    window.dispatchEvent(new Event('print-blocked'));
     return;
   }
 
