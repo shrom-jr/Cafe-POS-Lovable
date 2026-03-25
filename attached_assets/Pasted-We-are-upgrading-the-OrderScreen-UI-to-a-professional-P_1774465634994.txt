@@ -1,0 +1,223 @@
+We are upgrading the OrderScreen UI to a professional POS-style layout.
+
+---
+
+## GOAL
+
+1. Landscape (mobile + desktop):
+   Show split view:
+   LEFT = Menu
+   RIGHT = Cart (always visible)
+
+2. Portrait (mobile):
+   Keep existing bottom cart bar behavior (no changes)
+
+3. Improve overall UI:
+
+   * Better spacing
+   * Better grid usage
+   * More visual depth
+   * Use full screen width properly
+
+---
+
+## STEP 1 — DETECT LANDSCAPE
+
+Use existing logic or add:
+
+const isLandscape = window.innerWidth > window.innerHeight;
+
+(If already exists, reuse it)
+
+---
+
+## STEP 2 — MAIN LAYOUT STRUCTURE
+
+Wrap entire screen:
+
+<div className="w-full h-full">
+
+Then conditionally render:
+
+{isLandscape ? (
+
+  <div className="flex h-full">
+    {/* LEFT MENU */}
+    <div className="flex-1 overflow-y-auto">
+      {renderMenu()}
+    </div>
+
+```
+{/* RIGHT CART */}
+<div className="w-80 border-l border-white/10 bg-[#0b1220]">
+  {renderCartPanel()}
+</div>
+```
+
+  </div>
+) : (
+  renderMobileLayout()
+)}
+
+---
+
+## STEP 3 — MENU AREA IMPROVEMENTS
+
+Inside renderMenu():
+
+1. Remove narrow max-width:
+   ❌ max-w-md
+   ✅ replace with:
+   className="w-full px-4"
+
+2. Improve grid:
+
+Change:
+grid-cols-2
+
+To:
+grid-cols-2 sm:grid-cols-3 lg:grid-cols-4
+
+3. Add spacing:
+
+className="grid gap-4"
+
+---
+
+## STEP 4 — ITEM CARD UPGRADE
+
+Update item card styles:
+
+className="
+rounded-2xl
+bg-white/5
+border border-white/10
+p-3
+shadow-lg shadow-black/20
+hover:bg-white/10
+transition-all
+"
+
+---
+
+## STEP 5 — PLUS BUTTON IMPROVEMENT
+
+Update "+" button:
+
+className="
+w-10 h-10
+rounded-full
+bg-blue-500
+hover:scale-105
+active:scale-95
+transition-all
+"
+
+---
+
+## STEP 6 — CATEGORY BAR FIX
+
+Ensure horizontal scrolling:
+
+className="
+flex gap-3 overflow-x-auto
+"
+
+---
+
+## STEP 7 — HEADER COMPACTNESS
+
+Reduce header padding:
+
+Change:
+py-5 → py-3
+
+---
+
+## STEP 8 — CART PANEL (LANDSCAPE)
+
+Create or reuse renderCartPanel():
+
+Structure:
+
+<div className="h-full flex flex-col">
+
+{/* Header */}
+
+  <div className="p-4 border-b border-white/10 font-semibold">
+    Order
+  </div>
+
+{/* Items */}
+
+  <div className="flex-1 overflow-y-auto p-4 space-y-2">
+    {items.map(...)}
+  </div>
+
+{/* Footer */}
+
+  <div className="p-4 border-t border-white/10 space-y-3">
+    <div className="flex justify-between">
+      <span>Total</span>
+      <span>Rs. {total}</span>
+    </div>
+
+```
+<button className="w-full bg-green-500 rounded-xl py-3 font-semibold">
+  Review & Pay
+</button>
+```
+
+  </div>
+
+</div>
+
+---
+
+## STEP 9 — KEEP PORTRAIT BEHAVIOR
+
+DO NOT change:
+
+* Bottom cart bar
+* Drawer / full screen cart logic
+
+Only wrap it inside renderMobileLayout()
+
+---
+
+## STEP 10 — SAFETY CHECKS
+
+Ensure:
+
+* No duplicate cart logic
+* Shared state (items, total) used in both views
+* No breaking navigation
+
+---
+
+## EXPECTED RESULT
+
+Landscape:
+
+* Menu on left
+* Cart always visible on right
+* No "Review" toggle needed
+* Fast POS workflow
+
+Portrait:
+
+* Same as before (bottom bar + review screen)
+
+UI:
+
+* Better spacing
+* Better grid usage
+* More premium feel
+* No stretched layout
+
+---
+
+## IMPORTANT
+
+Do NOT remove existing working logic.
+Only restructure layout and reuse existing functions/components.

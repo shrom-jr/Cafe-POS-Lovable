@@ -38,12 +38,11 @@ const OrderScreen = () => {
   const swipeTouchStartY = useRef(0);
   const swipeTouchCurrentY = useRef(0);
 
-  // Reliable landscape mobile detection: width > height AND height < 600px
-  const detectLandscape = () =>
-    window.innerWidth > window.innerHeight && window.innerHeight < 600;
-  const [isLandscapeMobile, setIsLandscapeMobile] = useState(detectLandscape);
+  // Landscape detection: any device where width > height gets split view
+  const detectLandscape = () => window.innerWidth > window.innerHeight;
+  const [isLandscape, setIsLandscape] = useState(detectLandscape);
   useEffect(() => {
-    const update = () => setIsLandscapeMobile(detectLandscape());
+    const update = () => setIsLandscape(detectLandscape());
     window.addEventListener('resize', update);
     window.addEventListener('orientationchange', update);
     return () => {
@@ -142,7 +141,7 @@ const OrderScreen = () => {
           Tablet (sm, >=640px): side-by-side 2/3 menu + 1/3 cart
           Desktop (lg, >=1024px): same as tablet, larger cart panel
       */}
-      <div className="flex-1 flex flex-col sm:flex-row short:col overflow-hidden min-h-0">
+      <div className="flex-1 flex flex-row overflow-hidden min-h-0">
 
         {/* ── Menu area ── */}
         <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
@@ -197,18 +196,14 @@ const OrderScreen = () => {
           )}
 
           {/* Items grid — only this section scrolls */}
-          <div className="flex-1 min-h-0 overflow-y-auto p-3 lg:p-4 bg-background pb-24 sm:pb-4 short:pb-20">
-            <div className={isLandscapeMobile
-              ? 'grid grid-cols-4 gap-1.5'
-              : 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4'
-            }>
+          <div className={`flex-1 min-h-0 overflow-y-auto p-3 lg:p-4 bg-background ${!isLandscape ? 'pb-24' : ''}`}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
               {filteredItems.map((item) => (
                 <MenuItemCard
                   key={item.id}
                   item={item}
                   quantityInOrder={orderQtyMap[item.id] || 0}
                   onAdd={() => handleAddItem(item)}
-                  compact={isLandscapeMobile}
                 />
               ))}
             </div>
@@ -222,32 +217,34 @@ const OrderScreen = () => {
           </div>
         </div>
 
-        {/* ── Cart panel — hidden on mobile, always visible on tablet+ ── */}
-        <div
-          className="hidden sm:flex short:hidden sm:w-1/3 lg:w-[360px] flex-col min-h-0 overflow-hidden"
-          style={{
-            borderLeft: '1px solid rgba(255,255,255,0.10)',
-            boxShadow: '-10px 0 30px rgba(0,0,0,0.4)',
-          }}
-        >
-          <OrderPanel
-            order={order}
-            onUpdateQty={(menuItemId, delta) =>
-              order && updateItemQuantity(order.id, menuItemId, delta)
-            }
-            onRemove={(menuItemId) =>
-              order && removeItemFromOrder(order.id, menuItemId)
-            }
-            onPay={handlePay}
-            onClear={handleClear}
-            pax={table.pax ?? 1}
-            onPaxChange={handlePaxChange}
-          />
-        </div>
+        {/* ── Cart panel — JS-conditional, shown in landscape on any device ── */}
+        {isLandscape && (
+          <div
+            className="w-80 lg:w-[360px] flex-shrink-0 flex flex-col min-h-0 overflow-hidden"
+            style={{
+              borderLeft: '1px solid rgba(255,255,255,0.10)',
+              boxShadow: '-10px 0 30px rgba(0,0,0,0.4)',
+            }}
+          >
+            <OrderPanel
+              order={order}
+              onUpdateQty={(menuItemId, delta) =>
+                order && updateItemQuantity(order.id, menuItemId, delta)
+              }
+              onRemove={(menuItemId) =>
+                order && removeItemFromOrder(order.id, menuItemId)
+              }
+              onPay={handlePay}
+              onClear={handleClear}
+              pax={table.pax ?? 1}
+              onPaxChange={handlePaxChange}
+            />
+          </div>
+        )}
       </div>
 
-      {/* ── Mobile: COLLAPSED ORDER BAR (portrait + landscape) ── */}
-      {hasItems && (
+      {/* ── Portrait mobile only: COLLAPSED ORDER BAR ── */}
+      {!isLandscape && hasItems && (
         <div
           onClick={() => setShowCart(true)}
           className="sm:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between px-5 cursor-pointer active:brightness-110 transition-all select-none"
@@ -271,8 +268,8 @@ const OrderScreen = () => {
         </div>
       )}
 
-      {/* ── Portrait mobile: EXPANDABLE ORDER DRAWER ── */}
-      {!isLandscapeMobile && (
+      {/* ── Portrait mobile only: EXPANDABLE ORDER DRAWER ── */}
+      {!isLandscape && (
         <>
           {/* Backdrop */}
           <div
@@ -441,117 +438,6 @@ const OrderScreen = () => {
         </>
       )}
 
-      {/* ── Landscape mobile: FULL SCREEN cart (completely separate from bottom sheet) ── */}
-      {isLandscapeMobile && showCart && (
-        <div
-          className="fixed inset-0 z-[100] flex flex-col"
-          style={{ background: '#0a1628' }}
-        >
-          {/* Header */}
-          <div
-            className="flex-shrink-0 flex items-center justify-between px-4 py-2"
-            style={{
-              borderBottom: '1px solid rgba(255,255,255,0.10)',
-              background: 'rgba(255,255,255,0.03)',
-            }}
-          >
-            <h3 className="font-bold text-white/90 text-sm">
-              Cart{itemCount > 0 ? ` · ${itemCount} item${itemCount !== 1 ? 's' : ''}` : ''}
-            </h3>
-            <button
-              onClick={() => setShowCart(false)}
-              data-testid="button-close-cart"
-              className="p-1.5 rounded-lg transition-colors"
-              style={{ color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.06)' }}
-            >
-              <X size={16} />
-            </button>
-          </div>
-
-          {/* Items — only this scrolls */}
-          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 space-y-2">
-            {(order?.items || []).length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full py-8" style={{ color: 'rgba(255,255,255,0.25)' }}>
-                <ShoppingCart size={32} className="mb-2 opacity-30" />
-                <p className="text-sm font-semibold">No items yet</p>
-                <p className="text-xs opacity-60 mt-1">Tap items on the left to add</p>
-              </div>
-            ) : (
-              (order?.items || []).map((item) => (
-                <div
-                  key={item.menuItemId}
-                  className="flex items-center gap-2 rounded-xl px-3 py-2"
-                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.07)' }}
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-white/90 truncate">{item.name}</p>
-                    <p className="text-xs text-white/40">Rs. {fmt(item.price)} each</p>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => order && updateItemQuantity(order.id, item.menuItemId, -1)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-white/50 active:scale-90"
-                      style={{ background: 'rgba(255,255,255,0.07)' }}
-                    >
-                      <span className="text-base leading-none">−</span>
-                    </button>
-                    <span className="w-6 text-center font-black text-sm text-white/85">{item.quantity}</span>
-                    <button
-                      onClick={() => order && updateItemQuantity(order.id, item.menuItemId, 1)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-white/50 active:scale-90"
-                      style={{ background: 'rgba(59,130,246,0.18)', border: '1px solid rgba(59,130,246,0.28)' }}
-                    >
-                      <span className="text-base leading-none">+</span>
-                    </button>
-                  </div>
-                  <p className="w-16 text-right text-sm font-bold text-white/80">Rs. {fmt(item.price * item.quantity)}</p>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Footer — always pinned, never scrolls */}
-          <div
-            className="flex-shrink-0 px-4 pt-3 pb-4 relative"
-            style={{
-              background: '#0c1828',
-            }}
-          >
-            {/* Gradient fade — bleeds upward into scroll area, no layout impact */}
-            <div
-              className="absolute inset-x-0 pointer-events-none"
-              style={{
-                top: '-48px',
-                height: '48px',
-                background: 'linear-gradient(to bottom, transparent, #0c1828)',
-              }}
-            />
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold uppercase tracking-wider text-white/35">Total</span>
-              <span className="text-2xl font-black text-white/95">
-                Rs. {fmt((order?.items || []).reduce((s, i) => s + i.price * i.quantity, 0))}
-              </span>
-            </div>
-            <button
-              onClick={() => { setShowCart(false); handlePay(); }}
-              disabled={!order || order.items.length === 0}
-              data-testid="button-proceed-to-bill"
-              className="w-full py-3 rounded-xl font-black text-base flex items-center justify-center gap-2 transition-all active:scale-[0.97] disabled:opacity-20 disabled:cursor-not-allowed"
-              style={{
-                background: order && order.items.length > 0
-                  ? 'linear-gradient(135deg, #1e50d0 0%, #4186f5 100%)'
-                  : 'rgba(59,130,246,0.12)',
-                color: order && order.items.length > 0 ? '#ffffff' : 'rgba(255,255,255,0.3)',
-                boxShadow: order && order.items.length > 0
-                  ? '0 4px 20px -4px rgba(59,130,246,0.55)'
-                  : 'none',
-              }}
-            >
-              {order && order.items.length > 0 ? 'Review Order →' : 'Add items to order'}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
