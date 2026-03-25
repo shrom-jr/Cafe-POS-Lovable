@@ -156,7 +156,11 @@ const ReviewScreen = () => {
     setShowQRModal(false);
     setPaid(true);
 
-    triggerPrint('receipt');
+    // Delay so React re-renders the receipt portal and ThermalReceiptLayout
+    // registers its text via setReceiptText() before triggerPrint() reads it.
+    setTimeout(() => {
+      if (items.length > 0) triggerPrint('receipt');
+    }, 100);
   };
 
   // ── Early exits ───────────────────────────────────────────────
