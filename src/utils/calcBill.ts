@@ -21,7 +21,7 @@ export function calcBill(
   const discountAmount =
     discountType === 'percent'
       ? Math.round((subtotal * discountValue) / 100)
-      : Math.min(discountValue, subtotal);
+      : Math.round(Math.min(discountValue, subtotal));
 
   const afterDiscount = Math.max(0, subtotal - discountAmount);
 

@@ -12,7 +12,7 @@ import NotFound from './pages/NotFound.tsx';
 const App = () => (
   <TooltipProvider>
     <Toaster />
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         <Route path="/" element={<TableOverview />} />
         <Route path="/order/:tableId" element={<OrderScreen />} />
