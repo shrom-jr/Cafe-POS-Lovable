@@ -11,7 +11,7 @@ import { playSuccess } from '@/utils/sounds';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   ChevronLeft, ChevronDown, ChevronUp, Banknote, Smartphone,
-  CheckCircle2, Home, X, Loader2, Printer, Scissors, Check,
+  CheckCircle2, Home, X, Loader2, Printer, Check,
 } from 'lucide-react';
 import ThermalReceiptLayout from '@/components/ThermalReceiptLayout';
 import { OrderItem, TablePayment } from '@/types/pos';
@@ -64,7 +64,6 @@ const ReviewScreen = () => {
   );
 
   // ── Split / partial payment state ─────────────────────────────
-  const [splitMode, setSplitMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [partialSuccess, setPartialSuccess] = useState(false);
   const [printSession, setPrintSession] = useState<{
@@ -90,7 +89,7 @@ const ReviewScreen = () => {
     [splitSelectedItems, settings]
   );
 
-  const activeBill = splitMode ? splitBill : bill;
+  const activeBill = selectedIds.size > 0 ? splitBill : bill;
 
   // ── Payment state ─────────────────────────────────────────────
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
@@ -166,8 +165,9 @@ const ReviewScreen = () => {
     confirmingRef.current = true;
     setConfirming(true);
 
-    const payItems = splitMode ? splitSelectedItems : unpaidItems;
-    const payBill = splitMode ? splitBill : bill;
+    const isSplit = selectedIds.size > 0;
+    const payItems = isSplit ? splitSelectedItems : unpaidItems;
+    const payBill = isSplit ? splitBill : bill;
     const resolvedMethod = resolvePaymentLabel(method, settings);
 
     const bn = getNextBillNumber();
@@ -178,8 +178,8 @@ const ReviewScreen = () => {
       tableNumber,
       items: [...payItems],
       subtotal: payBill.subtotal,
-      discount: splitMode ? 0 : discountValue,
-      discountType: splitMode ? 'percent' : discountMode,
+      discount: isSplit ? 0 : discountValue,
+      discountType: isSplit ? 'percent' : discountMode,
       vatAmount: payBill.vatAmount,
       vatRate: payBill.vatRate,
       vatMode: payBill.vatMode,
@@ -244,7 +244,6 @@ const ReviewScreen = () => {
         setTimeout(attemptPrint, 50);
       }
     } else {
-      setSplitMode(false);
       setSelectedIds(new Set());
       confirmingRef.current = false;
       setConfirming(false);
@@ -494,7 +493,7 @@ const ReviewScreen = () => {
       className="flex-1 min-h-0 rounded-xl overflow-hidden flex flex-col"
       style={{
         background: 'rgba(255,255,255,0.04)',
-        border: splitMode ? '1px solid rgba(59,130,246,0.3)' : '1px solid rgba(255,255,255,0.06)',
+        border: '1px solid rgba(255,255,255,0.06)',
         boxShadow: '0 4px 16px -8px rgba(0,0,0,0.3)',
       }}
     >
@@ -505,9 +504,9 @@ const ReviewScreen = () => {
         <span className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.22)' }}>
           Order Items
         </span>
-        {splitMode && (
-          <span className="text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: 'rgba(59,130,246,0.8)' }}>
-            Select to pay
+        {selectedIds.size > 0 && (
+          <span className="text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: 'rgba(59,130,246,0.7)' }}>
+            {selectedIds.size} selected
           </span>
         )}
       </div>
@@ -519,28 +518,30 @@ const ReviewScreen = () => {
             return (
               <div
                 key={item.menuItemId}
-                className={`flex items-center gap-3 px-3 py-2 ${splitMode && !isPaid ? 'cursor-pointer active:opacity-70' : ''}`}
+                className={`flex items-center gap-3 px-3 py-2 ${!isPaid ? 'cursor-pointer active:opacity-70' : ''}`}
                 style={{
                   borderBottom: idx < items.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
                   opacity: isPaid ? 0.45 : 1,
-                  background: isSelected ? 'rgba(59,130,246,0.08)' : 'transparent',
+                  background: isSelected ? 'rgba(59,130,246,0.12)' : 'transparent',
+                  transition: 'background 0.15s',
                 }}
-                onClick={() => splitMode && !isPaid && toggleItemSelection(item.menuItemId)}
+                onClick={() => !isPaid && toggleItemSelection(item.menuItemId)}
               >
-                {splitMode && !isPaid && (
+                {!isPaid && (
                   <div
                     className="flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center transition-all"
                     style={{
-                      background: isSelected ? 'rgba(59,130,246,0.8)' : 'rgba(255,255,255,0.08)',
-                      border: isSelected ? '1px solid rgba(59,130,246,0.9)' : '1px solid rgba(255,255,255,0.15)',
+                      background: isSelected ? 'rgba(59,130,246,0.85)' : 'rgba(255,255,255,0.07)',
+                      border: isSelected ? '1px solid rgba(59,130,246,1)' : '1px solid rgba(255,255,255,0.13)',
                     }}
                   >
                     {isSelected && <Check size={11} className="text-white" />}
                   </div>
                 )}
+                {isPaid && <div className="flex-shrink-0 w-5 h-5" />}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-bold truncate leading-snug" style={{ color: isPaid ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.95)' }}>
+                    <p className="text-sm font-bold truncate leading-snug" style={{ color: isPaid ? 'rgba(255,255,255,0.45)' : isSelected ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.88)' }}>
                       {item.name}
                     </p>
                     {isPaid && (
@@ -553,7 +554,7 @@ const ReviewScreen = () => {
                     {item.quantity} × Rs. {fmt(item.price)}
                   </p>
                 </div>
-                <p className="text-sm font-bold tabular-nums whitespace-nowrap" style={{ color: isPaid ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.88)' }}>
+                <p className="text-sm font-bold tabular-nums whitespace-nowrap" style={{ color: isPaid ? 'rgba(255,255,255,0.35)' : isSelected ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.88)' }}>
                   Rs. {fmt(item.price * item.quantity)}
                 </p>
               </div>
@@ -670,7 +671,6 @@ const ReviewScreen = () => {
   const billCard = getBillCard();
 
   const getPaymentCard = (compact = false) => {
-    const payDisabled = confirming || (splitMode && selectedIds.size === 0);
     return (
     <div
       className="rounded-2xl px-4 flex-shrink-0"
@@ -682,51 +682,17 @@ const ReviewScreen = () => {
         paddingBottom: compact ? '8px' : '8px',
       }}
     >
-      {/* Split mode header */}
-      {splitMode ? (
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <p className="font-black uppercase tracking-[0.14em] text-[10px]" style={{ color: 'rgba(59,130,246,0.8)' }}>
-              Split — Pay Items
-            </p>
-            {selectedIds.size > 0 ? (
-              <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                {selectedIds.size} item{selectedIds.size !== 1 ? 's' : ''} · Rs. {fmt(splitBill.total)}
-              </p>
-            ) : (
-              <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.3)' }}>Select items above to pay</p>
-            )}
-          </div>
-          <button
-            onClick={() => { setSplitMode(false); setSelectedIds(new Set()); }}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all active:scale-95"
-            style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.1)' }}
-          >
-            <X size={10} /> Cancel
-          </button>
-        </div>
-      ) : (
-        <div className="flex items-center justify-between mb-2">
-          <p className="font-black uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10 }}>
-            Payment Method
-          </p>
-          {unpaidItems.length > 0 && items.length > 1 && (
-            <button
-              onClick={() => setSplitMode(true)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all active:scale-95"
-              style={{ background: 'rgba(59,130,246,0.1)', color: 'rgba(147,197,253,0.8)', border: '1px solid rgba(59,130,246,0.2)' }}
-            >
-              <Scissors size={9} /> Split / Pay Items
-            </button>
-          )}
-        </div>
-      )}
+      <div className="flex items-center justify-between mb-2">
+        <p className="font-black uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10 }}>
+          Payment Method
+        </p>
+      </div>
 
       <div className={compact ? 'space-y-1' : 'space-y-1.5'}>
               {/* Cash */}
               <button
                 onClick={() => handleConfirmPayment('cash')}
-                disabled={payDisabled}
+                disabled={confirming}
                 data-testid="button-payment-method-cash"
                 className={`w-full flex items-center gap-3 px-4 ${compact ? 'py-1.5' : 'py-2'} rounded-xl transition-all active:scale-[0.97] disabled:opacity-40`}
                 style={{
@@ -743,7 +709,7 @@ const ReviewScreen = () => {
                 <div className="flex-1 text-left">
                   <p className="font-bold text-sm" style={{ color: 'rgba(255,255,255,0.92)' }}>Cash</p>
                   <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.38)' }}>
-                    {splitMode ? (selectedIds.size > 0 ? 'Pay selected items' : 'Select items first') : 'Tap to complete payment'}
+                    Tap to complete payment
                   </p>
                 </div>
                 <span className="text-sm font-black text-success tabular-nums">Rs. {fmt(activeBill.total)}</span>
@@ -766,9 +732,9 @@ const ReviewScreen = () => {
                     return (
                       <button
                         key={id}
-                        onClick={() => { if (!payDisabled) { setSelectedMethod(id); setShowQRModal(true); } }}
+                        onClick={() => { if (!confirming) { setSelectedMethod(id); setShowQRModal(true); } }}
                         data-testid={`button-payment-method-${id}`}
-                        disabled={payDisabled}
+                        disabled={confirming}
                         className={`flex items-center gap-2.5 px-3 ${compact ? 'py-1.5' : 'py-2'} rounded-xl transition-all active:scale-[0.97] disabled:opacity-40`}
                         style={{
                           background: 'rgba(255,255,255,0.04)',
@@ -861,14 +827,9 @@ const ReviewScreen = () => {
                     border: '1px solid rgba(255,255,255,0.1)',
                   }}
                 >
-                  <div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.16em]" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                      {splitMode ? 'Selected Total' : 'Total'}
-                    </span>
-                    {splitMode && selectedIds.size === 0 && (
-                      <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.25)' }}>Select items to pay</p>
-                    )}
-                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.16em]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                    Total
+                  </span>
                   <span className="text-[24px] font-black tracking-tight leading-none tabular-nums" style={{ color: '#ffffff' }}>
                     Rs. {fmt(activeBill.total)}
                   </span>
@@ -883,39 +844,15 @@ const ReviewScreen = () => {
                     boxShadow: '0 4px 20px -6px rgba(0,0,0,0.4)',
                   }}
                 >
-                  <div className="flex-shrink-0 flex items-center justify-between mb-1.5">
-                    {splitMode ? (
-                      <>
-                        <p className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: 'rgba(59,130,246,0.8)' }}>Split — Pay Items</p>
-                        <button
-                          onClick={() => { setSplitMode(false); setSelectedIds(new Set()); }}
-                          className="flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold"
-                          style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}
-                        >
-                          <X size={8} /> Cancel
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.35)' }}>Payment Method</p>
-                        {unpaidItems.length > 0 && items.length > 1 && (
-                          <button
-                            onClick={() => setSplitMode(true)}
-                            className="flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold"
-                            style={{ background: 'rgba(59,130,246,0.1)', color: 'rgba(147,197,253,0.8)', border: '1px solid rgba(59,130,246,0.2)' }}
-                          >
-                            <Scissors size={8} /> Split
-                          </button>
-                        )}
-                      </>
-                    )}
+                  <div className="flex-shrink-0 mb-1.5">
+                    <p className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.35)' }}>Payment Method</p>
                   </div>
                   {/* Scrollable list — only this scrolls when there are many options */}
                   <div className="flex-1 min-h-0 overflow-y-auto space-y-1 pr-0.5">
                     {/* Cash — pinned first, always prominent */}
                     <button
                       onClick={() => handleConfirmPayment('cash')}
-                      disabled={confirming || (splitMode && selectedIds.size === 0)}
+                      disabled={confirming}
                       data-testid="button-payment-method-cash"
                       className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg transition-all active:scale-[0.97] disabled:opacity-40"
                       style={{ background: 'rgba(52,211,153,0.07)', border: '1px solid rgba(52,211,153,0.25)' }}
@@ -926,7 +863,7 @@ const ReviewScreen = () => {
                       <div className="flex-1 text-left">
                         <p className="font-bold text-sm leading-none" style={{ color: 'rgba(255,255,255,0.92)' }}>Cash</p>
                         <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.38)' }}>
-                          {splitMode ? (selectedIds.size > 0 ? 'Pay selected' : 'Select items') : 'Tap to complete'}
+                          Tap to complete
                         </p>
                       </div>
                       <span className="text-xs font-black text-success tabular-nums">Rs. {fmt(activeBill.total)}</span>
@@ -946,9 +883,9 @@ const ReviewScreen = () => {
                       return (
                         <button
                           key={id}
-                          onClick={() => { if (!(splitMode && selectedIds.size === 0)) { setSelectedMethod(id); setShowQRModal(true); } }}
+                          onClick={() => { if (!confirming) { setSelectedMethod(id); setShowQRModal(true); } }}
                           data-testid={`button-payment-method-${id}`}
-                          disabled={confirming || (splitMode && selectedIds.size === 0)}
+                          disabled={confirming}
                           className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg transition-all active:scale-[0.97] disabled:opacity-40"
                           style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)' }}
                         >
@@ -1229,6 +1166,50 @@ const ReviewScreen = () => {
 
         </div>
       )}
+      {/* Fixed bottom bar — shown when items are selected */}
+      {selectedIds.size > 0 && (
+        <div
+          className="fixed bottom-0 inset-x-0 z-40 flex items-center justify-between px-4 py-3 gap-3"
+          style={{
+            background: 'rgba(10,16,32,0.97)',
+            borderTop: '1px solid rgba(59,130,246,0.25)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            paddingBottom: 'max(12px, env(safe-area-inset-bottom, 12px))',
+          }}
+        >
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-[0.12em]" style={{ color: 'rgba(147,197,253,0.8)' }}>
+              {selectedIds.size} item{selectedIds.size !== 1 ? 's' : ''} selected
+            </p>
+            <p className="text-lg font-black text-white tabular-nums leading-none">
+              Rs. {fmt(splitBill.total)}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="px-3 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
+              style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.1)' }}
+            >
+              Clear
+            </button>
+            <button
+              onClick={() => handleConfirmPayment('cash')}
+              disabled={confirming}
+              className="flex items-center gap-2 px-5 py-2 rounded-xl font-black text-sm text-white transition-all active:scale-[0.97] disabled:opacity-60"
+              style={{
+                background: 'linear-gradient(135deg, #1e50d0 0%, #4186f5 100%)',
+                boxShadow: '0 4px 16px -4px rgba(59,130,246,0.5)',
+              }}
+            >
+              {confirming ? <Loader2 size={14} className="animate-spin" /> : null}
+              Pay Selected
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Partial payment success overlay */}
       {partialSuccess && printSession && (
         <div className="fixed inset-0 z-[60] flex items-end justify-center pb-8 px-4 pointer-events-none">

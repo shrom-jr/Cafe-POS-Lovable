@@ -1,0 +1,150 @@
+You are improving the UX of an existing café POS split payment system.
+
+⚠️ STRICT RULES:
+- DO NOT change business logic
+- DO NOT change store or data structure
+- DO NOT modify markItemsPaid or payment system
+- ONLY improve UI/UX
+- Keep everything stable and backward-compatible
+
+If any UX change requires logic change → STOP and ask.
+
+---
+
+# 🎯 GOAL
+
+Make payment flow:
+- Instant
+- No thinking
+- No modes
+- Natural for café staff
+
+---
+
+# ❌ REMOVE THESE COMPLETELY
+
+- "Split / Pay Items" button
+- "Cancel" button
+- "Split Mode" state
+- Any UI that changes layout when splitting
+
+---
+
+# ✅ NEW UX MODEL
+
+## CORE IDEA:
+Selection = Split automatically
+
+---
+
+## ✅ ITEM INTERACTION
+
+- All UNPAID items are always tappable
+- Tap = select
+- Tap again = unselect
+
+---
+
+## ✅ SELECTION UI
+
+Selected item must:
+- Have strong highlight (clear background change)
+- Show check icon
+- Be visually dominant over unselected items
+
+Paid items:
+- Dimmed
+- Show "Paid" badge
+- NOT selectable
+
+---
+
+## ✅ PAYMENT LOGIC (UI ONLY)
+
+IF no items selected:
+→ Payment = FULL unpaid bill
+
+IF items selected:
+→ Payment = ONLY selected items
+
+---
+
+## ✅ PAYMENT SECTION
+
+DO NOT change structure
+
+Keep:
+- Cash
+- eSewa
+- Khalti
+- Fonepay
+
+ONLY change:
+- Amount displayed
+
+---
+
+## ✅ ADD FIXED BOTTOM BAR (IMPORTANT)
+
+IF selectedIds.size > 0:
+
+Show fixed bottom bar:
+
+--------------------------------
+X items selected   Rs. XXXX
+[ Pay Selected ]
+--------------------------------
+
+- This bar triggers payment
+- This replaces split mode UI entirely
+
+---
+
+## ✅ REMOVE DYNAMIC CARD CHANGES
+
+DO NOT:
+- Change titles like "Split Pay"
+- Change layout structure
+- Insert Cancel buttons
+
+Everything stays visually stable
+
+---
+
+## ✅ AFTER PAYMENT
+
+PARTIAL:
+- Keep screen open
+- Clear selection
+- Show toast:
+  "Paid Rs. XXX for X items"
+
+FULL:
+- Existing success flow (no change)
+
+---
+
+## ✅ UX PRIORITY
+
+Focus only on:
+1. Items list
+2. Total
+3. Payment button
+
+Everything else is secondary
+
+---
+
+# 🎯 FINAL EXPERIENCE
+
+User flow must feel like:
+
+Tap items → Pay → Done
+
+No mode switching.
+No confusion.
+No UI jumps.
+
+---
+
+Keep UI minimal, stable, and fast.
