@@ -691,6 +691,11 @@ const ReviewScreen = () => {
         <p className="font-black uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10 }}>
           Payment Method
         </p>
+        {selectedIds.size > 0 && (
+          <p className="text-[10px] font-semibold tabular-nums" style={{ color: 'rgba(147,197,253,0.65)' }}>
+            Rs. {fmt(activeBill.total)} &bull; {selectedIds.size} item{selectedIds.size !== 1 ? 's' : ''}
+          </p>
+        )}
       </div>
 
       <div className={compact ? 'space-y-1' : 'space-y-1.5'}>
@@ -834,6 +839,11 @@ const ReviewScreen = () => {
                 >
                   <span className="text-[10px] font-black uppercase tracking-[0.16em]" style={{ color: 'rgba(255,255,255,0.35)' }}>
                     Total
+                    {selectedIds.size > 0 && (
+                      <span className="ml-2 normal-case font-semibold tracking-normal" style={{ color: 'rgba(147,197,253,0.65)' }}>
+                        {selectedIds.size} item{selectedIds.size !== 1 ? 's' : ''}
+                      </span>
+                    )}
                   </span>
                   <span className="text-[24px] font-black tracking-tight leading-none tabular-nums" style={{ color: '#ffffff' }}>
                     Rs. {fmt(activeBill.total)}
