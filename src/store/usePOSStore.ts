@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { db } from '@/storage/db';
-import { CafeTable, Category, MenuItem, Order, Payment, Settings } from '@/types/pos';
+import { CafeTable, Category, MenuItem, Order, Payment, Settings, TablePayment } from '@/types/pos';
 
 db.seed();
 
@@ -33,6 +33,8 @@ interface POSState {
   updateOrderStatus: (orderId: string, status: Order['status']) => void;
 
   clearOrder: (orderId: string) => void;
+
+  markItemsPaid: (orderId: string, menuItemIds: string[], tablePayment: TablePayment) => void;
 
   addPayment: (payment: Omit<Payment, 'id'>) => void;
 
@@ -271,6 +273,27 @@ export const usePOSStore = create<POSState>((set, get) => ({
       db.saveOrders(orders);
       db.saveTables(tables);
       return { orders, tables };
+    });
+  },
+
+  markItemsPaid: (orderId, menuItemIds, tablePayment) => {
+    set((state) => {
+      const idSet = new Set(menuItemIds);
+      const now = Date.now();
+      const orders = state.orders.map((o) => {
+        if (o.id !== orderId) return o;
+        return {
+          ...o,
+          items: o.items.map((i) =>
+            idSet.has(i.menuItemId)
+              ? { ...i, status: 'paid' as const, paidAt: now }
+              : i
+          ),
+          tablePayments: [...(o.tablePayments || []), tablePayment],
+        };
+      });
+      db.saveOrders(orders);
+      return { orders };
     });
   },
 

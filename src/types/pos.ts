@@ -26,6 +26,17 @@ export interface OrderItem {
   name: string;
   price: number;
   quantity: number;
+  status?: 'unpaid' | 'paid';
+  paidAt?: number;
+}
+
+export interface TablePayment {
+  id: string;
+  itemIds: string[];
+  total: number;
+  method: string;
+  timestamp: number;
+  billNumber: number;
 }
 
 export interface Order {
@@ -35,6 +46,7 @@ export interface Order {
   items: OrderItem[];
   status: 'active' | 'billed' | 'paid';
   createdAt: number;
+  tablePayments?: TablePayment[];
 }
 
 export interface Payment {

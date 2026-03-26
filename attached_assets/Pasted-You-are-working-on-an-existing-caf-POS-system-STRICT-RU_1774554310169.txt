@@ -1,0 +1,225 @@
+You are working on an existing café POS system.
+
+⚠️ STRICT RULES:
+
+* DO NOT rewrite existing architecture
+* DO NOT break current table-based flow
+* DO NOT modify unrelated components
+* DO NOT redesign UI
+* ONLY extend system safely with:
+
+  1. Partial Payment (Pay by Items)
+  2. Payment History (lightweight, future-proof)
+  3. Correct Receipt Handling
+
+---
+
+# 🎯 FEATURE 1: ITEM-LEVEL PAYMENT
+
+## ✅ Update order item structure
+
+```js
+{
+  id,
+  name,
+  price,
+  quantity,
+  status: "unpaid" | "paid",   // NEW
+  paidAt: timestamp | null     // OPTIONAL
+}
+```
+
+Default: "unpaid"
+
+---
+
+# 🎯 FEATURE 2: PAYMENT HISTORY (NEW, IMPORTANT)
+
+## 🧠 GOAL
+
+Track each payment separately WITHOUT breaking existing system.
+
+---
+
+## ✅ Add to table object:
+
+```js
+table = {
+  id,
+  items: [...],
+  payments: []   // NEW
+}
+```
+
+---
+
+## ✅ Payment entry structure:
+
+```js
+{
+  id,
+  items: [itemIds],     // items included in this payment
+  total,
+  method,               // cash / qr / etc
+  timestamp
+}
+```
+
+---
+
+## ⚠️ IMPORTANT RULES
+
+* DO NOT duplicate item data inside payments
+* ONLY store item references (ids)
+* Keep this lightweight
+
+---
+
+# 🎯 FEATURE 3: PARTIAL PAYMENT FLOW
+
+## UI
+
+Add button:
+→ “Split / Pay Items”
+
+---
+
+## Selection Mode:
+
+* Show checkbox for each UNPAID item
+* Show:
+
+Selected Total: Rs. XXXX
+[ Pay Selected ] [ Cancel ]
+
+---
+
+## On Pay Selected:
+
+1. Get selected unpaid items
+2. Calculate total
+3. Use EXISTING payment logic
+
+---
+
+## After Payment Success:
+
+### ✅ A. Update items:
+
+```js
+item.status = "paid";
+item.paidAt = now();
+```
+
+---
+
+### ✅ B. Add payment record:
+
+```js
+table.payments.push({
+  id: uniqueId(),
+  items: selectedItemIds,
+  total,
+  method,
+  timestamp: now()
+});
+```
+
+---
+
+# 🎯 FEATURE 4: RECEIPT SYSTEM (FIXED)
+
+## 🧠 RULE
+
+Receipt must represent ONLY current payment.
+
+---
+
+## ✅ Create paymentSession:
+
+```js
+const paymentSession = {
+  items: selectedItems,
+  total,
+  method,
+  timestamp
+};
+```
+
+---
+
+## ✅ Print:
+
+```js
+printReceipt(paymentSession);
+```
+
+NOT full table items.
+
+---
+
+## ✅ Receipt content:
+
+* Only selected items
+* total
+* payment method
+* timestamp
+* optional: “Partial Payment”
+
+---
+
+# 🎯 FEATURE 5: TABLE COMPLETION LOGIC
+
+Table closes ONLY when:
+
+```js
+allItems.every(item => item.status === "paid")
+```
+
+---
+
+# 🎯 FEATURE 6: BILL HISTORY INTEGRATION
+
+When table is closed:
+
+* Existing bill history logic remains
+* Extend bill object to include:
+
+```js
+bill = {
+  items: [...],
+  payments: table.payments,   // NEW
+  total
+}
+```
+
+---
+
+## ⚠️ DO NOT:
+
+* Change existing bill structure drastically
+* Remove existing functionality
+* Break previous receipts
+
+---
+
+# 🎯 FEATURE 7: SAFETY RULES
+
+* Prevent paying already-paid items
+* Disable payment if no items selected
+* Ensure consistency between items and payments
+
+---
+
+# 🎯 FINAL RESULT
+
+* Staff can pay by items
+* Each payment is recorded
+* Receipts are correct
+* Table remains active
+* Bill history remains intact
+* System is ready for future upgrades
+
+---
+
+Keep implementation minimal, safe, and scalable.

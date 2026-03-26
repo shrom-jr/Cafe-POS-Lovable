@@ -11,9 +11,10 @@ import { playSuccess } from '@/utils/sounds';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   ChevronLeft, ChevronDown, ChevronUp, Banknote, Smartphone,
-  CheckCircle2, Home, X, Loader2, Printer,
+  CheckCircle2, Home, X, Loader2, Printer, Scissors, Check,
 } from 'lucide-react';
 import ThermalReceiptLayout from '@/components/ThermalReceiptLayout';
+import { OrderItem, TablePayment } from '@/types/pos';
 
 const PRESETS = [0, 5, 10, 15];
 
@@ -26,6 +27,7 @@ const ReviewScreen = () => {
   const settings = usePOSStore((s) => s.settings);
   const resetTable = usePOSStore((s) => s.resetTable);
   const getNextBillNumber = usePOSStore((s) => s.getNextBillNumber);
+  const markItemsPaid = usePOSStore((s) => s.markItemsPaid);
 
   const table = tables.find((t) => t.id === tableId);
   const order = tableId ? getActiveOrder(tableId) : undefined;
@@ -51,10 +53,44 @@ const ReviewScreen = () => {
     return isNaN(n) || n < 0 ? 0 : n;
   }, [discountInput]);
 
-  const bill = useMemo(
-    () => calcBill(items, settings, discountMode, discountValue),
-    [items, settings, discountMode, discountValue]
+  const unpaidItems = useMemo(
+    () => items.filter((i) => i.status !== 'paid'),
+    [items]
   );
+
+  const bill = useMemo(
+    () => calcBill(unpaidItems, settings, discountMode, discountValue),
+    [unpaidItems, settings, discountMode, discountValue]
+  );
+
+  // ── Split / partial payment state ─────────────────────────────
+  const [splitMode, setSplitMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [partialSuccess, setPartialSuccess] = useState(false);
+  const [printSession, setPrintSession] = useState<{
+    items: OrderItem[];
+    billNum: number;
+    paidAt: number;
+    paidMethod: string;
+    subtotal: number;
+    discountAmount: number;
+    vatAmount: number;
+    vatRate: number;
+    vatEnabled: boolean;
+    total: number;
+  } | null>(null);
+
+  const splitSelectedItems = useMemo(
+    () => unpaidItems.filter((i) => selectedIds.has(i.menuItemId)),
+    [unpaidItems, selectedIds]
+  );
+
+  const splitBill = useMemo(
+    () => calcBill(splitSelectedItems, settings, 'percent', 0),
+    [splitSelectedItems, settings]
+  );
+
+  const activeBill = splitMode ? splitBill : bill;
 
   // ── Payment state ─────────────────────────────────────────────
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
@@ -111,8 +147,8 @@ const ReviewScreen = () => {
 
   const getQRData = (method: string) => {
     if (method === 'esewa')
-      return `eSewa://pay?eSewaID=${settings.esewaPhone || settings.esewaId}&amount=${bill.total}&table=${tableNumber}&ref=${reference}`;
-    return `pay://${method}?amount=${bill.total}&ref=${reference}`;
+      return `eSewa://pay?eSewaID=${settings.esewaPhone || settings.esewaId}&amount=${activeBill.total}&table=${tableNumber}&ref=${reference}`;
+    return `pay://${method}?amount=${activeBill.total}&ref=${reference}`;
   };
 
   const getQRImage = (method: string) => {
@@ -128,24 +164,25 @@ const ReviewScreen = () => {
     if (confirming) return;
     setConfirming(true);
 
+    const payItems = splitMode ? splitSelectedItems : unpaidItems;
+    const payBill = splitMode ? splitBill : bill;
+    const resolvedMethod = resolvePaymentLabel(method, settings);
+
     const bn = getNextBillNumber();
     const now = Date.now();
-    setBillNum(bn);
-    setPaidAt(now);
-    setPaidMethod(resolvePaymentLabel(method, settings));
 
     addPayment({
       orderId: orderIdRef.current,
       tableNumber,
-      items: [...items],
-      subtotal: bill.subtotal,
-      discount: discountValue,
-      discountType: discountMode,
-      vatAmount: bill.vatAmount,
-      vatRate: bill.vatRate,
-      vatMode: bill.vatMode,
-      vatEnabled: bill.vatEnabled,
-      total: bill.total,
+      items: [...payItems],
+      subtotal: payBill.subtotal,
+      discount: splitMode ? 0 : discountValue,
+      discountType: splitMode ? 'percent' : discountMode,
+      vatAmount: payBill.vatAmount,
+      vatRate: payBill.vatRate,
+      vatMode: payBill.vatMode,
+      vatEnabled: payBill.vatEnabled,
+      total: payBill.total,
       method,
       reference,
       createdAt: now,
@@ -153,25 +190,74 @@ const ReviewScreen = () => {
       billNumber: bn,
     });
 
-    updateOrderStatus(orderIdRef.current, 'paid');
+    const payItemIds = payItems.map((i) => i.menuItemId);
+    const tablePayment: TablePayment = {
+      id: crypto.randomUUID(),
+      itemIds: payItemIds,
+      total: payBill.total,
+      method,
+      timestamp: now,
+      billNumber: bn,
+    };
+    markItemsPaid(orderIdRef.current, payItemIds, tablePayment);
+
+    const session = {
+      items: [...payItems],
+      billNum: bn,
+      paidAt: now,
+      paidMethod: resolvedMethod,
+      subtotal: payBill.subtotal,
+      discountAmount: payBill.discountAmount,
+      vatAmount: payBill.vatAmount,
+      vatRate: payBill.vatRate,
+      vatEnabled: payBill.vatEnabled,
+      total: payBill.total,
+    };
+    setPrintSession(session);
+
+    const remainingUnpaid = items.filter(
+      (i) => i.status !== 'paid' && !payItemIds.includes(i.menuItemId)
+    );
+    const allDone = remainingUnpaid.length === 0;
+
     playSuccess();
     setShowQRModal(false);
-    setPaid(true);
 
-    // Reset table AFTER setPaid so the receipt portal renders with snapshotted items first
-    if (tableId) resetTable(tableId);
+    if (allDone) {
+      updateOrderStatus(orderIdRef.current, 'paid');
+      setBillNum(bn);
+      setPaidAt(now);
+      setPaidMethod(resolvedMethod);
+      setPaid(true);
+      if (tableId) resetTable(tableId);
 
-    // Retry until ThermalReceiptLayout has rendered and registered its text,
-    // then open the print popup — no fixed timing guess needed.
-    if (items.length > 0) {
-      const attemptPrint = () => {
-        if (isReceiptTextReady()) {
-          triggerPrint('receipt');
-        } else {
-          setTimeout(attemptPrint, 50);
-        }
-      };
-      setTimeout(attemptPrint, 50);
+      if (payItems.length > 0) {
+        const attemptPrint = () => {
+          if (isReceiptTextReady()) {
+            triggerPrint('receipt');
+          } else {
+            setTimeout(attemptPrint, 50);
+          }
+        };
+        setTimeout(attemptPrint, 50);
+      }
+    } else {
+      setSplitMode(false);
+      setSelectedIds(new Set());
+      setConfirming(false);
+      setPartialSuccess(true);
+
+      if (payItems.length > 0) {
+        const attemptPrint = () => {
+          if (isReceiptTextReady()) {
+            triggerPrint('receipt');
+          } else {
+            setTimeout(attemptPrint, 50);
+          }
+        };
+        setTimeout(attemptPrint, 50);
+      }
+      setTimeout(() => setPartialSuccess(false), 2500);
     }
   };
 
@@ -192,7 +278,7 @@ const ReviewScreen = () => {
   }
 
   // ── Receipt portal ────────────────────────────────────────────
-  const receiptPortal = paid
+  const receiptPortal = printSession
     ? createPortal(
         <div
           id="print-receipt"
@@ -214,16 +300,16 @@ const ReviewScreen = () => {
             cafePan={settings.cafePan}
             billFooter={settings.billFooter}
             tableNumber={tableNumber}
-            billNumber={billNum}
-            createdAt={paidAt || Date.now()}
-            items={items}
-            subtotal={bill.subtotal}
-            discountAmount={bill.discountAmount}
-            vatEnabled={bill.vatEnabled}
-            vatAmount={bill.vatAmount}
-            vatRate={bill.vatRate}
-            total={bill.total}
-            method={paidMethod}
+            billNumber={printSession.billNum}
+            createdAt={printSession.paidAt}
+            items={printSession.items}
+            subtotal={printSession.subtotal}
+            discountAmount={printSession.discountAmount}
+            vatEnabled={printSession.vatEnabled}
+            vatAmount={printSession.vatAmount}
+            vatRate={printSession.vatRate}
+            total={printSession.total}
+            method={printSession.paidMethod}
           />
         </div>,
         document.body
@@ -232,8 +318,9 @@ const ReviewScreen = () => {
 
   // ── Success screen ────────────────────────────────────────────
   if (paid) {
-    const displayItems = items.slice(0, 3);
-    const extraCount = items.length - displayItems.length;
+    const sessionItems = printSession?.items || [];
+    const displayItems = sessionItems.slice(0, 3);
+    const extraCount = sessionItems.length - displayItems.length;
 
     const handleReprint = () => {
       if (reprinting) return;
@@ -266,7 +353,7 @@ const ReviewScreen = () => {
         </div>
         <div className="flex justify-between items-center border-t border-dashed border-border/60 pt-1.5">
           <span className={`font-semibold text-muted-foreground ${compact ? 'text-xs' : 'text-sm'}`}>Total</span>
-          <span className={`font-black text-foreground ${compact ? 'text-base' : 'text-lg'}`}>Rs. {fmt(bill.total)}</span>
+          <span className={`font-black text-foreground ${compact ? 'text-base' : 'text-lg'}`}>Rs. {fmt(printSession?.total ?? 0)}</span>
         </div>
       </div>
     );
@@ -290,13 +377,13 @@ const ReviewScreen = () => {
                 </div>
                 <h2 className="text-base font-black text-foreground text-center leading-tight">Payment Successful</h2>
                 <div className="flex items-center gap-2 flex-wrap justify-center">
-                  <span className="text-2xl font-black text-foreground tabular-nums">Rs. {fmt(bill.total)}</span>
+                  <span className="text-2xl font-black text-foreground tabular-nums">Rs. {fmt(printSession?.total ?? 0)}</span>
                   <span className="px-2 py-0.5 rounded-full bg-success/15 text-success text-xs font-bold uppercase">
                     {paidMethod}
                   </span>
                 </div>
-                {bill.discountAmount > 0 && (
-                  <span className="text-xs text-success font-medium">Saved Rs. {fmt(bill.discountAmount)}</span>
+                {(printSession?.discountAmount ?? 0) > 0 && (
+                  <span className="text-xs text-success font-medium">Saved Rs. {fmt(printSession?.discountAmount ?? 0)}</span>
                 )}
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Printer size={11} />
@@ -342,13 +429,13 @@ const ReviewScreen = () => {
                   </div>
                   <h2 className="text-xl font-black text-foreground">Payment Successful</h2>
                   <div className="flex items-center gap-2 flex-wrap justify-center">
-                    <span className="text-3xl font-black text-foreground tabular-nums">Rs. {fmt(bill.total)}</span>
+                    <span className="text-3xl font-black text-foreground tabular-nums">Rs. {fmt(printSession?.total ?? 0)}</span>
                     <span className="px-2.5 py-0.5 rounded-full bg-success/15 text-success text-xs font-bold uppercase">
                       {paidMethod}
                     </span>
                   </div>
-                  {bill.discountAmount > 0 && (
-                    <span className="text-xs text-success font-medium">Saved Rs. {fmt(bill.discountAmount)}</span>
+                  {(printSession?.discountAmount ?? 0) > 0 && (
+                    <span className="text-xs text-success font-medium">Saved Rs. {fmt(printSession?.discountAmount ?? 0)}</span>
                   )}
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Printer size={12} />
@@ -390,44 +477,85 @@ const ReviewScreen = () => {
 
   // ── Shared JSX sections (used in both portrait and landscape) ────
 
+  const toggleItemSelection = (menuItemId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(menuItemId)) next.delete(menuItemId);
+      else next.add(menuItemId);
+      return next;
+    });
+  };
+
   const itemsCard = (
     <div
       className="flex-1 min-h-0 rounded-xl overflow-hidden flex flex-col"
       style={{
         background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.06)',
+        border: splitMode ? '1px solid rgba(59,130,246,0.3)' : '1px solid rgba(255,255,255,0.06)',
         boxShadow: '0 4px 16px -8px rgba(0,0,0,0.3)',
       }}
     >
       <div
-        className="flex-shrink-0 px-3 py-1.5 flex items-center"
+        className="flex-shrink-0 px-3 py-1.5 flex items-center justify-between"
         style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
       >
         <span className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.22)' }}>
           Order Items
         </span>
+        {splitMode && (
+          <span className="text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: 'rgba(59,130,246,0.8)' }}>
+            Select to pay
+          </span>
+        )}
       </div>
       <div className="relative flex-1 min-h-0">
         <div className="overflow-y-auto h-full">
-          {items.map((item, idx) => (
-            <div
-              key={item.menuItemId}
-              className="flex items-center gap-3 px-3 py-2"
-              style={idx < items.length - 1 ? { borderBottom: '1px solid rgba(255,255,255,0.04)' } : {}}
-            >
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold truncate leading-snug" style={{ color: 'rgba(255,255,255,0.95)' }}>
-                  {item.name}
-                </p>
-                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.38)' }}>
-                  {item.quantity} × Rs. {fmt(item.price)}
+          {items.map((item, idx) => {
+            const isPaid = item.status === 'paid';
+            const isSelected = selectedIds.has(item.menuItemId);
+            return (
+              <div
+                key={item.menuItemId}
+                className={`flex items-center gap-3 px-3 py-2 ${splitMode && !isPaid ? 'cursor-pointer active:opacity-70' : ''}`}
+                style={{
+                  borderBottom: idx < items.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                  opacity: isPaid ? 0.45 : 1,
+                  background: isSelected ? 'rgba(59,130,246,0.08)' : 'transparent',
+                }}
+                onClick={() => splitMode && !isPaid && toggleItemSelection(item.menuItemId)}
+              >
+                {splitMode && !isPaid && (
+                  <div
+                    className="flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center transition-all"
+                    style={{
+                      background: isSelected ? 'rgba(59,130,246,0.8)' : 'rgba(255,255,255,0.08)',
+                      border: isSelected ? '1px solid rgba(59,130,246,0.9)' : '1px solid rgba(255,255,255,0.15)',
+                    }}
+                  >
+                    {isSelected && <Check size={11} className="text-white" />}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-bold truncate leading-snug" style={{ color: isPaid ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.95)' }}>
+                      {item.name}
+                    </p>
+                    {isPaid && (
+                      <span className="flex-shrink-0 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded" style={{ background: 'rgba(52,211,153,0.12)', color: 'rgba(52,211,153,0.7)' }}>
+                        Paid
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs" style={{ color: 'rgba(255,255,255,0.38)' }}>
+                    {item.quantity} × Rs. {fmt(item.price)}
+                  </p>
+                </div>
+                <p className="text-sm font-bold tabular-nums whitespace-nowrap" style={{ color: isPaid ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.88)' }}>
+                  Rs. {fmt(item.price * item.quantity)}
                 </p>
               </div>
-              <p className="text-sm font-bold tabular-nums whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.88)' }}>
-                Rs. {fmt(item.price * item.quantity)}
-              </p>
-            </div>
-          ))}
+            );
+          })}
         </div>
         <div
           className="absolute bottom-0 inset-x-0 h-8 pointer-events-none"
@@ -538,7 +666,9 @@ const ReviewScreen = () => {
   );
   const billCard = getBillCard();
 
-  const getPaymentCard = (compact = false) => (
+  const getPaymentCard = (compact = false) => {
+    const payDisabled = confirming || (splitMode && selectedIds.size === 0);
+    return (
     <div
       className="rounded-2xl px-4 flex-shrink-0"
       style={{
@@ -549,20 +679,53 @@ const ReviewScreen = () => {
         paddingBottom: compact ? '8px' : '8px',
       }}
     >
-      <p
-        className="font-black uppercase tracking-[0.14em]"
-        style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10, marginBottom: compact ? 6 : 6 }}
-      >
-        Payment Method
-      </p>
-      <div className={compact ? 'space-y-1' : 'space-y-1.5'}>
+      {/* Split mode header */}
+      {splitMode ? (
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <p className="font-black uppercase tracking-[0.14em] text-[10px]" style={{ color: 'rgba(59,130,246,0.8)' }}>
+              Split — Pay Items
+            </p>
+            {selectedIds.size > 0 ? (
+              <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                {selectedIds.size} item{selectedIds.size !== 1 ? 's' : ''} · Rs. {fmt(splitBill.total)}
+              </p>
+            ) : (
+              <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.3)' }}>Select items above to pay</p>
+            )}
+          </div>
+          <button
+            onClick={() => { setSplitMode(false); setSelectedIds(new Set()); }}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all active:scale-95"
+            style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.1)' }}
+          >
+            <X size={10} /> Cancel
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between mb-2">
+          <p className="font-black uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10 }}>
+            Payment Method
+          </p>
+          {unpaidItems.length > 0 && items.length > 1 && (
+            <button
+              onClick={() => setSplitMode(true)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all active:scale-95"
+              style={{ background: 'rgba(59,130,246,0.1)', color: 'rgba(147,197,253,0.8)', border: '1px solid rgba(59,130,246,0.2)' }}
+            >
+              <Scissors size={9} /> Split / Pay Items
+            </button>
+          )}
+        </div>
+      )}
 
+      <div className={compact ? 'space-y-1' : 'space-y-1.5'}>
               {/* Cash */}
               <button
                 onClick={() => handleConfirmPayment('cash')}
-                disabled={confirming}
+                disabled={payDisabled}
                 data-testid="button-payment-method-cash"
-                className={`w-full flex items-center gap-3 px-4 ${compact ? 'py-1.5' : 'py-2'} rounded-xl transition-all active:scale-[0.97] disabled:opacity-60`}
+                className={`w-full flex items-center gap-3 px-4 ${compact ? 'py-1.5' : 'py-2'} rounded-xl transition-all active:scale-[0.97] disabled:opacity-40`}
                 style={{
                   background: 'rgba(52,211,153,0.07)',
                   border: '1px solid rgba(52,211,153,0.25)',
@@ -576,9 +739,11 @@ const ReviewScreen = () => {
                 </div>
                 <div className="flex-1 text-left">
                   <p className="font-bold text-sm" style={{ color: 'rgba(255,255,255,0.92)' }}>Cash</p>
-                  <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.38)' }}>Tap to complete payment</p>
+                  <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.38)' }}>
+                    {splitMode ? (selectedIds.size > 0 ? 'Pay selected items' : 'Select items first') : 'Tap to complete payment'}
+                  </p>
                 </div>
-                <span className="text-sm font-black text-success tabular-nums">Rs. {fmt(bill.total)}</span>
+                <span className="text-sm font-black text-success tabular-nums">Rs. {fmt(activeBill.total)}</span>
               </button>
 
               {/* Digital wallets */}
@@ -598,9 +763,10 @@ const ReviewScreen = () => {
                     return (
                       <button
                         key={id}
-                        onClick={() => { setSelectedMethod(id); setShowQRModal(true); }}
+                        onClick={() => { if (!payDisabled) { setSelectedMethod(id); setShowQRModal(true); } }}
                         data-testid={`button-payment-method-${id}`}
-                        className={`flex items-center gap-2.5 px-3 ${compact ? 'py-1.5' : 'py-2'} rounded-xl transition-all active:scale-[0.97]`}
+                        disabled={payDisabled}
+                        className={`flex items-center gap-2.5 px-3 ${compact ? 'py-1.5' : 'py-2'} rounded-xl transition-all active:scale-[0.97] disabled:opacity-40`}
                         style={{
                           background: 'rgba(255,255,255,0.04)',
                           border: '1px solid rgba(255,255,255,0.09)',
@@ -627,7 +793,8 @@ const ReviewScreen = () => {
               )}
       </div>
     </div>
-  );
+    );
+  };
   const paymentCard = getPaymentCard();
 
   // ── Main review + payment screen ──
@@ -691,11 +858,16 @@ const ReviewScreen = () => {
                     border: '1px solid rgba(255,255,255,0.1)',
                   }}
                 >
-                  <span className="text-[10px] font-black uppercase tracking-[0.16em]" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                    Total
-                  </span>
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.16em]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                      {splitMode ? 'Selected Total' : 'Total'}
+                    </span>
+                    {splitMode && selectedIds.size === 0 && (
+                      <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.25)' }}>Select items to pay</p>
+                    )}
+                  </div>
                   <span className="text-[24px] font-black tracking-tight leading-none tabular-nums" style={{ color: '#ffffff' }}>
-                    Rs. {fmt(bill.total)}
+                    Rs. {fmt(activeBill.total)}
                   </span>
                 </div>
 
@@ -708,17 +880,41 @@ const ReviewScreen = () => {
                     boxShadow: '0 4px 20px -6px rgba(0,0,0,0.4)',
                   }}
                 >
-                  <p className="flex-shrink-0 text-[9px] font-black uppercase tracking-[0.14em] mb-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                    Payment Method
-                  </p>
+                  <div className="flex-shrink-0 flex items-center justify-between mb-1.5">
+                    {splitMode ? (
+                      <>
+                        <p className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: 'rgba(59,130,246,0.8)' }}>Split — Pay Items</p>
+                        <button
+                          onClick={() => { setSplitMode(false); setSelectedIds(new Set()); }}
+                          className="flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold"
+                          style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}
+                        >
+                          <X size={8} /> Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.35)' }}>Payment Method</p>
+                        {unpaidItems.length > 0 && items.length > 1 && (
+                          <button
+                            onClick={() => setSplitMode(true)}
+                            className="flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold"
+                            style={{ background: 'rgba(59,130,246,0.1)', color: 'rgba(147,197,253,0.8)', border: '1px solid rgba(59,130,246,0.2)' }}
+                          >
+                            <Scissors size={8} /> Split
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
                   {/* Scrollable list — only this scrolls when there are many options */}
                   <div className="flex-1 min-h-0 overflow-y-auto space-y-1 pr-0.5">
                     {/* Cash — pinned first, always prominent */}
                     <button
                       onClick={() => handleConfirmPayment('cash')}
-                      disabled={confirming}
+                      disabled={confirming || (splitMode && selectedIds.size === 0)}
                       data-testid="button-payment-method-cash"
-                      className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg transition-all active:scale-[0.97] disabled:opacity-60"
+                      className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg transition-all active:scale-[0.97] disabled:opacity-40"
                       style={{ background: 'rgba(52,211,153,0.07)', border: '1px solid rgba(52,211,153,0.25)' }}
                     >
                       <div className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(52,211,153,0.12)' }}>
@@ -726,9 +922,11 @@ const ReviewScreen = () => {
                       </div>
                       <div className="flex-1 text-left">
                         <p className="font-bold text-sm leading-none" style={{ color: 'rgba(255,255,255,0.92)' }}>Cash</p>
-                        <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.38)' }}>Tap to complete</p>
+                        <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.38)' }}>
+                          {splitMode ? (selectedIds.size > 0 ? 'Pay selected' : 'Select items') : 'Tap to complete'}
+                        </p>
                       </div>
-                      <span className="text-xs font-black text-success tabular-nums">Rs. {fmt(bill.total)}</span>
+                      <span className="text-xs font-black text-success tabular-nums">Rs. {fmt(activeBill.total)}</span>
                     </button>
 
                     {/* Digital wallets */}
@@ -745,9 +943,10 @@ const ReviewScreen = () => {
                       return (
                         <button
                           key={id}
-                          onClick={() => { setSelectedMethod(id); setShowQRModal(true); }}
+                          onClick={() => { if (!(splitMode && selectedIds.size === 0)) { setSelectedMethod(id); setShowQRModal(true); } }}
                           data-testid={`button-payment-method-${id}`}
-                          className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg transition-all active:scale-[0.97]"
+                          disabled={confirming || (splitMode && selectedIds.size === 0)}
+                          className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg transition-all active:scale-[0.97] disabled:opacity-40"
                           style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)' }}
                         >
                           <div className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
@@ -932,9 +1131,9 @@ const ReviewScreen = () => {
                   </div>
                   <div>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Amount Due</p>
-                    <p className="text-3xl font-black text-foreground tabular-nums leading-tight">Rs. {fmt(bill.total)}</p>
-                    {bill.discountAmount > 0 && (
-                      <p className="text-xs text-success font-semibold mt-0.5">Saved Rs. {fmt(bill.discountAmount)}</p>
+                    <p className="text-3xl font-black text-foreground tabular-nums leading-tight">Rs. {fmt(activeBill.total)}</p>
+                    {activeBill.discountAmount > 0 && (
+                      <p className="text-xs text-success font-semibold mt-0.5">Saved Rs. {fmt(activeBill.discountAmount)}</p>
                     )}
                   </div>
                   <p className="text-xs font-semibold text-muted-foreground">
@@ -983,9 +1182,9 @@ const ReviewScreen = () => {
               <div className="px-6 pt-5 pb-6 flex flex-col items-center gap-4">
                 <div className="text-center">
                   <p className="text-[11px] text-muted-foreground uppercase tracking-widest font-semibold">Amount Due</p>
-                  <p className="text-5xl font-black text-foreground mt-1 tabular-nums">Rs. {fmt(bill.total)}</p>
-                  {bill.discountAmount > 0 && (
-                    <p className="text-xs text-success font-semibold mt-1">Saved Rs. {fmt(bill.discountAmount)}</p>
+                  <p className="text-5xl font-black text-foreground mt-1 tabular-nums">Rs. {fmt(activeBill.total)}</p>
+                  {activeBill.discountAmount > 0 && (
+                    <p className="text-xs text-success font-semibold mt-1">Saved Rs. {fmt(activeBill.discountAmount)}</p>
                   )}
                 </div>
                 <div
@@ -1027,6 +1226,31 @@ const ReviewScreen = () => {
 
         </div>
       )}
+      {/* Partial payment success overlay */}
+      {partialSuccess && printSession && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center pb-8 px-4 pointer-events-none">
+          <div
+            className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl pointer-events-auto"
+            style={{
+              background: 'rgba(17,24,39,0.95)',
+              border: '1px solid rgba(52,211,153,0.3)',
+              backdropFilter: 'blur(12px)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(52,211,153,0.15)',
+            }}
+          >
+            <div className="w-8 h-8 rounded-full bg-success/15 flex items-center justify-center flex-shrink-0">
+              <CheckCircle2 size={16} className="text-success" />
+            </div>
+            <div>
+              <p className="text-sm font-black text-white">Partial Payment Recorded</p>
+              <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                Rs. {fmt(printSession.total)} · {printSession.items.length} item{printSession.items.length !== 1 ? 's' : ''} paid
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
     </>
   );
 };
