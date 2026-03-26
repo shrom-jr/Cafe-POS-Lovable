@@ -34,6 +34,7 @@ interface POSState {
 
   clearOrder: (orderId: string) => void;
 
+  splitOrderItem: (orderId: string, menuItemId: string, qty: number) => string;
   markItemsPaid: (orderId: string, menuItemIds: string[], tablePayment: TablePayment) => void;
 
   addPayment: (payment: Omit<Payment, 'id'>) => void;
@@ -274,6 +275,29 @@ export const usePOSStore = create<POSState>((set, get) => ({
       db.saveTables(tables);
       return { orders, tables };
     });
+  },
+
+  splitOrderItem: (orderId, menuItemId, qty) => {
+    const splitKey = `${menuItemId}-sp-${Date.now()}`;
+    set((state) => {
+      const orders = state.orders.map((o) => {
+        if (o.id !== orderId) return o;
+        const item = o.items.find((i) => i.menuItemId === menuItemId);
+        if (!item || qty >= item.quantity) return o;
+        return {
+          ...o,
+          items: [
+            ...o.items.map((i) =>
+              i.menuItemId === menuItemId ? { ...i, quantity: i.quantity - qty } : i
+            ),
+            { menuItemId: splitKey, name: item.name, price: item.price, quantity: qty },
+          ],
+        };
+      });
+      db.saveOrders(orders);
+      return { orders };
+    });
+    return splitKey;
   },
 
   markItemsPaid: (orderId, menuItemIds, tablePayment) => {
