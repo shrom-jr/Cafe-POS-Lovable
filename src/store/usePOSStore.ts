@@ -180,12 +180,12 @@ export const usePOSStore = create<POSState>((set, get) => ({
     set((state) => {
       const orders = state.orders.map((o) => {
         if (o.id !== orderId) return o;
-        const existing = o.items.find((i) => i.menuItemId === item.id);
+        const existing = o.items.find((i) => i.menuItemId === item.id && i.status !== 'paid');
         if (existing) {
           return {
             ...o,
             items: o.items.map((i) =>
-              i.menuItemId === item.id ? { ...i, quantity: i.quantity + 1 } : i
+              i.menuItemId === item.id && i.status !== 'paid' ? { ...i, quantity: i.quantity + 1 } : i
             ),
           };
         }
