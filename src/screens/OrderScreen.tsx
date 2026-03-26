@@ -82,7 +82,7 @@ const OrderScreen = () => {
   }
 
   const itemCount = order?.items.reduce((s, i) => s + i.quantity, 0) || 0;
-  const runningTotal = order?.items.reduce((s, i) => s + i.price * i.quantity, 0) || 0;
+  const runningTotal = order?.items.filter((i) => i.status !== 'paid').reduce((s, i) => s + i.price * i.quantity, 0) || 0;
   const hasItems = itemCount > 0;
 
   const handlePay = () => {
@@ -361,36 +361,52 @@ const OrderScreen = () => {
                   <p className="text-xs opacity-60 mt-1">Tap items on the menu to add</p>
                 </div>
               ) : (
-                (order?.items || []).map((item) => (
+                (order?.items || []).map((item) => {
+                  const isPaid = item.status === 'paid';
+                  return (
                   <div
                     key={item.menuItemId}
                     className="flex items-center gap-2 rounded-xl px-3 py-2.5"
-                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.07)' }}
+                    style={{
+                      background: isPaid ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.06)',
+                      border: isPaid ? '1px solid rgba(255,255,255,0.04)' : '1px solid rgba(255,255,255,0.07)',
+                      opacity: isPaid ? 0.5 : 1,
+                    }}
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-white/90 truncate">{item.name}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className={`text-sm font-bold text-white/90 truncate ${isPaid ? 'line-through' : ''}`}>{item.name}</p>
+                        {isPaid && (
+                          <span className="flex-shrink-0 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded" style={{ background: 'rgba(52,211,153,0.12)', color: 'rgba(52,211,153,0.7)' }}>
+                            Paid
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-white/40">Rs. {fmt(item.price)} each</p>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <button
-                        onClick={() => order && updateItemQuantity(order.id, item.menuItemId, -1)}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-white/50 active:scale-90 transition-transform"
+                        onClick={() => !isPaid && order && updateItemQuantity(order.id, item.menuItemId, -1)}
+                        disabled={isPaid}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-white/50 active:scale-90 transition-transform disabled:pointer-events-none disabled:opacity-30"
                         style={{ background: 'rgba(255,255,255,0.07)' }}
                       >
                         <span className="text-base leading-none select-none">−</span>
                       </button>
                       <span className="w-7 text-center font-black text-sm text-white/90 select-none">{item.quantity}</span>
                       <button
-                        onClick={() => order && updateItemQuantity(order.id, item.menuItemId, 1)}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center active:scale-90 transition-transform"
+                        onClick={() => !isPaid && order && updateItemQuantity(order.id, item.menuItemId, 1)}
+                        disabled={isPaid}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center active:scale-90 transition-transform disabled:pointer-events-none disabled:opacity-30"
                         style={{ background: 'rgba(59,130,246,0.20)', border: '1px solid rgba(59,130,246,0.30)' }}
                       >
                         <span className="text-base leading-none text-blue-300 select-none">+</span>
                       </button>
                     </div>
-                    <p className="w-16 text-right text-sm font-bold text-white/80">Rs. {fmt(item.price * item.quantity)}</p>
+                    <p className="w-16 text-right text-sm font-bold" style={{ color: isPaid ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.8)' }}>Rs. {fmt(item.price * item.quantity)}</p>
                   </div>
-                ))
+                  );
+                })
               )}
             </div>
 

@@ -37,7 +37,8 @@ const OrderPanel = ({
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const items = order?.items || [];
-  const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const unpaidItems = items.filter((i) => i.status !== 'paid');
+  const total = unpaidItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const itemCount = items.reduce((s, i) => s + i.quantity, 0);
 
   const handleClearConfirmed = () => {
@@ -137,7 +138,7 @@ const OrderPanel = ({
           </div>
         ) : (
           items.map((item) => (
-            <OrderItemRow key={item.menuItemId} item={item} onUpdateQty={onUpdateQty} onRemove={onRemove} />
+            <OrderItemRow key={item.menuItemId} item={item} onUpdateQty={onUpdateQty} onRemove={onRemove} isPaid={item.status === 'paid'} />
           ))
         )}
       </div>
@@ -216,47 +217,59 @@ interface OrderItemRowProps {
   item: OrderItem;
   onUpdateQty: (id: string, delta: number) => void;
   onRemove: (id: string) => void;
+  isPaid?: boolean;
 }
 
-const OrderItemRow = ({ item, onUpdateQty, onRemove }: OrderItemRowProps) => (
+const OrderItemRow = ({ item, onUpdateQty, onRemove, isPaid = false }: OrderItemRowProps) => (
   <div
     className="flex items-center gap-2 rounded-xl p-2.5 transition-all"
     data-testid={`order-item-${item.menuItemId}`}
     style={{
-      background: 'rgba(255,255,255,0.05)',
-      border: '1px solid rgba(255,255,255,0.06)',
+      background: isPaid ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.05)',
+      border: isPaid ? '1px solid rgba(255,255,255,0.04)' : '1px solid rgba(255,255,255,0.06)',
+      opacity: isPaid ? 0.5 : 1,
     }}
   >
     <div className="flex-1 min-w-0">
-      <p className="text-sm font-bold truncate" style={{ color: 'rgba(255,255,255,0.95)' }}>{item.name}</p>
+      <div className="flex items-center gap-1.5">
+        <p className={`text-sm font-bold truncate ${isPaid ? 'line-through' : ''}`} style={{ color: isPaid ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.95)' }}>{item.name}</p>
+        {isPaid && (
+          <span className="flex-shrink-0 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded" style={{ background: 'rgba(52,211,153,0.12)', color: 'rgba(52,211,153,0.7)' }}>
+            Paid
+          </span>
+        )}
+      </div>
       <p className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.42)' }}>Rs. {fmt(item.price)} each</p>
     </div>
     <div className="flex items-center gap-1">
       <button
-        onClick={() => onUpdateQty(item.menuItemId, -1)}
+        onClick={() => !isPaid && onUpdateQty(item.menuItemId, -1)}
+        disabled={isPaid}
         data-testid={`button-decrease-${item.menuItemId}`}
-        className="w-7 h-7 rounded-lg flex items-center justify-center text-white/40 transition-colors active:scale-90 hover:text-red-400 hover:bg-red-500/10"
+        className="w-7 h-7 rounded-lg flex items-center justify-center text-white/40 transition-colors active:scale-90 hover:text-red-400 hover:bg-red-500/10 disabled:pointer-events-none disabled:opacity-30"
         style={{ background: 'rgba(255,255,255,0.05)' }}
       >
         <Minus size={13} />
       </button>
       <span className="w-7 text-center font-black text-sm text-white/85">{item.quantity}</span>
       <button
-        onClick={() => onUpdateQty(item.menuItemId, 1)}
+        onClick={() => !isPaid && onUpdateQty(item.menuItemId, 1)}
+        disabled={isPaid}
         data-testid={`button-increase-${item.menuItemId}`}
-        className="w-7 h-7 rounded-lg flex items-center justify-center text-white/45 transition-colors active:scale-90 hover:text-blue-300 hover:brightness-110"
+        className="w-7 h-7 rounded-lg flex items-center justify-center text-white/45 transition-colors active:scale-90 hover:text-blue-300 hover:brightness-110 disabled:pointer-events-none disabled:opacity-30"
         style={BLUE_BTN}
       >
         <Plus size={13} />
       </button>
     </div>
-    <p className="w-16 text-right text-sm font-bold" style={{ color: 'rgba(255,255,255,0.88)' }}>
+    <p className="w-16 text-right text-sm font-bold" style={{ color: isPaid ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.88)' }}>
       Rs. {fmt(item.price * item.quantity)}
     </p>
     <button
-      onClick={() => onRemove(item.menuItemId)}
+      onClick={() => !isPaid && onRemove(item.menuItemId)}
+      disabled={isPaid}
       data-testid={`button-remove-${item.menuItemId}`}
-      className="w-7 h-7 rounded-lg flex items-center justify-center text-white/22 transition-colors active:scale-90 hover:text-red-400 hover:bg-red-500/10"
+      className="w-7 h-7 rounded-lg flex items-center justify-center text-white/22 transition-colors active:scale-90 hover:text-red-400 hover:bg-red-500/10 disabled:pointer-events-none disabled:opacity-0"
     >
       <Trash2 size={13} />
     </button>
