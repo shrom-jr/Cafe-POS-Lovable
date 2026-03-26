@@ -265,14 +265,16 @@ const OrderItemRow = ({ item, onUpdateQty, onRemove, isPaid = false }: OrderItem
     <p className="w-16 text-right text-sm font-bold" style={{ color: isPaid ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.88)' }}>
       Rs. {fmt(item.price * item.quantity)}
     </p>
-    <button
-      onClick={() => !isPaid && onRemove(item.menuItemId)}
-      disabled={isPaid}
-      data-testid={`button-remove-${item.menuItemId}`}
-      className="w-7 h-7 rounded-lg flex items-center justify-center text-white/22 transition-colors active:scale-90 hover:text-red-400 hover:bg-red-500/10 disabled:pointer-events-none disabled:opacity-0"
-    >
-      <Trash2 size={13} />
-    </button>
+    {!isPaid && (
+      <button
+        onClick={() => onRemove(item.menuItemId)}
+        data-testid={`button-remove-${item.menuItemId}`}
+        className="w-7 h-7 rounded-lg flex items-center justify-center text-white/22 transition-colors active:scale-90 hover:text-red-400 hover:bg-red-500/10"
+      >
+        <Trash2 size={13} />
+      </button>
+    )}
+    {isPaid && <div className="w-7 h-7 flex-shrink-0" />}
   </div>
 );
 
