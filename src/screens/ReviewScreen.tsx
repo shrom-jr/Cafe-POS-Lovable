@@ -523,8 +523,8 @@ const ReviewScreen = () => {
                   borderBottom: idx < items.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
                   opacity: isPaid ? 0.38 : 1,
                   background: isSelected
-                    ? 'rgba(59,130,246,0.18)'
-                    : 'transparent',
+                    ? 'rgba(59,130,246,0.24)'
+                    : isPaid ? 'rgba(255,255,255,0.02)' : 'transparent',
                   borderLeft: isSelected ? '3px solid rgba(59,130,246,0.85)' : '3px solid transparent',
                   transition: 'background 0.12s ease, border-color 0.12s ease, opacity 0.12s ease, transform 0.1s ease',
                 }}
@@ -546,7 +546,7 @@ const ReviewScreen = () => {
                 {isPaid && <div className="flex-shrink-0 w-5 h-5" />}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-bold truncate leading-snug" style={{ color: isPaid ? 'rgba(255,255,255,0.45)' : isSelected ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.88)' }}>
+                    <p className={`text-sm font-bold truncate leading-snug ${isPaid ? 'line-through' : ''}`} style={{ color: isPaid ? 'rgba(255,255,255,0.45)' : isSelected ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.88)' }}>
                       {item.name}
                     </p>
                     {isPaid && (
@@ -699,7 +699,7 @@ const ReviewScreen = () => {
                 onClick={() => handleConfirmPayment('cash')}
                 disabled={confirming}
                 data-testid="button-payment-method-cash"
-                className={`w-full flex items-center gap-3 px-4 ${compact ? 'py-1.5' : 'py-2'} rounded-xl transition-all active:scale-[0.97] disabled:opacity-40`}
+                className={`w-full flex items-center gap-3 px-4 ${compact ? 'py-1.5' : 'py-2'} rounded-xl transition-all duration-100 active:scale-95 active:brightness-90 disabled:opacity-40`}
                 style={{
                   background: 'rgba(52,211,153,0.07)',
                   border: '1px solid rgba(52,211,153,0.25)',
@@ -740,7 +740,7 @@ const ReviewScreen = () => {
                         onClick={() => { if (!confirming) { setSelectedMethod(id); setShowQRModal(true); } }}
                         data-testid={`button-payment-method-${id}`}
                         disabled={confirming}
-                        className={`flex items-center gap-2.5 px-3 ${compact ? 'py-1.5' : 'py-2'} rounded-xl transition-all active:scale-[0.97] disabled:opacity-40`}
+                        className={`flex items-center gap-2.5 px-3 ${compact ? 'py-1.5' : 'py-2'} rounded-xl transition-all duration-100 active:scale-95 active:brightness-90 disabled:opacity-40`}
                         style={{
                           background: 'rgba(255,255,255,0.04)',
                           border: '1px solid rgba(255,255,255,0.09)',
@@ -859,7 +859,7 @@ const ReviewScreen = () => {
                       onClick={() => handleConfirmPayment('cash')}
                       disabled={confirming}
                       data-testid="button-payment-method-cash"
-                      className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg transition-all active:scale-[0.97] disabled:opacity-40"
+                      className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg transition-all duration-100 active:scale-95 active:brightness-90 disabled:opacity-40"
                       style={{ background: 'rgba(52,211,153,0.07)', border: '1px solid rgba(52,211,153,0.25)' }}
                     >
                       <div className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(52,211,153,0.12)' }}>
@@ -891,7 +891,7 @@ const ReviewScreen = () => {
                           onClick={() => { if (!confirming) { setSelectedMethod(id); setShowQRModal(true); } }}
                           data-testid={`button-payment-method-${id}`}
                           disabled={confirming}
-                          className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg transition-all active:scale-[0.97] disabled:opacity-40"
+                          className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg transition-all duration-100 active:scale-95 active:brightness-90 disabled:opacity-40"
                           style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)' }}
                         >
                           <div className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
