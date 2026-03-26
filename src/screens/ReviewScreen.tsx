@@ -518,24 +518,29 @@ const ReviewScreen = () => {
             return (
               <div
                 key={item.menuItemId}
-                className={`flex items-center gap-3 px-3 py-2 ${!isPaid ? 'cursor-pointer active:opacity-70' : ''}`}
+                className={`flex items-center gap-3 px-3 py-2.5 select-none ${!isPaid ? 'cursor-pointer active:scale-[0.985]' : ''}`}
                 style={{
                   borderBottom: idx < items.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-                  opacity: isPaid ? 0.45 : 1,
-                  background: isSelected ? 'rgba(59,130,246,0.12)' : 'transparent',
-                  transition: 'background 0.15s',
+                  opacity: isPaid ? 0.38 : 1,
+                  background: isSelected
+                    ? 'rgba(59,130,246,0.18)'
+                    : 'transparent',
+                  borderLeft: isSelected ? '3px solid rgba(59,130,246,0.85)' : '3px solid transparent',
+                  transition: 'background 0.12s ease, border-color 0.12s ease, opacity 0.12s ease, transform 0.1s ease',
                 }}
                 onClick={() => !isPaid && toggleItemSelection(item.menuItemId)}
               >
                 {!isPaid && (
                   <div
-                    className="flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center transition-all"
+                    className="flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center"
                     style={{
-                      background: isSelected ? 'rgba(59,130,246,0.85)' : 'rgba(255,255,255,0.07)',
-                      border: isSelected ? '1px solid rgba(59,130,246,1)' : '1px solid rgba(255,255,255,0.13)',
+                      background: isSelected ? 'rgba(59,130,246,0.9)' : 'rgba(255,255,255,0.06)',
+                      border: isSelected ? '1.5px solid rgba(96,165,250,1)' : '1.5px solid rgba(255,255,255,0.16)',
+                      boxShadow: isSelected ? '0 0 8px rgba(59,130,246,0.45)' : 'none',
+                      transition: 'background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease',
                     }}
                   >
-                    {isSelected && <Check size={11} className="text-white" />}
+                    {isSelected && <Check size={11} className="text-white" strokeWidth={3} />}
                   </div>
                 )}
                 {isPaid && <div className="flex-shrink-0 w-5 h-5" />}
@@ -1164,49 +1169,6 @@ const ReviewScreen = () => {
             </div>
           )}
 
-        </div>
-      )}
-      {/* Fixed bottom bar — shown when items are selected */}
-      {selectedIds.size > 0 && (
-        <div
-          className="fixed bottom-0 inset-x-0 z-40 flex items-center justify-between px-4 py-3 gap-3"
-          style={{
-            background: 'rgba(10,16,32,0.97)',
-            borderTop: '1px solid rgba(59,130,246,0.25)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            paddingBottom: 'max(12px, env(safe-area-inset-bottom, 12px))',
-          }}
-        >
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.12em]" style={{ color: 'rgba(147,197,253,0.8)' }}>
-              {selectedIds.size} item{selectedIds.size !== 1 ? 's' : ''} selected
-            </p>
-            <p className="text-lg font-black text-white tabular-nums leading-none">
-              Rs. {fmt(splitBill.total)}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setSelectedIds(new Set())}
-              className="px-3 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
-              style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.1)' }}
-            >
-              Clear
-            </button>
-            <button
-              onClick={() => handleConfirmPayment('cash')}
-              disabled={confirming}
-              className="flex items-center gap-2 px-5 py-2 rounded-xl font-black text-sm text-white transition-all active:scale-[0.97] disabled:opacity-60"
-              style={{
-                background: 'linear-gradient(135deg, #1e50d0 0%, #4186f5 100%)',
-                boxShadow: '0 4px 16px -4px rgba(59,130,246,0.5)',
-              }}
-            >
-              {confirming ? <Loader2 size={14} className="animate-spin" /> : null}
-              Pay Selected
-            </button>
-          </div>
         </div>
       )}
 
