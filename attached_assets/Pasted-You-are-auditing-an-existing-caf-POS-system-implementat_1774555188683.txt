@@ -1,0 +1,118 @@
+You are auditing an existing café POS system implementation for split (partial) payments.
+
+⚠️ STRICT RULES:
+- DO NOT rewrite architecture
+- DO NOT change UI
+- ONLY verify and fix logic gaps
+- Be surgical and minimal
+
+---
+
+# 🎯 GOAL
+
+Ensure split payment system is 100% correct, consistent, and future-proof.
+
+---
+
+# ✅ CHECK 1: PAYMENT HISTORY (CRITICAL)
+
+When a partial payment happens, verify:
+
+1. Is a payment record pushed into tablePayments[]?
+
+2. Does each payment store:
+   {
+     id,
+     items: [itemIds],   // MUST be IDs only
+     total,
+     method,
+     timestamp
+   }
+
+3. Ensure:
+   - NO full item objects are duplicated
+   - ONLY references (ids) are stored
+
+---
+
+# ✅ CHECK 2: ITEM ↔ PAYMENT CONSISTENCY
+
+Verify:
+
+- Every paid item:
+  item.status === "paid"
+  item.paidAt exists
+
+- Every payment:
+  references ONLY items that were just paid
+
+- No item can be paid twice
+
+---
+
+# ✅ CHECK 3: RECEIPT CORRECTNESS
+
+Verify receipt system:
+
+- Receipt MUST use:
+  printReceipt(paymentSession)
+
+- paymentSession MUST contain:
+  ONLY selected items
+
+- Ensure:
+  ❌ No already-paid items appear in future receipts
+  ❌ No full-table printing during partial payments
+
+---
+
+# ✅ CHECK 4: TOTAL CALCULATION
+
+Ensure:
+
+- Full bill total = ALL items
+- Active bill total = ONLY unpaid items
+- Split total = ONLY selected items
+
+NO mixing of these states.
+
+---
+
+# ✅ CHECK 5: TABLE COMPLETION
+
+Verify:
+
+- Table closes ONLY when:
+  all items are paid
+
+- Partial payment:
+  → table remains open
+
+---
+
+# ✅ CHECK 6: EDGE CASES
+
+Handle safely:
+
+- Clicking Pay with no selected items
+- Selecting already-paid items
+- Paying same item twice
+- Rapid double-click on payment
+
+---
+
+# 🧾 OUTPUT REQUIRED
+
+1. Show EXACT code for:
+   - markItemsPaid
+   - payment push logic
+   - receipt (printSession)
+
+2. Clearly state:
+   ✅ What is correct
+   ❌ What is broken
+   🔧 What you fixed
+
+---
+
+Do NOT add features. Only verify and fix.

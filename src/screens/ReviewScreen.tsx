@@ -101,6 +101,7 @@ const ReviewScreen = () => {
   const [paidMethod, setPaidMethod] = useState('');
   const [reprinting, setReprinting] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const confirmingRef = useRef(false);
   const [billDetailsOpen, setBillDetailsOpen] = useState(false);
 
   // Landscape detection — matches OrderScreen logic
@@ -161,7 +162,8 @@ const ReviewScreen = () => {
   };
 
   const handleConfirmPayment = async (method: string) => {
-    if (confirming) return;
+    if (confirmingRef.current) return;
+    confirmingRef.current = true;
     setConfirming(true);
 
     const payItems = splitMode ? splitSelectedItems : unpaidItems;
@@ -244,6 +246,7 @@ const ReviewScreen = () => {
     } else {
       setSplitMode(false);
       setSelectedIds(new Set());
+      confirmingRef.current = false;
       setConfirming(false);
       setPartialSuccess(true);
 
