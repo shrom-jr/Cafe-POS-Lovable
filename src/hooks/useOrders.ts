@@ -8,6 +8,7 @@ export const useOrders = () => {
   const updateItemQuantity = usePOSStore((s) => s.updateItemQuantity);
   const removeItemFromOrder = usePOSStore((s) => s.removeItemFromOrder);
   const updateOrderStatus = usePOSStore((s) => s.updateOrderStatus);
+  const sendToKitchen = usePOSStore((s) => s.sendToKitchen);
   const clearOrder = usePOSStore((s) => s.clearOrder);
   const addPayment = usePOSStore((s) => s.addPayment);
 
@@ -19,6 +20,7 @@ export const useOrders = () => {
     updateItemQuantity,
     removeItemFromOrder,
     updateOrderStatus,
+    sendToKitchen,
     clearOrder,
     addPayment,
   };

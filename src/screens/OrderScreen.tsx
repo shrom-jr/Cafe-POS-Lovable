@@ -23,6 +23,7 @@ const OrderScreen = () => {
     updateItemQuantity,
     removeItemFromOrder,
     clearOrder,
+    sendToKitchen,
     orders,
   } = useOrders();
   const categories = usePOSStore((s) => s.categories);
@@ -101,6 +102,39 @@ const OrderScreen = () => {
     clearOrder(order.id);
   };
 
+  const kitchenStatus = order?.kitchenStatus ?? 'draft';
+  const hasUnsentItems = order?.hasUnsentItems ?? false;
+
+  const drawerStatusLabel =
+    kitchenStatus === 'draft' ? 'Draft' : hasUnsentItems ? 'Updated' : 'Sent';
+  const drawerStatusStyle =
+    kitchenStatus === 'draft'
+      ? { background: 'rgba(148,163,184,0.12)', color: 'rgba(148,163,184,0.7)', border: '1px solid rgba(148,163,184,0.2)' }
+      : hasUnsentItems
+      ? { background: 'rgba(251,191,36,0.12)', color: 'rgba(251,191,36,0.8)', border: '1px solid rgba(251,191,36,0.25)' }
+      : { background: 'rgba(52,211,153,0.12)', color: 'rgba(52,211,153,0.8)', border: '1px solid rgba(52,211,153,0.25)' };
+
+  const drawerPrimaryLabel =
+    kitchenStatus === 'draft'
+      ? 'Send to Kitchen'
+      : hasUnsentItems
+      ? 'Send New Items'
+      : 'Proceed to Payment →';
+
+  const handleSendToKitchen = () => {
+    if (!order) return;
+    sendToKitchen(order.id);
+  };
+
+  const handleDrawerPrimary = () => {
+    if (kitchenStatus === 'placed' && !hasUnsentItems) {
+      setShowCart(false);
+      handlePay();
+    } else {
+      handleSendToKitchen();
+    }
+  };
+
   const handlePaxChange = (newPax: number) => {
     if (tableId) updateTable(tableId, { pax: newPax });
   };
@@ -127,6 +161,19 @@ const OrderScreen = () => {
   return (
     <div className="h-[100dvh] flex flex-col overflow-hidden" style={{ background: 'linear-gradient(180deg, #0d1525 0%, #060e1a 100%)' }}>
       <TopBar title={`Table ${table.number}`} showBack onBack={() => navigate('/')} />
+
+      {/* Kitchen status label */}
+      {order && (
+        <div className="flex items-center gap-2 px-4 py-1.5 flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+          <span className="text-xs font-semibold text-white/35">Order status:</span>
+          <span
+            className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full"
+            style={drawerStatusStyle}
+          >
+            {drawerStatusLabel}
+          </span>
+        </div>
+      )}
 
       {/* Payment-in-progress info banner */}
       {table.status === 'billing' && (
@@ -235,6 +282,7 @@ const OrderScreen = () => {
                 order && removeItemFromOrder(order.id, menuItemId)
               }
               onPay={handlePay}
+              onSendToKitchen={handleSendToKitchen}
               onClear={handleClear}
               pax={table.pax ?? 1}
               onPaxChange={handlePaxChange}
@@ -437,7 +485,7 @@ const OrderScreen = () => {
                 </button>
               )}
               <button
-                onClick={() => { setShowCart(false); handlePay(); }}
+                onClick={handleDrawerPrimary}
                 disabled={!order || order.items.length === 0}
                 data-testid="button-proceed-to-bill"
                 className="w-full py-3.5 rounded-2xl font-black text-base transition-all active:scale-[0.97] disabled:opacity-20 disabled:cursor-not-allowed"
@@ -447,7 +495,7 @@ const OrderScreen = () => {
                   boxShadow: '0 4px 20px -4px rgba(59,130,246,0.6)',
                 }}
               >
-                Proceed to Payment →
+                {drawerPrimaryLabel}
               </button>
             </div>
           </div>

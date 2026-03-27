@@ -31,6 +31,7 @@ interface POSState {
   updateItemQuantity: (orderId: string, menuItemId: string, delta: number) => void;
   removeItemFromOrder: (orderId: string, menuItemId: string) => void;
   updateOrderStatus: (orderId: string, status: Order['status']) => void;
+  sendToKitchen: (orderId: string) => void;
 
   clearOrder: (orderId: string) => void;
 
@@ -197,9 +198,11 @@ export const usePOSStore = create<POSState>((set, get) => ({
       const orders = state.orders.map((o) => {
         if (o.id !== orderId) return o;
         const existing = o.items.find((i) => i.menuItemId === item.id && i.status !== 'paid');
+        const wasPlaced = o.kitchenStatus === 'placed';
         if (existing) {
           return {
             ...o,
+            hasUnsentItems: wasPlaced ? true : o.hasUnsentItems,
             items: o.items.map((i) =>
               i.menuItemId === item.id && i.status !== 'paid' ? { ...i, quantity: i.quantity + 1 } : i
             ),
@@ -207,6 +210,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
         }
         return {
           ...o,
+          hasUnsentItems: wasPlaced ? true : o.hasUnsentItems,
           items: [...o.items, { id: crypto.randomUUID(), menuItemId: item.id, name: item.name, price: item.price, quantity: 1 }],
         };
       });
@@ -271,6 +275,16 @@ export const usePOSStore = create<POSState>((set, get) => ({
   updateOrderStatus: (orderId, status) => {
     set((state) => {
       const orders = state.orders.map((o) => (o.id === orderId ? { ...o, status } : o));
+      db.saveOrders(orders);
+      return { orders };
+    });
+  },
+
+  sendToKitchen: (orderId) => {
+    set((state) => {
+      const orders = state.orders.map((o) =>
+        o.id === orderId ? { ...o, kitchenStatus: 'placed' as const, hasUnsentItems: false } : o
+      );
       db.saveOrders(orders);
       return { orders };
     });

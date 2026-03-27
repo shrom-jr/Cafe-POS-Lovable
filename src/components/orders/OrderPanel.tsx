@@ -18,6 +18,7 @@ interface OrderPanelProps {
   onUpdateQty: (menuItemId: string, delta: number) => void;
   onRemove: (menuItemId: string) => void;
   onPay: () => void;
+  onSendToKitchen: () => void;
   onClear?: () => void;
   pax?: number;
   onPaxChange?: (pax: number) => void;
@@ -30,6 +31,7 @@ const OrderPanel = ({
   onUpdateQty,
   onRemove,
   onPay,
+  onSendToKitchen,
   onClear,
   pax = 1,
   onPaxChange,
@@ -40,6 +42,32 @@ const OrderPanel = ({
   const unpaidItems = items.filter((i) => i.status !== 'paid');
   const total = unpaidItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const itemCount = items.reduce((s, i) => s + i.quantity, 0);
+
+  const kitchenStatus = order?.kitchenStatus ?? 'draft';
+  const hasUnsentItems = order?.hasUnsentItems ?? false;
+
+  const statusLabel = kitchenStatus === 'draft' ? 'Draft' : hasUnsentItems ? 'Updated' : 'Sent';
+  const statusColor =
+    kitchenStatus === 'draft'
+      ? { background: 'rgba(148,163,184,0.12)', color: 'rgba(148,163,184,0.7)', border: '1px solid rgba(148,163,184,0.2)' }
+      : hasUnsentItems
+      ? { background: 'rgba(251,191,36,0.12)', color: 'rgba(251,191,36,0.8)', border: '1px solid rgba(251,191,36,0.25)' }
+      : { background: 'rgba(52,211,153,0.12)', color: 'rgba(52,211,153,0.8)', border: '1px solid rgba(52,211,153,0.25)' };
+
+  const primaryLabel =
+    kitchenStatus === 'draft'
+      ? 'Send to Kitchen'
+      : hasUnsentItems
+      ? 'Send New Items'
+      : 'Proceed to Payment →';
+
+  const handlePrimary = () => {
+    if (kitchenStatus === 'placed' && !hasUnsentItems) {
+      onPay();
+    } else {
+      onSendToKitchen();
+    }
+  };
 
   const handleClearConfirmed = () => {
     onClear?.();
@@ -75,6 +103,14 @@ const OrderPanel = ({
         <h3 className="font-bold text-sm flex-1 text-white/80">
           {order ? `Table ${order.tableNumber}` : 'Order'}
         </h3>
+        {order && (
+          <span
+            className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full"
+            style={statusColor}
+          >
+            {statusLabel}
+          </span>
+        )}
         {itemCount > 0 && (
           <div className="flex items-center gap-2">
             <span
@@ -169,9 +205,9 @@ const OrderPanel = ({
           </span>
         </div>
 
-        {/* Primary action — blue */}
+        {/* Primary action — kitchen lifecycle */}
         <button
-          onClick={onPay}
+          onClick={handlePrimary}
           disabled={items.length === 0}
           data-testid="button-proceed-to-bill"
           className="w-full py-4 rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-all active:scale-[0.97] disabled:opacity-20 disabled:cursor-not-allowed"
@@ -185,7 +221,7 @@ const OrderPanel = ({
               : 'none',
           }}
         >
-          {items.length > 0 ? 'Review Order →' : 'Add items to order'}
+          {items.length > 0 ? primaryLabel : 'Add items to order'}
         </button>
       </div>
 

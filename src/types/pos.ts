@@ -46,6 +46,8 @@ export interface Order {
   tableNumber: number;
   items: OrderItem[];
   status: 'active' | 'billed' | 'paid';
+  kitchenStatus?: 'draft' | 'placed';
+  hasUnsentItems?: boolean;
   createdAt: number;
   tablePayments?: TablePayment[];
 }
