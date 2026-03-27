@@ -150,6 +150,20 @@
   }
 }
 
+/* ── POS PAYMENT CARD INTERACTIONS ───────────────────── */
+.pos-pay-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+.pos-pay-card:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: var(--card-hover-shadow) !important;
+}
+.pos-pay-card:active:not(:disabled) {
+  transform: scale(0.97);
+  transition-duration: 0.08s;
+}
+
 /* ── PRINT STYLES ─────────────────────────────────────── */
 @media print {
   @page { margin: 0; size: auto; }
