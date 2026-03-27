@@ -284,12 +284,25 @@ export const usePOSStore = create<POSState>((set, get) => ({
     set((state) => {
       const orders = state.orders.map((o) =>
         o.id === orderId
-          ? {
-              ...o,
-              kitchenStatus: 'placed' as const,
-              hasUnsentItems: false,
-              items: o.items.map((i) => ({ ...i, sentToKitchen: true })),
-            }
+          ? (() => {
+              const markedItems = o.items.map((i) => ({ ...i, sentToKitchen: true }));
+              const indexByMenuItemId = new Map<string, number>();
+              const mergedItems: typeof markedItems = [];
+              for (const item of markedItems) {
+                if (item.status === 'paid') {
+                  mergedItems.push(item);
+                } else {
+                  const existing = indexByMenuItemId.get(item.menuItemId);
+                  if (existing !== undefined) {
+                    mergedItems[existing] = { ...mergedItems[existing], quantity: mergedItems[existing].quantity + item.quantity };
+                  } else {
+                    indexByMenuItemId.set(item.menuItemId, mergedItems.length);
+                    mergedItems.push(item);
+                  }
+                }
+              }
+              return { ...o, kitchenStatus: 'placed' as const, hasUnsentItems: false, items: mergedItems };
+            })()
           : o
       );
       db.saveOrders(orders);
