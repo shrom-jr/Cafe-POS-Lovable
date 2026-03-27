@@ -894,9 +894,9 @@ const ReviewScreen = () => {
                 >
                   <span className="text-[10px] font-black uppercase tracking-[0.16em]" style={{ color: 'rgba(255,255,255,0.35)' }}>
                     Total
-                    {selectedIds.size > 0 && (
+                    {selectedQty.size > 0 && (
                       <span className="ml-2 normal-case font-semibold tracking-normal" style={{ color: 'rgba(147,197,253,0.65)' }}>
-                        {selectedIds.size} item{selectedIds.size !== 1 ? 's' : ''}
+                        {selectedQty.size} item{selectedQty.size !== 1 ? 's' : ''}
                       </span>
                     )}
                   </span>
