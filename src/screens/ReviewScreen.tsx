@@ -524,9 +524,9 @@ const ReviewScreen = () => {
     });
   };
 
-  const itemsCard = (
+  const getItemsCard = (tablet = false) => (
     <div
-      className="flex-1 min-h-0 rounded-xl overflow-hidden flex flex-col"
+      className={`${tablet ? '' : 'flex-1 min-h-0 '}rounded-xl overflow-hidden flex flex-col`}
       style={{
         background: 'rgba(255,255,255,0.04)',
         border: '1px solid rgba(255,255,255,0.06)',
@@ -546,8 +546,8 @@ const ReviewScreen = () => {
           </span>
         )}
       </div>
-      <div className="relative flex-1 min-h-0">
-        <div className="overflow-y-auto h-full">
+      <div className={tablet ? '' : 'relative flex-1 min-h-0'}>
+        <div className={tablet ? '' : 'overflow-y-auto h-full'}>
           {items.map((item, idx) => {
             const isPaid = item.status === 'paid';
             const isSelected = !!item.id && selectedQty.has(item.id);
@@ -627,10 +627,12 @@ const ReviewScreen = () => {
             );
           })}
         </div>
-        <div
-          className="absolute bottom-0 inset-x-0 h-8 pointer-events-none"
-          style={{ background: 'linear-gradient(to bottom, transparent, rgba(9,14,28,0.95))' }}
-        />
+        {!tablet && (
+          <div
+            className="absolute bottom-0 inset-x-0 h-8 pointer-events-none"
+            style={{ background: 'linear-gradient(to bottom, transparent, rgba(9,14,28,0.95))' }}
+          />
+        )}
       </div>
     </div>
   );
@@ -734,7 +736,6 @@ const ReviewScreen = () => {
       </div>
     </div>
   );
-  const billCard = getBillCard();
 
   const getPaymentCard = (compact = false) => {
     return (
@@ -835,7 +836,6 @@ const ReviewScreen = () => {
     </div>
     );
   };
-  const paymentCard = getPaymentCard();
 
   // ── Main review + payment screen ──
   return (
@@ -881,7 +881,7 @@ const ReviewScreen = () => {
 
               {/* Left: items list (scrollable) */}
               <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-                {itemsCard}
+                {getItemsCard()}
               </div>
 
               {/* Right: Total → Payment (scrollable list) → Bill details (collapsible) */}
@@ -1088,13 +1088,39 @@ const ReviewScreen = () => {
               </div>
             </div>
           ) : (
-            <div className="max-w-[460px] mx-auto w-full flex flex-col flex-1 min-h-0 px-4 pt-2.5 pb-2 gap-1.5">
-              {itemsCard}
-              <div className="flex-shrink-0 flex flex-col gap-1.5">
-                {billCard}
-                {paymentCard}
+            <>
+              {/* Mobile layout (< 768px): unchanged stacked */}
+              <div className="flex md:hidden max-w-[460px] mx-auto w-full flex-col flex-1 min-h-0 px-4 pt-2.5 pb-2 gap-1.5">
+                {getItemsCard()}
+                <div className="flex-shrink-0 flex flex-col gap-1.5">
+                  {getBillCard()}
+                  {getPaymentCard()}
+                </div>
               </div>
-            </div>
+
+              {/* Tablet/Desktop layout (≥ 768px): split */}
+              <div className="hidden md:flex flex-1 min-h-0 overflow-hidden">
+                {/* Left panel: scrollable items */}
+                <div className="flex-1 overflow-y-auto px-5 py-4">
+                  {getItemsCard(true)}
+                </div>
+
+                {/* Vertical divider */}
+                <div
+                  className="flex-shrink-0 w-px self-stretch"
+                  style={{ background: 'rgba(255,255,255,0.07)' }}
+                />
+
+                {/* Right panel: bill + payment — independently scrollable, sticky feel */}
+                <div
+                  className="flex-shrink-0 overflow-y-auto flex flex-col gap-3 px-5 py-4"
+                  style={{ width: 450 }}
+                >
+                  {getBillCard()}
+                  {getPaymentCard()}
+                </div>
+              </div>
+            </>
           )}
         </div>
       </div>
