@@ -65,7 +65,7 @@ const ReviewScreen = () => {
   );
 
   // ── Split / partial payment state ─────────────────────────────
-  const [selectedQty, setSelectedQty] = useState<Map<string, number>>(new Map());
+  const [selectedQty, setSelectedQty] = useState<Map<number, number>>(new Map());
   const [partialSuccess, setPartialSuccess] = useState(false);
   const [printSession, setPrintSession] = useState<{
     items: OrderItem[];
@@ -82,10 +82,12 @@ const ReviewScreen = () => {
 
   const splitSelectedItems = useMemo(
     () =>
-      unpaidItems
-        .filter((i) => selectedQty.has(i.menuItemId))
-        .map((i) => ({ ...i, quantity: selectedQty.get(i.menuItemId)! })),
-    [unpaidItems, selectedQty]
+      items.flatMap((item, idx) =>
+        selectedQty.has(idx) && item.status !== 'paid'
+          ? [{ ...item, quantity: selectedQty.get(idx)! }]
+          : []
+      ),
+    [items, selectedQty]
   );
 
   const splitBill = useMemo(
@@ -199,13 +201,13 @@ const ReviewScreen = () => {
     // Build payItemIds — split item in store when only a partial quantity is being paid
     const payItemIds: string[] = [];
     if (isSplit) {
-      for (const [menuItemId, qty] of selectedQty.entries()) {
-        const item = unpaidItems.find((i) => i.menuItemId === menuItemId);
-        if (!item) continue;
+      for (const [rowIdx, qty] of selectedQty.entries()) {
+        const item = items[rowIdx];
+        if (!item || item.status === 'paid') continue;
         if (qty >= item.quantity) {
-          payItemIds.push(menuItemId);
+          payItemIds.push(item.menuItemId);
         } else {
-          const splitKey = splitOrderItem(orderIdRef.current, menuItemId, qty);
+          const splitKey = splitOrderItem(orderIdRef.current, item.menuItemId, qty);
           payItemIds.push(splitKey);
         }
       }
@@ -239,8 +241,10 @@ const ReviewScreen = () => {
 
     // allDone: true when every unpaid item's full quantity is being paid in this transaction
     const allDone = isSplit
-      ? unpaidItems.every(
-          (i) => selectedQty.has(i.menuItemId) && (selectedQty.get(i.menuItemId) ?? 0) >= i.quantity
+      ? items.every(
+          (item, idx) =>
+            item.status === 'paid' ||
+            (selectedQty.has(idx) && (selectedQty.get(idx) ?? 0) >= item.quantity)
         )
       : true;
 
@@ -501,19 +505,19 @@ const ReviewScreen = () => {
 
   // ── Shared JSX sections (used in both portrait and landscape) ────
 
-  const toggleItemSelection = (menuItemId: string, totalQty: number) => {
+  const toggleItemSelection = (idx: number, totalQty: number) => {
     setSelectedQty((prev) => {
       const next = new Map(prev);
-      if (next.has(menuItemId)) next.delete(menuItemId);
-      else next.set(menuItemId, totalQty);
+      if (next.has(idx)) next.delete(idx);
+      else next.set(idx, totalQty);
       return next;
     });
   };
 
-  const setItemSelectedQty = (menuItemId: string, qty: number, max: number) => {
+  const setItemSelectedQty = (idx: number, qty: number, max: number) => {
     setSelectedQty((prev) => {
       const next = new Map(prev);
-      next.set(menuItemId, Math.max(1, Math.min(max, qty)));
+      next.set(idx, Math.max(1, Math.min(max, qty)));
       return next;
     });
   };
@@ -544,12 +548,12 @@ const ReviewScreen = () => {
         <div className="overflow-y-auto h-full">
           {items.map((item, idx) => {
             const isPaid = item.status === 'paid';
-            const isSelected = selectedQty.has(item.menuItemId);
-            const selQty = selectedQty.get(item.menuItemId) ?? item.quantity;
+            const isSelected = selectedQty.has(idx);
+            const selQty = selectedQty.get(idx) ?? item.quantity;
             const showStepper = isSelected && item.quantity > 1;
             return (
               <div
-                key={item.menuItemId}
+                key={`${item.menuItemId}-${idx}`}
                 className={`flex items-center gap-3 px-3 py-2.5 select-none ${!isPaid ? 'cursor-pointer active:scale-[0.985]' : ''}`}
                 style={{
                   borderBottom: idx < items.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
@@ -560,7 +564,7 @@ const ReviewScreen = () => {
                   borderLeft: isSelected ? '3px solid rgba(59,130,246,0.85)' : '3px solid transparent',
                   transition: 'background 0.12s ease, border-color 0.12s ease, opacity 0.12s ease, transform 0.1s ease',
                 }}
-                onClick={() => !isPaid && toggleItemSelection(item.menuItemId, item.quantity)}
+                onClick={() => !isPaid && toggleItemSelection(idx, item.quantity)}
               >
                 {!isPaid && (
                   <div
@@ -600,7 +604,7 @@ const ReviewScreen = () => {
                     <button
                       className="w-6 h-6 rounded flex items-center justify-center active:scale-90 transition-transform"
                       style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}
-                      onClick={() => setItemSelectedQty(item.menuItemId, selQty - 1, item.quantity)}
+                      onClick={() => setItemSelectedQty(idx, selQty - 1, item.quantity)}
                     >
                       <span className="text-xs font-bold leading-none" style={{ color: 'rgba(255,255,255,0.7)' }}>−</span>
                     </button>
@@ -608,7 +612,7 @@ const ReviewScreen = () => {
                     <button
                       className="w-6 h-6 rounded flex items-center justify-center active:scale-90 transition-transform"
                       style={{ background: 'rgba(59,130,246,0.18)', border: '1px solid rgba(59,130,246,0.3)' }}
-                      onClick={() => setItemSelectedQty(item.menuItemId, selQty + 1, item.quantity)}
+                      onClick={() => setItemSelectedQty(idx, selQty + 1, item.quantity)}
                     >
                       <span className="text-xs font-bold leading-none" style={{ color: 'rgba(147,197,253,0.9)' }}>+</span>
                     </button>
