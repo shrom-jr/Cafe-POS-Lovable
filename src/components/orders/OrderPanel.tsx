@@ -26,6 +26,9 @@ interface OrderPanelProps {
 
 const BLUE_BTN = { background: 'rgba(59,130,246,0.14)', border: '1px solid rgba(59,130,246,0.24)' };
 
+const formatTime = (ts: number) =>
+  new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+
 const OrderPanel = ({
   order,
   onUpdateQty,
@@ -37,6 +40,13 @@ const OrderPanel = ({
   onPaxChange,
 }: OrderPanelProps) => {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [sendPhase, setSendPhase] = useState<'idle' | 'sending' | 'sent'>('idle');
+  const [sentAt, setSentAt] = useState<number | null>(
+    order?.kitchenStatus === 'placed' ? Date.now() : null
+  );
+  const [sentItemIds, setSentItemIds] = useState<Set<string>>(
+    () => new Set((order?.items || []).map((i) => i.menuItemId))
+  );
 
   const items = order?.items || [];
   const unpaidItems = items.filter((i) => i.status !== 'paid');
@@ -58,14 +68,29 @@ const OrderPanel = ({
     kitchenStatus === 'draft'
       ? 'Send to Kitchen'
       : hasUnsentItems
-      ? 'Send New Items'
+      ? 'Send Update'
       : 'Proceed to Payment →';
 
+  const buttonLabel =
+    sendPhase === 'sending' ? 'Sending...'
+    : sendPhase === 'sent' ? 'Sent ✓'
+    : items.length > 0 ? primaryLabel : 'Add items to order';
+
+  const handleSend = () => {
+    setSendPhase('sending');
+    setSentItemIds(new Set(items.map((i) => i.menuItemId)));
+    setSentAt(Date.now());
+    onSendToKitchen();
+    setTimeout(() => setSendPhase('sent'), 700);
+    setTimeout(() => setSendPhase('idle'), 1800);
+  };
+
   const handlePrimary = () => {
+    if (sendPhase !== 'idle') return;
     if (kitchenStatus === 'placed' && !hasUnsentItems) {
       onPay();
     } else {
-      onSendToKitchen();
+      handleSend();
     }
   };
 
@@ -174,7 +199,14 @@ const OrderPanel = ({
           </div>
         ) : (
           items.map((item) => (
-            <OrderItemRow key={item.menuItemId} item={item} onUpdateQty={onUpdateQty} onRemove={onRemove} isPaid={item.status === 'paid'} />
+            <OrderItemRow
+              key={item.menuItemId}
+              item={item}
+              onUpdateQty={onUpdateQty}
+              onRemove={onRemove}
+              isPaid={item.status === 'paid'}
+              isUnsent={kitchenStatus === 'placed' && !sentItemIds.has(item.menuItemId) && item.status !== 'paid'}
+            />
           ))
         )}
       </div>
@@ -196,7 +228,14 @@ const OrderPanel = ({
           }}
         />
         <div className="flex items-center justify-between py-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-white/30">Total</span>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs font-semibold uppercase tracking-wider text-white/30">Total</span>
+            {kitchenStatus === 'placed' && sentAt && (
+              <span className="text-[10px] font-medium" style={{ color: 'rgba(52,211,153,0.65)' }}>
+                Sent at {formatTime(sentAt)}
+              </span>
+            )}
+          </div>
           <span
             className="text-3xl font-black"
             style={{ color: items.length > 0 ? 'rgba(255,255,255,0.97)' : 'rgba(255,255,255,0.25)' }}
@@ -205,23 +244,35 @@ const OrderPanel = ({
           </span>
         </div>
 
+        {/* Safety hint — only shown in draft with items */}
+        {kitchenStatus === 'draft' && items.length > 0 && (
+          <p className="text-[10px] text-center font-medium" style={{ color: 'rgba(251,191,36,0.55)' }}>
+            Send to kitchen before proceeding to payment
+          </p>
+        )}
+
         {/* Primary action — kitchen lifecycle */}
         <button
           onClick={handlePrimary}
-          disabled={items.length === 0}
+          disabled={items.length === 0 || sendPhase === 'sending'}
           data-testid="button-proceed-to-bill"
           className="w-full py-4 rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-all active:scale-[0.97] disabled:opacity-20 disabled:cursor-not-allowed"
           style={{
             background: items.length > 0
-              ? 'linear-gradient(135deg, #1e50d0 0%, #4186f5 100%)'
+              ? sendPhase === 'sent'
+                ? 'linear-gradient(135deg, #059669 0%, #10b981 100%)'
+                : 'linear-gradient(135deg, #1e50d0 0%, #4186f5 100%)'
               : 'rgba(59,130,246,0.12)',
             color: items.length > 0 ? '#ffffff' : 'rgba(255,255,255,0.3)',
             boxShadow: items.length > 0
-              ? '0 4px 20px -4px rgba(59,130,246,0.55), inset 0 1px 0 rgba(255,255,255,0.12)'
+              ? sendPhase === 'sent'
+                ? '0 4px 20px -4px rgba(16,185,129,0.55), inset 0 1px 0 rgba(255,255,255,0.12)'
+                : '0 4px 20px -4px rgba(59,130,246,0.55), inset 0 1px 0 rgba(255,255,255,0.12)'
               : 'none',
+            transition: 'background 0.3s ease, box-shadow 0.3s ease',
           }}
         >
-          {items.length > 0 ? primaryLabel : 'Add items to order'}
+          {buttonLabel}
         </button>
       </div>
 
@@ -254,15 +305,20 @@ interface OrderItemRowProps {
   onUpdateQty: (id: string, delta: number) => void;
   onRemove: (id: string) => void;
   isPaid?: boolean;
+  isUnsent?: boolean;
 }
 
-const OrderItemRow = ({ item, onUpdateQty, onRemove, isPaid = false }: OrderItemRowProps) => (
+const OrderItemRow = ({ item, onUpdateQty, onRemove, isPaid = false, isUnsent = false }: OrderItemRowProps) => (
   <div
     className="flex items-center gap-2 rounded-xl p-2.5 transition-all"
     data-testid={`order-item-${item.menuItemId}`}
     style={{
-      background: isPaid ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.05)',
-      border: isPaid ? '1px solid rgba(255,255,255,0.04)' : '1px solid rgba(255,255,255,0.06)',
+      background: isPaid ? 'rgba(255,255,255,0.02)' : isUnsent ? 'rgba(251,191,36,0.05)' : 'rgba(255,255,255,0.05)',
+      border: isPaid
+        ? '1px solid rgba(255,255,255,0.04)'
+        : isUnsent
+        ? '1px solid rgba(251,191,36,0.18)'
+        : '1px solid rgba(255,255,255,0.06)',
       opacity: isPaid ? 0.5 : 1,
     }}
   >
@@ -272,6 +328,11 @@ const OrderItemRow = ({ item, onUpdateQty, onRemove, isPaid = false }: OrderItem
         {isPaid && (
           <span className="flex-shrink-0 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded" style={{ background: 'rgba(52,211,153,0.12)', color: 'rgba(52,211,153,0.7)' }}>
             Paid
+          </span>
+        )}
+        {isUnsent && (
+          <span className="flex-shrink-0 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded" style={{ background: 'rgba(251,191,36,0.14)', color: 'rgba(251,191,36,0.85)' }}>
+            New
           </span>
         )}
       </div>

@@ -10,6 +10,9 @@ import OrderPanel from '@/components/orders/OrderPanel';
 import { Search, ShoppingCart, ChevronUp, X, Info } from 'lucide-react';
 import { playClick } from '@/utils/sounds';
 
+const formatTime = (ts: number) =>
+  new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+
 const OrderScreen = () => {
   const { tableId } = useParams<{ tableId: string }>();
   const navigate = useNavigate();
@@ -34,6 +37,10 @@ const OrderScreen = () => {
   const [activeCat, setActiveCat] = useState(categories[0]?.id || '');
   const [search, setSearch] = useState('');
   const [showCart, setShowCart] = useState(false);
+  const [drawerSendPhase, setDrawerSendPhase] = useState<'idle' | 'sending' | 'sent'>('idle');
+  const [drawerSentAt, setDrawerSentAt] = useState<number | null>(null);
+  const [drawerSentItemIds, setDrawerSentItemIds] = useState<Set<string>>(new Set());
+  const [showKitchenWarning, setShowKitchenWarning] = useState(false);
 
   // Swipe-to-close refs (portrait drawer only)
   const swipeTouchStartY = useRef(0);
@@ -56,6 +63,14 @@ const OrderScreen = () => {
     if (!tableId || !table) return null;
     return getActiveOrder(tableId) || null;
   }, [tableId, table, getActiveOrder, orders]);
+
+  // Initialise sentItemIds on first load if order already placed
+  useEffect(() => {
+    if (order && order.kitchenStatus === 'placed' && drawerSentItemIds.size === 0) {
+      setDrawerSentItemIds(new Set(order.items.map((i) => i.menuItemId)));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order?.id]);
 
   const filteredItems = useMemo(() => {
     let items = menuItems;
@@ -118,18 +133,32 @@ const OrderScreen = () => {
     kitchenStatus === 'draft'
       ? 'Send to Kitchen'
       : hasUnsentItems
-      ? 'Send New Items'
+      ? 'Send Update'
       : 'Proceed to Payment →';
+
+  const drawerButtonLabel =
+    drawerSendPhase === 'sending' ? 'Sending...'
+    : drawerSendPhase === 'sent' ? 'Sent ✓'
+    : drawerPrimaryLabel;
 
   const handleSendToKitchen = () => {
     if (!order) return;
+    setDrawerSendPhase('sending');
+    setDrawerSentItemIds(new Set(order.items.map((i) => i.menuItemId)));
+    setDrawerSentAt(Date.now());
+    setShowKitchenWarning(false);
     sendToKitchen(order.id);
+    setTimeout(() => setDrawerSendPhase('sent'), 700);
+    setTimeout(() => setDrawerSendPhase('idle'), 1800);
   };
 
   const handleDrawerPrimary = () => {
+    if (drawerSendPhase !== 'idle') return;
     if (kitchenStatus === 'placed' && !hasUnsentItems) {
       setShowCart(false);
       handlePay();
+    } else if (kitchenStatus === 'draft' && order && order.items.length > 0) {
+      handleSendToKitchen();
     } else {
       handleSendToKitchen();
     }
@@ -411,13 +440,14 @@ const OrderScreen = () => {
               ) : (
                 (order?.items || []).map((item) => {
                   const isPaid = item.status === 'paid';
+                  const isUnsent = kitchenStatus === 'placed' && !drawerSentItemIds.has(item.menuItemId) && !isPaid;
                   return (
                   <div
                     key={item.menuItemId}
                     className="flex items-center gap-2 rounded-xl px-3 py-2.5"
                     style={{
-                      background: isPaid ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.06)',
-                      border: isPaid ? '1px solid rgba(255,255,255,0.04)' : '1px solid rgba(255,255,255,0.07)',
+                      background: isPaid ? 'rgba(255,255,255,0.02)' : isUnsent ? 'rgba(251,191,36,0.05)' : 'rgba(255,255,255,0.06)',
+                      border: isPaid ? '1px solid rgba(255,255,255,0.04)' : isUnsent ? '1px solid rgba(251,191,36,0.18)' : '1px solid rgba(255,255,255,0.07)',
                       opacity: isPaid ? 0.5 : 1,
                     }}
                   >
@@ -427,6 +457,11 @@ const OrderScreen = () => {
                         {isPaid && (
                           <span className="flex-shrink-0 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded" style={{ background: 'rgba(52,211,153,0.12)', color: 'rgba(52,211,153,0.7)' }}>
                             Paid
+                          </span>
+                        )}
+                        {isUnsent && (
+                          <span className="flex-shrink-0 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded" style={{ background: 'rgba(251,191,36,0.14)', color: 'rgba(251,191,36,0.85)' }}>
+                            New
                           </span>
                         )}
                       </div>
@@ -467,10 +502,32 @@ const OrderScreen = () => {
                 background: '#0d1525',
               }}
             >
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold uppercase tracking-wider text-white/35">Total</span>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-white/35">Total</span>
+                  {kitchenStatus === 'placed' && drawerSentAt && (
+                    <span className="text-[10px] font-medium" style={{ color: 'rgba(52,211,153,0.65)' }}>
+                      Sent at {formatTime(drawerSentAt)}
+                    </span>
+                  )}
+                </div>
                 <span className="text-2xl font-black text-white/95">Rs. {fmt(runningTotal)}</span>
               </div>
+
+              {/* Safety warning */}
+              {showKitchenWarning && (
+                <p className="text-[11px] text-center font-semibold mb-2 mt-1" style={{ color: 'rgba(251,191,36,0.9)' }}>
+                  Send order to kitchen first
+                </p>
+              )}
+
+              {/* Draft hint */}
+              {kitchenStatus === 'draft' && hasItems && !showKitchenWarning && (
+                <p className="text-[10px] text-center font-medium mb-2 mt-1" style={{ color: 'rgba(251,191,36,0.5)' }}>
+                  Send to kitchen before proceeding to payment
+                </p>
+              )}
+
               {hasItems && (
                 <button
                   onClick={() => { handleClear(); setShowCart(false); }}
@@ -486,16 +543,21 @@ const OrderScreen = () => {
               )}
               <button
                 onClick={handleDrawerPrimary}
-                disabled={!order || order.items.length === 0}
+                disabled={!order || order.items.length === 0 || drawerSendPhase === 'sending'}
                 data-testid="button-proceed-to-bill"
                 className="w-full py-3.5 rounded-2xl font-black text-base transition-all active:scale-[0.97] disabled:opacity-20 disabled:cursor-not-allowed"
                 style={{
-                  background: 'linear-gradient(90deg, #2563EB 0%, #3B82F6 100%)',
+                  background: drawerSendPhase === 'sent'
+                    ? 'linear-gradient(90deg, #059669 0%, #10b981 100%)'
+                    : 'linear-gradient(90deg, #2563EB 0%, #3B82F6 100%)',
                   color: '#ffffff',
-                  boxShadow: '0 4px 20px -4px rgba(59,130,246,0.6)',
+                  boxShadow: drawerSendPhase === 'sent'
+                    ? '0 4px 20px -4px rgba(16,185,129,0.6)'
+                    : '0 4px 20px -4px rgba(59,130,246,0.6)',
+                  transition: 'background 0.3s ease, box-shadow 0.3s ease',
                 }}
               >
-                {drawerPrimaryLabel}
+                {drawerButtonLabel}
               </button>
             </div>
           </div>
