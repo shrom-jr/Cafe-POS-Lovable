@@ -22,6 +22,7 @@ export interface MenuItem {
 }
 
 export interface OrderItem {
+  id: string;
   menuItemId: string;
   name: string;
   price: number;

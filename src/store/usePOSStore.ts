@@ -51,7 +51,22 @@ export const usePOSStore = create<POSState>((set, get) => ({
   tables: db.getTables(),
   categories: db.getCategories(),
   menuItems: db.getMenuItems(),
-  orders: db.getOrders(),
+  orders: (() => {
+    const raw = db.getOrders();
+    let dirty = false;
+    const migrated = raw.map((o) => ({
+      ...o,
+      items: o.items.map((i) => {
+        if (!(i as unknown as { id?: string }).id) {
+          dirty = true;
+          return { ...i, id: crypto.randomUUID() };
+        }
+        return i;
+      }),
+    }));
+    if (dirty) db.saveOrders(migrated);
+    return migrated;
+  })(),
   payments: db.getPayments(),
   settings: db.getSettings(),
 
@@ -192,7 +207,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
         }
         return {
           ...o,
-          items: [...o.items, { menuItemId: item.id, name: item.name, price: item.price, quantity: 1 }],
+          items: [...o.items, { id: crypto.randomUUID(), menuItemId: item.id, name: item.name, price: item.price, quantity: 1 }],
         };
       });
       db.saveOrders(orders);
@@ -290,7 +305,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
             ...o.items.map((i) =>
               i.menuItemId === menuItemId ? { ...i, quantity: i.quantity - qty } : i
             ),
-            { menuItemId: splitKey, name: item.name, price: item.price, quantity: qty },
+            { id: crypto.randomUUID(), menuItemId: splitKey, name: item.name, price: item.price, quantity: qty },
           ],
         };
       });
