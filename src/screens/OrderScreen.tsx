@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { fmt } from '@/utils/format';
 import { SEND_DELAY, SUCCESS_DURATION, FLASH_DURATION, NOW_TICK_INTERVAL } from '@/utils/kitchenTimings';
 import { usePOSStore } from '@/store/usePOSStore';
@@ -24,6 +24,7 @@ const formatRelativeTime = (ts: number, now: number): string => {
 const OrderScreen = () => {
   const { tableId } = useParams<{ tableId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { tables } = useTables();
   const updateTable = usePOSStore((s) => s.updateTable);
@@ -53,6 +54,12 @@ const OrderScreen = () => {
   const [now, setNow] = useState(Date.now());
   const [movePhase, setMovePhase] = useState<null | 'picker' | 'confirm'>(null);
   const [moveTargetTableId, setMoveTargetTableId] = useState<string | null>(null);
+  const [moveIsProcessing, setMoveIsProcessing] = useState(false);
+  const [moveSuccessBanner, setMoveSuccessBanner] = useState<string | null>(
+    () => (location.state as { movedFrom?: number })?.movedFrom != null
+      ? `Moved from Table ${(location.state as { movedFrom?: number }).movedFrom} ✓`
+      : null
+  );
 
   // Timer refs — prevent memory leaks and stale updates on unmount
   const sendTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -87,6 +94,12 @@ const OrderScreen = () => {
     const id = setInterval(() => setNow(Date.now()), NOW_TICK_INTERVAL);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (!moveSuccessBanner) return;
+    const t = setTimeout(() => setMoveSuccessBanner(null), 2000);
+    return () => clearTimeout(t);
+  }, [moveSuccessBanner]);
 
   const order = useMemo(() => {
     if (!tableId || !table) return null;
@@ -219,11 +232,15 @@ const OrderScreen = () => {
   const moveTargetTable = moveTargetTableId ? tables.find((t) => t.id === moveTargetTableId) : null;
 
   const handleMoveConfirm = () => {
-    if (!order || !moveTargetTableId) return;
-    moveOrder(order.id, moveTargetTableId);
+    if (!order || !moveTargetTableId || moveIsProcessing) return;
+    setMoveIsProcessing(true);
+    const targetId = moveTargetTableId;
+    const fromNumber = table.number;
+    moveOrder(order.id, targetId);
     setMovePhase(null);
     setMoveTargetTableId(null);
-    navigate(`/order/${moveTargetTableId}`);
+    setMoveIsProcessing(false);
+    navigate(`/order/${targetId}`, { state: { movedFrom: fromNumber }, replace: true });
   };
 
   const handleRepeatLast = () => {
@@ -248,6 +265,26 @@ const OrderScreen = () => {
   return (
     <div className="h-[100dvh] flex flex-col overflow-hidden" style={{ background: 'linear-gradient(180deg, #0d1525 0%, #060e1a 100%)' }}>
       <TopBar title={`Table ${table.number}`} showBack onBack={() => navigate('/')} />
+
+      {/* Move success banner */}
+      {moveSuccessBanner && (
+        <div
+          className="flex items-center gap-2.5 px-4 py-2.5 flex-shrink-0 transition-all"
+          style={{
+            background: 'linear-gradient(90deg, rgba(16,185,129,0.18) 0%, rgba(16,185,129,0.08) 100%)',
+            borderBottom: '1px solid rgba(16,185,129,0.3)',
+            boxShadow: '0 0 20px rgba(16,185,129,0.12) inset',
+          }}
+        >
+          <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ background: 'rgba(16,185,129,0.25)', border: '1px solid rgba(16,185,129,0.5)' }}>
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+              <path d="M2 5l2 2 4-4" stroke="rgba(52,211,153,0.95)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <span className="text-xs font-bold" style={{ color: 'rgba(52,211,153,0.9)' }}>{moveSuccessBanner}</span>
+        </div>
+      )}
 
       {/* Kitchen status label */}
       {order && (
@@ -372,6 +409,7 @@ const OrderScreen = () => {
               onSendToKitchen={handleSendToKitchen}
               onClear={handleClear}
               onMoveTable={order ? () => setMovePhase('picker') : undefined}
+              moveDisabled={freeTables.length === 0}
               pax={table.pax ?? 1}
               onPaxChange={handlePaxChange}
             />
@@ -469,13 +507,18 @@ const OrderScreen = () => {
               <div className="flex items-center gap-2">
                 {order && (
                   <button
-                    onClick={() => setMovePhase('picker')}
+                    onClick={() => { if (freeTables.length > 0) setMovePhase('picker'); }}
+                    disabled={freeTables.length === 0}
                     data-testid="button-move-table-drawer"
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all active:scale-95"
-                    style={{ color: 'rgba(147,197,253,0.8)', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)' }}
+                    title={freeTables.length === 0 ? 'No available tables' : undefined}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={freeTables.length > 0
+                      ? { color: 'rgba(147,197,253,0.8)', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)' }
+                      : { color: 'rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }
+                    }
                   >
                     <ArrowRightLeft size={12} />
-                    Move
+                    {freeTables.length === 0 ? 'No tables' : 'Move'}
                   </button>
                 )}
                 <button
@@ -803,7 +846,9 @@ const OrderScreen = () => {
                 {' '}to{' '}
                 <span className="text-blue-300 font-bold">Table {moveTargetTable.number}</span>?
               </p>
-              <p className="text-xs text-white/30 mt-1">All items and order data will be preserved.</p>
+              <p className="text-xs text-white/35 mt-1.5 leading-relaxed">
+                All items, kitchen status, and payments will remain unchanged.
+              </p>
             </div>
             <div className="flex gap-2.5">
               <button
@@ -815,10 +860,12 @@ const OrderScreen = () => {
               </button>
               <button
                 onClick={handleMoveConfirm}
-                className="flex-1 py-3 rounded-xl text-sm font-black transition-all active:scale-[0.97]"
+                disabled={moveIsProcessing}
+                className="flex-1 py-3 rounded-xl text-sm font-black transition-all active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 style={{ background: 'linear-gradient(135deg, #1e50d0 0%, #4186f5 100%)', color: '#fff', boxShadow: '0 4px 16px -4px rgba(59,130,246,0.55)' }}
               >
-                Move Table
+                <ArrowRightLeft size={14} />
+                {moveIsProcessing ? 'Moving…' : 'Move Table'}
               </button>
             </div>
           </div>

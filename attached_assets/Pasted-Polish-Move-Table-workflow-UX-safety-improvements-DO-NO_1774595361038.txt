@@ -1,0 +1,147 @@
+Polish "Move Table" workflow (UX + safety improvements).
+
+⚠️ DO NOT change core logic
+⚠️ DO NOT modify store behavior
+⚠️ Only improve UI/UX and edge-case handling
+
+---
+
+# GOAL
+
+Make table movement:
+
+* Clear
+* Safe
+* Fast under pressure
+* Visually reassuring
+
+---
+
+# IMPROVEMENTS
+
+## 1. Success Feedback (important)
+
+After moving table:
+
+* Show a short success message:
+  "Moved to Table X ✓"
+
+* Auto-dismiss after ~1.5 seconds
+
+Purpose:
+
+* Confirm action clearly to cashier
+
+---
+
+## 2. Highlight Target Table
+
+After navigation:
+
+* Briefly highlight the new table (glow or border for ~1–2 seconds)
+
+Purpose:
+
+* Help user visually track where the order moved
+
+---
+
+## 3. Disable Move When No Tables Available
+
+If no free tables exist:
+
+* Disable "Move" button OR
+* Show message: "No tables available"
+
+Prevent opening empty modal
+
+---
+
+## 4. Stronger Confirmation Message
+
+Improve confirmation text:
+
+From:
+"Move order from Table X to Table Y?"
+
+To:
+"Move order from Table X to Table Y?
+All items, kitchen status, and payments will remain unchanged."
+
+Purpose:
+
+* Reduce hesitation and mistakes
+
+---
+
+## 5. Prevent Double Actions
+
+When confirming move:
+
+* Disable confirm button while processing
+* Prevent multiple rapid clicks
+
+---
+
+## 6. Cancel Safety
+
+If user clicks outside modal:
+
+* Close safely without side effects
+* Ensure no partial state change
+
+---
+
+## 7. Maintain Scroll / Context
+
+After moving:
+
+* Ensure UI focuses on the new table view correctly
+* No jumpy or confusing transitions
+
+---
+
+## 8. Edge Case Handling
+
+Ensure:
+
+* Moving an empty order does nothing (or is disabled)
+* Moving while no order exists is not allowed
+* No crash if table state updates during modal open
+
+---
+
+## 9. Visual Consistency
+
+Ensure both:
+
+* Landscape panel
+* Mobile drawer
+
+Have identical Move behavior and UI feedback
+
+---
+
+## 10. Optional (nice touch)
+
+Add small icon to Move button (e.g. arrows or swap icon)
+
+Purpose:
+
+* Faster recognition during busy usage
+
+---
+
+# RESULT
+
+The Move Table feature should feel:
+
+✔ Instant
+✔ Safe
+✔ Clear
+✔ Hard to misuse
+✔ Professional
+
+---
+
+Apply only UI polish and safeguards.

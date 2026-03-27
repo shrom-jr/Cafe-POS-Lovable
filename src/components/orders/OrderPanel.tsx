@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Order, OrderItem } from '@/types/pos';
 import { fmt } from '@/utils/format';
 import { SEND_DELAY, SUCCESS_DURATION, FLASH_DURATION, NOW_TICK_INTERVAL } from '@/utils/kitchenTimings';
-import { Minus, Plus, Trash2, ShoppingBag, Users } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingBag, Users, ArrowRightLeft } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +22,7 @@ interface OrderPanelProps {
   onSendToKitchen: () => void;
   onClear?: () => void;
   onMoveTable?: () => void;
+  moveDisabled?: boolean;
   pax?: number;
   onPaxChange?: (pax: number) => void;
 }
@@ -46,6 +47,7 @@ const OrderPanel = ({
   onSendToKitchen,
   onClear,
   onMoveTable,
+  moveDisabled = false,
   pax = 1,
   onPaxChange,
 }: OrderPanelProps) => {
@@ -241,12 +243,18 @@ const OrderPanel = ({
             </span>
             {onMoveTable && (
               <button
-                onClick={onMoveTable}
+                onClick={moveDisabled ? undefined : onMoveTable}
+                disabled={moveDisabled}
                 data-testid="button-move-table"
-                className="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all active:scale-95"
-                style={{ color: 'rgba(147,197,253,0.75)', border: '1px solid rgba(59,130,246,0.18)', background: 'rgba(59,130,246,0.07)' }}
+                title={moveDisabled ? 'No available tables' : 'Move order to another table'}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                style={moveDisabled
+                  ? { color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)' }
+                  : { color: 'rgba(147,197,253,0.82)', border: '1px solid rgba(59,130,246,0.22)', background: 'rgba(59,130,246,0.09)' }
+                }
               >
-                Move
+                <ArrowRightLeft size={11} />
+                {moveDisabled ? 'No tables' : 'Move'}
               </button>
             )}
             {onClear && (
