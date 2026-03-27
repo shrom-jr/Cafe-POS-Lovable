@@ -8,7 +8,7 @@ import { useTables } from '@/hooks/useTables';
 import { TopBar } from '@/components/ui/Navigation';
 import MenuItemCard from '@/components/orders/MenuItemCard';
 import OrderPanel from '@/components/orders/OrderPanel';
-import { Search, ShoppingCart, ChevronUp, X, Info } from 'lucide-react';
+import { Search, ShoppingCart, ChevronUp, X, Info, ArrowRightLeft } from 'lucide-react';
 import { playClick } from '@/utils/sounds';
 
 const formatTime = (ts: number) =>
@@ -27,6 +27,7 @@ const OrderScreen = () => {
 
   const { tables } = useTables();
   const updateTable = usePOSStore((s) => s.updateTable);
+  const moveOrder = usePOSStore((s) => s.moveOrder);
   const {
     getActiveOrder,
     createOrder,
@@ -50,6 +51,8 @@ const OrderScreen = () => {
   const [drawerFlashingIds, setDrawerFlashingIds] = useState<Set<string>>(new Set());
   const [showKitchenWarning, setShowKitchenWarning] = useState(false);
   const [now, setNow] = useState(Date.now());
+  const [movePhase, setMovePhase] = useState<null | 'picker' | 'confirm'>(null);
+  const [moveTargetTableId, setMoveTargetTableId] = useState<string | null>(null);
 
   // Timer refs — prevent memory leaks and stale updates on unmount
   const sendTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -208,6 +211,21 @@ const OrderScreen = () => {
     if (tableId) updateTable(tableId, { pax: newPax });
   };
 
+  const freeTables = useMemo(
+    () => tables.filter((t) => t.status === 'free').sort((a, b) => a.number - b.number),
+    [tables]
+  );
+
+  const moveTargetTable = moveTargetTableId ? tables.find((t) => t.id === moveTargetTableId) : null;
+
+  const handleMoveConfirm = () => {
+    if (!order || !moveTargetTableId) return;
+    moveOrder(order.id, moveTargetTableId);
+    setMovePhase(null);
+    setMoveTargetTableId(null);
+    navigate(`/order/${moveTargetTableId}`);
+  };
+
   const handleRepeatLast = () => {
     const tablePayments = payments
       .filter((p) => p.tableNumber === table.number)
@@ -353,6 +371,7 @@ const OrderScreen = () => {
               onPay={handlePay}
               onSendToKitchen={handleSendToKitchen}
               onClear={handleClear}
+              onMoveTable={order ? () => setMovePhase('picker') : undefined}
               pax={table.pax ?? 1}
               onPaxChange={handlePaxChange}
             />
@@ -447,14 +466,27 @@ const OrderScreen = () => {
               <h3 className="font-bold text-white/90 text-sm">
                 Your Order{itemCount > 0 ? ` · ${itemCount} item${itemCount !== 1 ? 's' : ''}` : ''}
               </h3>
-              <button
-                onClick={() => setShowCart(false)}
-                data-testid="button-close-cart"
-                className="p-1.5 rounded-lg transition-colors"
-                style={{ color: 'rgba(255,255,255,0.45)', background: 'rgba(255,255,255,0.07)' }}
-              >
-                <X size={16} />
-              </button>
+              <div className="flex items-center gap-2">
+                {order && (
+                  <button
+                    onClick={() => setMovePhase('picker')}
+                    data-testid="button-move-table-drawer"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all active:scale-95"
+                    style={{ color: 'rgba(147,197,253,0.8)', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)' }}
+                  >
+                    <ArrowRightLeft size={12} />
+                    Move
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowCart(false)}
+                  data-testid="button-close-cart"
+                  className="p-1.5 rounded-lg transition-colors"
+                  style={{ color: 'rgba(255,255,255,0.45)', background: 'rgba(255,255,255,0.07)' }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
             </div>
 
             {/* Guests (Pax) selector */}
@@ -672,6 +704,122 @@ const OrderScreen = () => {
                   </button>
                 );
               })()}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── Move Table Modal ── */}
+      {movePhase === 'picker' && (
+        <>
+          <div
+            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm"
+            onClick={() => setMovePhase(null)}
+          />
+          <div
+            className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 rounded-2xl p-5 flex flex-col gap-4"
+            style={{
+              background: 'linear-gradient(160deg, #0f1929 0%, #0b1220 100%)',
+              border: '1px solid rgba(59,130,246,0.22)',
+              boxShadow: '0 24px 64px -8px rgba(0,0,0,0.85)',
+              maxWidth: 480,
+              margin: '0 auto',
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="font-black text-white/90 text-base">Move Table</h2>
+                <p className="text-xs text-white/40 mt-0.5">
+                  Move order from <span className="text-blue-300 font-semibold">Table {table.number}</span> to:
+                </p>
+              </div>
+              <button
+                onClick={() => setMovePhase(null)}
+                className="p-1.5 rounded-lg"
+                style={{ color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.07)' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {freeTables.length === 0 ? (
+              <div className="text-center py-8 text-white/30">
+                <p className="text-sm font-semibold">No available tables</p>
+                <p className="text-xs mt-1 opacity-60">All other tables are currently occupied</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 max-h-64 overflow-y-auto">
+                {freeTables.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => { setMoveTargetTableId(t.id); setMovePhase('confirm'); }}
+                    className="flex flex-col items-center justify-center py-4 rounded-xl font-black text-2xl transition-all active:scale-95 hover:scale-[1.03]"
+                    style={{
+                      background: 'linear-gradient(160deg, #0f1929 0%, #0b1220 100%)',
+                      border: '1px solid rgba(16,185,129,0.28)',
+                      color: 'rgba(255,255,255,0.85)',
+                    }}
+                  >
+                    {t.number}
+                    <span className="text-[9px] font-semibold mt-1" style={{ color: 'rgba(52,211,153,0.7)' }}>
+                      Available
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* ── Move Table Confirmation ── */}
+      {movePhase === 'confirm' && moveTargetTable && (
+        <>
+          <div
+            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm"
+            onClick={() => setMovePhase('picker')}
+          />
+          <div
+            className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 rounded-2xl p-5 flex flex-col gap-5"
+            style={{
+              background: 'linear-gradient(160deg, #0f1929 0%, #0b1220 100%)',
+              border: '1px solid rgba(59,130,246,0.22)',
+              boxShadow: '0 24px 64px -8px rgba(0,0,0,0.85)',
+              maxWidth: 400,
+              margin: '0 auto',
+            }}
+          >
+            <div className="text-center">
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
+                style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.25)' }}
+              >
+                <ArrowRightLeft size={20} style={{ color: 'rgba(147,197,253,0.85)' }} />
+              </div>
+              <h2 className="font-black text-white/90 text-base">Confirm Move</h2>
+              <p className="text-sm text-white/50 mt-1.5 leading-relaxed">
+                Move order from{' '}
+                <span className="text-white/80 font-bold">Table {table.number}</span>
+                {' '}to{' '}
+                <span className="text-blue-300 font-bold">Table {moveTargetTable.number}</span>?
+              </p>
+              <p className="text-xs text-white/30 mt-1">All items and order data will be preserved.</p>
+            </div>
+            <div className="flex gap-2.5">
+              <button
+                onClick={() => setMovePhase('picker')}
+                className="flex-1 py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.97]"
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}
+              >
+                Back
+              </button>
+              <button
+                onClick={handleMoveConfirm}
+                className="flex-1 py-3 rounded-xl text-sm font-black transition-all active:scale-[0.97]"
+                style={{ background: 'linear-gradient(135deg, #1e50d0 0%, #4186f5 100%)', color: '#fff', boxShadow: '0 4px 16px -4px rgba(59,130,246,0.55)' }}
+              >
+                Move Table
+              </button>
             </div>
           </div>
         </>

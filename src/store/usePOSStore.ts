@@ -33,6 +33,7 @@ interface POSState {
   updateOrderStatus: (orderId: string, status: Order['status']) => void;
   sendToKitchen: (orderId: string) => void;
 
+  moveOrder: (orderId: string, newTableId: string) => void;
   clearOrder: (orderId: string) => void;
 
   splitOrderItem: (orderId: string, menuItemId: string, qty: number) => string;
@@ -307,6 +308,35 @@ export const usePOSStore = create<POSState>((set, get) => ({
       );
       db.saveOrders(orders);
       return { orders };
+    });
+  },
+
+  moveOrder: (orderId, newTableId) => {
+    set((state) => {
+      const order = state.orders.find((o) => o.id === orderId);
+      const newTable = state.tables.find((t) => t.id === newTableId);
+      if (!order || !newTable || newTable.status !== 'free') return {};
+
+      const oldTableId = order.tableId;
+      const oldTable = state.tables.find((t) => t.id === oldTableId);
+
+      const orders = state.orders.map((o) =>
+        o.id === orderId ? { ...o, tableId: newTableId, tableNumber: newTable.number } : o
+      );
+      const tables = state.tables.map((t) => {
+        if (t.id === oldTableId) {
+          return { ...t, status: 'free' as const, orderId: undefined, orderStartTime: undefined, pax: undefined };
+        }
+        if (t.id === newTableId) {
+          const newStatus = order.status === 'billed' ? 'billing' as const : 'occupied' as const;
+          return { ...t, status: newStatus, orderId: order.id, orderStartTime: oldTable?.orderStartTime, pax: oldTable?.pax };
+        }
+        return t;
+      });
+
+      db.saveOrders(orders);
+      db.saveTables(tables);
+      return { orders, tables };
     });
   },
 

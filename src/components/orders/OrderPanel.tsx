@@ -21,6 +21,7 @@ interface OrderPanelProps {
   onPay: () => void;
   onSendToKitchen: () => void;
   onClear?: () => void;
+  onMoveTable?: () => void;
   pax?: number;
   onPaxChange?: (pax: number) => void;
 }
@@ -44,6 +45,7 @@ const OrderPanel = ({
   onPay,
   onSendToKitchen,
   onClear,
+  onMoveTable,
   pax = 1,
   onPaxChange,
 }: OrderPanelProps) => {
@@ -237,6 +239,16 @@ const OrderPanel = ({
             >
               {itemCount} items
             </span>
+            {onMoveTable && (
+              <button
+                onClick={onMoveTable}
+                data-testid="button-move-table"
+                className="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all active:scale-95"
+                style={{ color: 'rgba(147,197,253,0.75)', border: '1px solid rgba(59,130,246,0.18)', background: 'rgba(59,130,246,0.07)' }}
+              >
+                Move
+              </button>
+            )}
             {onClear && (
               <button
                 onClick={() => setShowClearConfirm(true)}
