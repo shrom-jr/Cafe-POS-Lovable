@@ -29,6 +29,7 @@ export interface OrderItem {
   quantity: number;
   status?: 'unpaid' | 'paid';
   paidAt?: number;
+  sentToKitchen?: boolean;
 }
 
 export interface TablePayment {

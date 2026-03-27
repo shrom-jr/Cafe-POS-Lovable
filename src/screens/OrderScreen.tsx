@@ -47,7 +47,6 @@ const OrderScreen = () => {
   const [showCart, setShowCart] = useState(false);
   const [drawerSendPhase, setDrawerSendPhase] = useState<'idle' | 'sending' | 'sent'>('idle');
   const [drawerSentAt, setDrawerSentAt] = useState<number | null>(null);
-  const [drawerSentItemIds, setDrawerSentItemIds] = useState<Set<string>>(new Set());
   const [drawerFlashingIds, setDrawerFlashingIds] = useState<Set<string>>(new Set());
   const [showKitchenWarning, setShowKitchenWarning] = useState(false);
   const [now, setNow] = useState(Date.now());
@@ -91,13 +90,6 @@ const OrderScreen = () => {
     return getActiveOrder(tableId) || null;
   }, [tableId, table, getActiveOrder, orders]);
 
-  // Initialise sentItemIds on first load if order already placed
-  useEffect(() => {
-    if (order && order.kitchenStatus === 'placed' && drawerSentItemIds.size === 0) {
-      setDrawerSentItemIds(new Set(order.items.map((i) => i.menuItemId)));
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [order?.id]);
 
   const filteredItems = useMemo(() => {
     let items = menuItems;
@@ -175,8 +167,8 @@ const OrderScreen = () => {
 
     // Snapshot unsent IDs at click time — stable for flash
     const unsentSnapshot = order.items
-      .filter((i) => !drawerSentItemIds.has(i.menuItemId) && i.status !== 'paid')
-      .map((i) => i.menuItemId);
+      .filter((i) => !i.sentToKitchen && i.status !== 'paid')
+      .map((i) => i.id);
 
     // Cancel any prior flash and start a new one from the snapshot
     if (flashTimer.current !== null) clearTimeout(flashTimer.current);
@@ -189,7 +181,6 @@ const OrderScreen = () => {
     }
 
     setDrawerSendPhase('sending');
-    setDrawerSentItemIds(new Set(order.items.map((i) => i.menuItemId)));
     const ts = Date.now();
     setDrawerSentAt(ts);
     setNow(ts);
@@ -353,11 +344,11 @@ const OrderScreen = () => {
           >
             <OrderPanel
               order={order}
-              onUpdateQty={(menuItemId, delta) =>
-                order && updateItemQuantity(order.id, menuItemId, delta)
+              onUpdateQty={(itemId, delta) =>
+                order && updateItemQuantity(order.id, itemId, delta)
               }
-              onRemove={(menuItemId) =>
-                order && removeItemFromOrder(order.id, menuItemId)
+              onRemove={(itemId) =>
+                order && removeItemFromOrder(order.id, itemId)
               }
               onPay={handlePay}
               onSendToKitchen={handleSendToKitchen}
@@ -506,18 +497,18 @@ const OrderScreen = () => {
                 const allItems = order?.items || [];
                 const hasGrouping = kitchenStatus === 'placed' && hasUnsentItems;
                 const sentItems = hasGrouping
-                  ? allItems.filter((i) => drawerSentItemIds.has(i.menuItemId))
+                  ? allItems.filter((i) => i.sentToKitchen)
                   : allItems;
                 const unsentItems = hasGrouping
-                  ? allItems.filter((i) => !drawerSentItemIds.has(i.menuItemId) && i.status !== 'paid')
+                  ? allItems.filter((i) => !i.sentToKitchen && i.status !== 'paid')
                   : [];
 
                 const renderItem = (item: typeof allItems[0], isUnsent: boolean) => {
                   const isPaid = item.status === 'paid';
-                  const isFlashing = drawerFlashingIds.has(item.menuItemId);
+                  const isFlashing = drawerFlashingIds.has(item.id);
                   return (
                     <div
-                      key={item.menuItemId}
+                      key={item.id}
                       className="flex items-center gap-2 rounded-xl px-3 py-2.5"
                       style={{
                         background: isPaid ? 'rgba(255,255,255,0.02)' : isUnsent ? 'rgba(251,191,36,0.05)' : 'rgba(255,255,255,0.06)',
@@ -545,7 +536,7 @@ const OrderScreen = () => {
                       </div>
                       <div className="flex items-center gap-1.5">
                         <button
-                          onClick={() => !isPaid && order && updateItemQuantity(order.id, item.menuItemId, -1)}
+                          onClick={() => !isPaid && order && updateItemQuantity(order.id, item.id, -1)}
                           disabled={isPaid}
                           className="w-8 h-8 rounded-lg flex items-center justify-center text-white/50 active:scale-90 transition-transform disabled:pointer-events-none disabled:opacity-30"
                           style={{ background: 'rgba(255,255,255,0.07)' }}
@@ -554,7 +545,7 @@ const OrderScreen = () => {
                         </button>
                         <span className="w-7 text-center font-black text-sm text-white/90 select-none">{item.quantity}</span>
                         <button
-                          onClick={() => !isPaid && order && updateItemQuantity(order.id, item.menuItemId, 1)}
+                          onClick={() => !isPaid && order && updateItemQuantity(order.id, item.id, 1)}
                           disabled={isPaid}
                           className="w-8 h-8 rounded-lg flex items-center justify-center active:scale-90 transition-transform disabled:pointer-events-none disabled:opacity-30"
                           style={{ background: 'rgba(59,130,246,0.20)', border: '1px solid rgba(59,130,246,0.30)' }}

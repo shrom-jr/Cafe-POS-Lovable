@@ -52,9 +52,6 @@ const OrderPanel = ({
   const [sentAt, setSentAt] = useState<number | null>(
     order?.kitchenStatus === 'placed' ? Date.now() : null
   );
-  const [sentItemIds, setSentItemIds] = useState<Set<string>>(
-    () => new Set((order?.items || []).map((i) => i.menuItemId))
-  );
   const [flashingIds, setFlashingIds] = useState<Set<string>>(new Set());
   const [now, setNow] = useState(Date.now());
 
@@ -140,10 +137,10 @@ const OrderPanel = ({
   const handleSend = () => {
     if (sendPhase !== 'idle') return; // race condition guard
 
-    // Snapshot unsent IDs at click time — stable for flash + sentItemIds update
+    // Snapshot unsent IDs at click time — stable for flash
     const unsentSnapshot = items
-      .filter((i) => !sentItemIds.has(i.menuItemId) && i.status !== 'paid')
-      .map((i) => i.menuItemId);
+      .filter((i) => !i.sentToKitchen && i.status !== 'paid')
+      .map((i) => i.id);
 
     // Flash the unsent items — cancel any prior flash first
     if (flashTimer.current !== null) clearTimeout(flashTimer.current);
@@ -156,7 +153,6 @@ const OrderPanel = ({
     }
 
     setSendPhase('sending');
-    setSentItemIds(new Set(items.map((i) => i.menuItemId)));
     const ts = Date.now();
     setSentAt(ts);
     setNow(ts);
@@ -180,13 +176,13 @@ const OrderPanel = ({
     setShowClearConfirm(false);
   };
 
-  // Grouping — always re-derived from live sentItemIds, never stale
+  // Grouping — derived from sentToKitchen flag on each item
   const hasGrouping = kitchenStatus === 'placed' && hasUnsentItems;
   const sentDisplayItems = hasGrouping
-    ? items.filter((i) => sentItemIds.has(i.menuItemId))
+    ? items.filter((i) => i.sentToKitchen)
     : items;
   const unsentDisplayItems = hasGrouping
-    ? items.filter((i) => !sentItemIds.has(i.menuItemId) && i.status !== 'paid')
+    ? items.filter((i) => !i.sentToKitchen && i.status !== 'paid')
     : [];
 
   return (
@@ -294,7 +290,7 @@ const OrderPanel = ({
           <>
             {sentDisplayItems.map((item) => (
               <OrderItemRow
-                key={item.menuItemId}
+                key={item.id}
                 item={item}
                 onUpdateQty={onUpdateQty}
                 onRemove={onRemove}
@@ -314,13 +310,13 @@ const OrderPanel = ({
                 </div>
                 {unsentDisplayItems.map((item) => (
                   <OrderItemRow
-                    key={item.menuItemId}
+                    key={item.id}
                     item={item}
                     onUpdateQty={onUpdateQty}
                     onRemove={onRemove}
                     isPaid={false}
                     isUnsent={true}
-                    isFlashing={flashingIds.has(item.menuItemId)}
+                    isFlashing={flashingIds.has(item.id)}
                   />
                 ))}
               </>
@@ -329,7 +325,7 @@ const OrderPanel = ({
         ) : (
           items.map((item) => (
             <OrderItemRow
-              key={item.menuItemId}
+              key={item.id}
               item={item}
               onUpdateQty={onUpdateQty}
               onRemove={onRemove}
@@ -476,7 +472,7 @@ const OrderItemRow = ({ item, onUpdateQty, onRemove, isPaid = false, isUnsent = 
     </div>
     <div className="flex items-center gap-1">
       <button
-        onClick={() => !isPaid && onUpdateQty(item.menuItemId, -1)}
+        onClick={() => !isPaid && onUpdateQty(item.id, -1)}
         disabled={isPaid}
         aria-label={`Decrease ${item.name} quantity`}
         data-testid={`button-decrease-${item.menuItemId}`}
@@ -487,7 +483,7 @@ const OrderItemRow = ({ item, onUpdateQty, onRemove, isPaid = false, isUnsent = 
       </button>
       <span className="w-7 text-center font-black text-sm text-white/85" aria-label={`${item.quantity} of ${item.name}`}>{item.quantity}</span>
       <button
-        onClick={() => !isPaid && onUpdateQty(item.menuItemId, 1)}
+        onClick={() => !isPaid && onUpdateQty(item.id, 1)}
         disabled={isPaid}
         aria-label={`Increase ${item.name} quantity`}
         data-testid={`button-increase-${item.menuItemId}`}
@@ -502,7 +498,7 @@ const OrderItemRow = ({ item, onUpdateQty, onRemove, isPaid = false, isUnsent = 
     </p>
     {!isPaid && (
       <button
-        onClick={() => onRemove(item.menuItemId)}
+        onClick={() => onRemove(item.id)}
         aria-label={`Remove ${item.name}`}
         data-testid={`button-remove-${item.menuItemId}`}
         className="w-7 h-7 rounded-lg flex items-center justify-center text-white/22 transition-colors active:scale-90 hover:text-red-400 hover:bg-red-500/10"

@@ -197,14 +197,14 @@ export const usePOSStore = create<POSState>((set, get) => ({
     set((state) => {
       const orders = state.orders.map((o) => {
         if (o.id !== orderId) return o;
-        const existing = o.items.find((i) => i.menuItemId === item.id && i.status !== 'paid');
+        const existing = o.items.find((i) => i.menuItemId === item.id && i.status !== 'paid' && !i.sentToKitchen);
         const wasPlaced = o.kitchenStatus === 'placed';
         if (existing) {
           return {
             ...o,
             hasUnsentItems: wasPlaced ? true : o.hasUnsentItems,
             items: o.items.map((i) =>
-              i.menuItemId === item.id && i.status !== 'paid' ? { ...i, quantity: i.quantity + 1 } : i
+              i.id === existing.id ? { ...i, quantity: i.quantity + 1 } : i
             ),
           };
         }
@@ -219,12 +219,12 @@ export const usePOSStore = create<POSState>((set, get) => ({
     });
   },
 
-  updateItemQuantity: (orderId, menuItemId, delta) => {
+  updateItemQuantity: (orderId, itemId, delta) => {
     set((state) => {
       let updatedOrders = state.orders.map((o) => {
         if (o.id !== orderId) return o;
         const items = o.items
-          .map((i) => (i.menuItemId === menuItemId ? { ...i, quantity: i.quantity + delta } : i))
+          .map((i) => (i.id === itemId ? { ...i, quantity: i.quantity + delta } : i))
           .filter((i) => i.quantity > 0);
         return { ...o, items };
       });
@@ -247,11 +247,11 @@ export const usePOSStore = create<POSState>((set, get) => ({
     });
   },
 
-  removeItemFromOrder: (orderId, menuItemId) => {
+  removeItemFromOrder: (orderId, itemId) => {
     set((state) => {
       let updatedOrders = state.orders.map((o) => {
         if (o.id !== orderId) return o;
-        return { ...o, items: o.items.filter((i) => i.menuItemId !== menuItemId) };
+        return { ...o, items: o.items.filter((i) => i.id !== itemId) };
       });
 
       const order = updatedOrders.find((o) => o.id === orderId);
@@ -283,7 +283,14 @@ export const usePOSStore = create<POSState>((set, get) => ({
   sendToKitchen: (orderId) => {
     set((state) => {
       const orders = state.orders.map((o) =>
-        o.id === orderId ? { ...o, kitchenStatus: 'placed' as const, hasUnsentItems: false } : o
+        o.id === orderId
+          ? {
+              ...o,
+              kitchenStatus: 'placed' as const,
+              hasUnsentItems: false,
+              items: o.items.map((i) => ({ ...i, sentToKitchen: true })),
+            }
+          : o
       );
       db.saveOrders(orders);
       return { orders };
