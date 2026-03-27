@@ -1,0 +1,179 @@
+Finalize kitchen workflow UX (stability + consistency pass).
+
+⚠️ DO NOT change store logic
+⚠️ DO NOT change data model
+⚠️ DO NOT modify payment flow
+⚠️ Only refine UI behavior, consistency, and edge-case safety
+
+---
+
+# GOAL
+
+Ensure all kitchen workflow interactions are:
+
+* Consistent across views (panel + drawer)
+* Free of timing bugs or stale UI states
+* Smooth under rapid user interaction
+
+---
+
+# FINAL REFINEMENTS
+
+## 1. Centralize Timing Durations
+
+Currently:
+
+* Sending delay (~700ms)
+* Success state (~1100ms)
+* Flash (~650ms)
+
+Refactor into shared constants:
+
+SEND_DELAY = 700
+SUCCESS_DURATION = 1100
+FLASH_DURATION = 650
+
+Use same values everywhere (panel + drawer)
+
+---
+
+## 2. Prevent Race Conditions (important)
+
+Handle rapid interactions safely:
+
+* If user taps "Send" multiple times quickly:
+  → ignore while sending === true
+
+* If items change during sending:
+  → snapshot unsent item IDs at click time only
+
+* Ensure:
+  flashingIds always corresponds to that snapshot (not live state)
+
+---
+
+## 3. Guarantee Cleanup on Unmount
+
+For all timers:
+
+* clearTimeout / clearInterval on component unmount
+* avoid memory leaks or state updates on unmounted components
+
+Applies to:
+
+* sending timers
+* flash timers
+* "now" interval ticker
+
+---
+
+## 4. Strict NEW State Reset
+
+After "Send Update":
+
+* NEW badge must fully disappear
+* flashingIds must clear
+* sentItemIds must sync exactly with current order
+
+No partial states allowed.
+
+---
+
+## 5. Stable Grouping Logic
+
+Ensure grouping is always derived from current data:
+
+unsentItems = items NOT in sentItemIds
+
+DO NOT rely on stale arrays.
+
+Recompute on every render.
+
+---
+
+## 6. Timestamp Accuracy
+
+Ensure:
+
+* "Sent just now" transitions correctly to "Sent 2 min ago"
+* No frozen values
+* now ticker updates cleanly every 30s
+
+Avoid excessive re-renders:
+
+* only update visible label
+
+---
+
+## 7. Animation Safety
+
+Ensure:
+
+* animations do not stack if triggered repeatedly
+* no duplicate class application
+* no flicker on fast updates
+
+Use:
+
+* unique keys
+* controlled class toggling
+
+---
+
+## 8. Visual Consistency Across Views
+
+Ensure both:
+
+* OrderPanel (landscape)
+* Mobile drawer (OrderScreen)
+
+Have identical behavior for:
+
+* button states
+* flash animation
+* grouping
+* timestamps
+* safety messages
+
+No divergence allowed.
+
+---
+
+## 9. Accessibility (light pass)
+
+Add:
+
+* aria-disabled for sending state
+* clear button labels for screen readers
+
+Example:
+"Send to kitchen (disabled while sending)"
+
+---
+
+## 10. Fallback Safety
+
+If any unexpected state occurs:
+
+* default to safe UI:
+  → treat as draft
+  → hide grouping
+  → show "Send to Kitchen"
+
+Avoid broken UI at all costs.
+
+---
+
+# RESULT
+
+The system should now feel:
+
+✔ Consistent across all layouts
+✔ Resistant to rapid interaction
+✔ Free of UI glitches
+✔ Production-stable
+✔ Smooth and predictable
+
+---
+
+Apply only stabilization and consistency improvements.

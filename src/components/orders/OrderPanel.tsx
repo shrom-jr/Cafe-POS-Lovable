@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Order, OrderItem } from '@/types/pos';
 import { fmt } from '@/utils/format';
+import { SEND_DELAY, SUCCESS_DURATION, FLASH_DURATION, NOW_TICK_INTERVAL } from '@/utils/kitchenTimings';
 import { Minus, Plus, Trash2, ShoppingBag, Users } from 'lucide-react';
 import {
   AlertDialog,
@@ -57,18 +58,42 @@ const OrderPanel = ({
   const [flashingIds, setFlashingIds] = useState<Set<string>>(new Set());
   const [now, setNow] = useState(Date.now());
 
+  // Refs for timer cleanup — prevents state updates on unmounted component
+  const sendTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const schedule = (fn: () => void, delay: number) => {
+    const id = setTimeout(fn, delay);
+    sendTimers.current.push(id);
+    return id;
+  };
+
+  // Clean up all timers on unmount
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 30000);
+    return () => {
+      sendTimers.current.forEach(clearTimeout);
+      if (flashTimer.current !== null) clearTimeout(flashTimer.current);
+    };
+  }, []);
+
+  // Now ticker — relative time display
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), NOW_TICK_INTERVAL);
     return () => clearInterval(id);
   }, []);
+
+  // Derive safe kitchen state — fallback to draft on unexpected values
+  const rawStatus = order?.kitchenStatus;
+  const kitchenStatus: 'draft' | 'placed' = rawStatus === 'placed' ? 'placed' : 'draft';
+  const hasUnsentItems = kitchenStatus === 'placed' ? (order?.hasUnsentItems ?? false) : false;
 
   const items = order?.items || [];
   const unpaidItems = items.filter((i) => i.status !== 'paid');
   const total = unpaidItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const itemCount = items.reduce((s, i) => s + i.quantity, 0);
 
-  const kitchenStatus = order?.kitchenStatus ?? 'draft';
-  const hasUnsentItems = order?.hasUnsentItems ?? false;
+  const isProceedState = kitchenStatus === 'placed' && !hasUnsentItems;
+  const isUpdateState = kitchenStatus === 'placed' && hasUnsentItems;
 
   const statusLabel = kitchenStatus === 'draft' ? 'Draft' : hasUnsentItems ? 'Updated' : 'Sent';
   const statusColor =
@@ -78,19 +103,20 @@ const OrderPanel = ({
       ? { background: 'rgba(251,191,36,0.12)', color: 'rgba(251,191,36,0.8)', border: '1px solid rgba(251,191,36,0.25)' }
       : { background: 'rgba(52,211,153,0.12)', color: 'rgba(52,211,153,0.8)', border: '1px solid rgba(52,211,153,0.25)' };
 
-  const isProceedState = kitchenStatus === 'placed' && !hasUnsentItems;
-  const isUpdateState = kitchenStatus === 'placed' && hasUnsentItems;
-
-  const primaryLabel = kitchenStatus === 'draft'
-    ? 'Send to Kitchen'
-    : isUpdateState
-    ? 'Send Update'
+  const primaryLabel =
+    kitchenStatus === 'draft' ? 'Send to Kitchen'
+    : isUpdateState ? 'Send Update'
     : 'Proceed to Payment →';
 
   const buttonLabel =
     sendPhase === 'sending' ? 'Sending...'
     : sendPhase === 'sent' ? 'Sent ✓'
     : items.length > 0 ? primaryLabel : 'Add items to order';
+
+  const ariaLabel =
+    sendPhase === 'sending' ? 'Sending to kitchen, please wait'
+    : sendPhase === 'sent' ? 'Order sent to kitchen'
+    : primaryLabel;
 
   const btnBackground = (() => {
     if (items.length === 0) return 'rgba(59,130,246,0.12)';
@@ -109,24 +135,35 @@ const OrderPanel = ({
   })();
 
   const btnPy = isUpdateState && sendPhase === 'idle' ? '14px' : '16px';
+  const isBtnDisabled = items.length === 0 || sendPhase === 'sending';
 
   const handleSend = () => {
-    const unsentBeforeSend = items
+    if (sendPhase !== 'idle') return; // race condition guard
+
+    // Snapshot unsent IDs at click time — stable for flash + sentItemIds update
+    const unsentSnapshot = items
       .filter((i) => !sentItemIds.has(i.menuItemId) && i.status !== 'paid')
       .map((i) => i.menuItemId);
 
-    if (unsentBeforeSend.length > 0) {
-      setFlashingIds(new Set(unsentBeforeSend));
-      setTimeout(() => setFlashingIds(new Set()), 650);
+    // Flash the unsent items — cancel any prior flash first
+    if (flashTimer.current !== null) clearTimeout(flashTimer.current);
+    if (unsentSnapshot.length > 0) {
+      setFlashingIds(new Set(unsentSnapshot));
+      flashTimer.current = setTimeout(() => {
+        setFlashingIds(new Set());
+        flashTimer.current = null;
+      }, FLASH_DURATION);
     }
 
     setSendPhase('sending');
     setSentItemIds(new Set(items.map((i) => i.menuItemId)));
-    setSentAt(Date.now());
-    setNow(Date.now());
+    const ts = Date.now();
+    setSentAt(ts);
+    setNow(ts);
     onSendToKitchen();
-    setTimeout(() => setSendPhase('sent'), 700);
-    setTimeout(() => setSendPhase('idle'), 1900);
+
+    schedule(() => setSendPhase('sent'), SEND_DELAY);
+    schedule(() => setSendPhase('idle'), SEND_DELAY + SUCCESS_DURATION);
   };
 
   const handlePrimary = () => {
@@ -143,6 +180,7 @@ const OrderPanel = ({
     setShowClearConfirm(false);
   };
 
+  // Grouping — always re-derived from live sentItemIds, never stale
   const hasGrouping = kitchenStatus === 'placed' && hasUnsentItems;
   const sentDisplayItems = hasGrouping
     ? items.filter((i) => sentItemIds.has(i.menuItemId))
@@ -244,7 +282,7 @@ const OrderPanel = ({
         </div>
       </div>
 
-      {/* Item list — ONLY this section scrolls */}
+      {/* Item list — scrollable */}
       <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-1.5">
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full py-12" style={{ color: 'rgba(255,255,255,0.22)' }}>
@@ -343,7 +381,9 @@ const OrderPanel = ({
         {/* Primary action */}
         <button
           onClick={handlePrimary}
-          disabled={items.length === 0 || sendPhase === 'sending'}
+          disabled={isBtnDisabled}
+          aria-disabled={isBtnDisabled}
+          aria-label={ariaLabel}
           data-testid="button-proceed-to-bill"
           className="w-full rounded-xl font-black text-lg flex items-center justify-center gap-2 active:scale-[0.97] disabled:opacity-20 disabled:cursor-not-allowed"
           style={{
@@ -352,7 +392,7 @@ const OrderPanel = ({
             background: btnBackground,
             color: items.length > 0 ? '#ffffff' : 'rgba(255,255,255,0.3)',
             boxShadow: btnShadow,
-            transition: 'background 0.35s ease, box-shadow 0.35s ease, padding 0.2s ease, opacity 0.15s ease',
+            transition: 'background 0.35s ease, box-shadow 0.35s ease, padding 0.2s ease',
             animation: sendPhase === 'sending' ? 'op-btn-pulse 0.7s ease' : undefined,
           }}
         >
@@ -438,16 +478,18 @@ const OrderItemRow = ({ item, onUpdateQty, onRemove, isPaid = false, isUnsent = 
       <button
         onClick={() => !isPaid && onUpdateQty(item.menuItemId, -1)}
         disabled={isPaid}
+        aria-label={`Decrease ${item.name} quantity`}
         data-testid={`button-decrease-${item.menuItemId}`}
         className="w-7 h-7 rounded-lg flex items-center justify-center text-white/40 transition-colors active:scale-90 hover:text-red-400 hover:bg-red-500/10 disabled:pointer-events-none disabled:opacity-30"
         style={{ background: 'rgba(255,255,255,0.05)' }}
       >
         <Minus size={13} />
       </button>
-      <span className="w-7 text-center font-black text-sm text-white/85">{item.quantity}</span>
+      <span className="w-7 text-center font-black text-sm text-white/85" aria-label={`${item.quantity} of ${item.name}`}>{item.quantity}</span>
       <button
         onClick={() => !isPaid && onUpdateQty(item.menuItemId, 1)}
         disabled={isPaid}
+        aria-label={`Increase ${item.name} quantity`}
         data-testid={`button-increase-${item.menuItemId}`}
         className="w-7 h-7 rounded-lg flex items-center justify-center text-white/45 transition-colors active:scale-90 hover:text-blue-300 hover:brightness-110 disabled:pointer-events-none disabled:opacity-30"
         style={{ background: 'rgba(59,130,246,0.14)', border: '1px solid rgba(59,130,246,0.24)' }}
@@ -461,6 +503,7 @@ const OrderItemRow = ({ item, onUpdateQty, onRemove, isPaid = false, isUnsent = 
     {!isPaid && (
       <button
         onClick={() => onRemove(item.menuItemId)}
+        aria-label={`Remove ${item.name}`}
         data-testid={`button-remove-${item.menuItemId}`}
         className="w-7 h-7 rounded-lg flex items-center justify-center text-white/22 transition-colors active:scale-90 hover:text-red-400 hover:bg-red-500/10"
       >

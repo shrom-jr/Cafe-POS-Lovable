@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fmt } from '@/utils/format';
+import { SEND_DELAY, SUCCESS_DURATION, FLASH_DURATION, NOW_TICK_INTERVAL } from '@/utils/kitchenTimings';
 import { usePOSStore } from '@/store/usePOSStore';
 import { useOrders } from '@/hooks/useOrders';
 import { useTables } from '@/hooks/useTables';
@@ -51,6 +52,10 @@ const OrderScreen = () => {
   const [showKitchenWarning, setShowKitchenWarning] = useState(false);
   const [now, setNow] = useState(Date.now());
 
+  // Timer refs — prevent memory leaks and stale updates on unmount
+  const sendTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Swipe-to-close refs (portrait drawer only)
   const swipeTouchStartY = useRef(0);
   const swipeTouchCurrentY = useRef(0);
@@ -68,8 +73,16 @@ const OrderScreen = () => {
     };
   }, []);
 
+  // Clean up all send/flash timers on unmount
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 30000);
+    return () => {
+      sendTimers.current.forEach(clearTimeout);
+      if (flashTimer.current !== null) clearTimeout(flashTimer.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), NOW_TICK_INTERVAL);
     return () => clearInterval(id);
   }, []);
 
@@ -131,8 +144,10 @@ const OrderScreen = () => {
     clearOrder(order.id);
   };
 
-  const kitchenStatus = order?.kitchenStatus ?? 'draft';
-  const hasUnsentItems = order?.hasUnsentItems ?? false;
+  // Fallback safety — default to draft if unexpected value
+  const rawKitchenStatus = order?.kitchenStatus;
+  const kitchenStatus: 'draft' | 'placed' = rawKitchenStatus === 'placed' ? 'placed' : 'draft';
+  const hasUnsentItems = kitchenStatus === 'placed' ? (order?.hasUnsentItems ?? false) : false;
 
   const drawerStatusLabel =
     kitchenStatus === 'draft' ? 'Draft' : hasUnsentItems ? 'Updated' : 'Sent';
@@ -156,14 +171,23 @@ const OrderScreen = () => {
     : drawerPrimaryLabel;
 
   const handleSendToKitchen = () => {
-    if (!order) return;
-    const unsentBeforeSend = order.items
+    if (!order || drawerSendPhase !== 'idle') return; // race condition guard
+
+    // Snapshot unsent IDs at click time — stable for flash
+    const unsentSnapshot = order.items
       .filter((i) => !drawerSentItemIds.has(i.menuItemId) && i.status !== 'paid')
       .map((i) => i.menuItemId);
-    if (unsentBeforeSend.length > 0) {
-      setDrawerFlashingIds(new Set(unsentBeforeSend));
-      setTimeout(() => setDrawerFlashingIds(new Set()), 650);
+
+    // Cancel any prior flash and start a new one from the snapshot
+    if (flashTimer.current !== null) clearTimeout(flashTimer.current);
+    if (unsentSnapshot.length > 0) {
+      setDrawerFlashingIds(new Set(unsentSnapshot));
+      flashTimer.current = setTimeout(() => {
+        setDrawerFlashingIds(new Set());
+        flashTimer.current = null;
+      }, FLASH_DURATION);
     }
+
     setDrawerSendPhase('sending');
     setDrawerSentItemIds(new Set(order.items.map((i) => i.menuItemId)));
     const ts = Date.now();
@@ -171,8 +195,10 @@ const OrderScreen = () => {
     setNow(ts);
     setShowKitchenWarning(false);
     sendToKitchen(order.id);
-    setTimeout(() => setDrawerSendPhase('sent'), 700);
-    setTimeout(() => setDrawerSendPhase('idle'), 1900);
+
+    const t1 = setTimeout(() => setDrawerSendPhase('sent'), SEND_DELAY);
+    const t2 = setTimeout(() => setDrawerSendPhase('idle'), SEND_DELAY + SUCCESS_DURATION);
+    sendTimers.current.push(t1, t2);
   };
 
   const handleDrawerPrimary = () => {
@@ -612,6 +638,7 @@ const OrderScreen = () => {
               {(() => {
                 const isProceed = kitchenStatus === 'placed' && !hasUnsentItems;
                 const isUpdate = kitchenStatus === 'placed' && hasUnsentItems;
+                const isBtnDisabled = !order || order.items.length === 0 || drawerSendPhase === 'sending';
                 const bg = drawerSendPhase === 'sent'
                   ? 'linear-gradient(135deg, #059669 0%, #10b981 100%)'
                   : isProceed
@@ -627,10 +654,17 @@ const OrderScreen = () => {
                   ? '0 4px 12px -4px rgba(59,130,246,0.35)'
                   : '0 4px 20px -4px rgba(59,130,246,0.6)';
                 const py = isUpdate && drawerSendPhase === 'idle' ? '13px' : '15px';
+                const ariaLabel = drawerSendPhase === 'sending'
+                  ? 'Sending to kitchen, please wait'
+                  : drawerSendPhase === 'sent'
+                  ? 'Order sent to kitchen'
+                  : drawerPrimaryLabel;
                 return (
                   <button
                     onClick={handleDrawerPrimary}
-                    disabled={!order || order.items.length === 0 || drawerSendPhase === 'sending'}
+                    disabled={isBtnDisabled}
+                    aria-disabled={isBtnDisabled}
+                    aria-label={ariaLabel}
                     data-testid="button-proceed-to-bill"
                     className="w-full rounded-2xl font-black text-base active:scale-[0.97] disabled:opacity-20 disabled:cursor-not-allowed"
                     style={{
