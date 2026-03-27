@@ -1189,16 +1189,16 @@ const ReviewScreen = () => {
 
               {/* Tablet/Desktop layout (≥ 768px): card-based grid */}
               <div className="hidden md:flex flex-1 min-h-0 overflow-hidden">
-                <div className="w-full overflow-y-auto">
+                <div className="w-full h-full overflow-hidden" style={{ padding: '24px 28px' }}>
                   <div
                     style={{
                       maxWidth: 1360,
                       margin: '0 auto',
-                      padding: '24px 28px 32px',
+                      height: '100%',
                       display: 'grid',
                       gridTemplateColumns: '1.5fr 1fr',
                       gap: 20,
-                      alignItems: 'start',
+                      alignItems: 'stretch',
                     }}
                   >
 
@@ -1210,11 +1210,14 @@ const ReviewScreen = () => {
                         background: 'rgba(255,255,255,0.02)',
                         overflow: 'hidden',
                         boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        minHeight: 0,
                       }}
                     >
-                      {/* Card header */}
+                      {/* Card header — fixed */}
                       <div
-                        className="flex items-center justify-between px-5 py-3.5"
+                        className="flex items-center justify-between px-5 py-3.5 flex-shrink-0"
                         style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
                       >
                         <p className="text-[11px] font-bold uppercase tracking-[0.2em]" style={{ color: 'rgba(255,255,255,0.3)' }}>
@@ -1228,17 +1231,18 @@ const ReviewScreen = () => {
                         </span>
                       </div>
                       {/* Scrollable item rows */}
-                      <div>
+                      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
                         {getItemsCard(true)}
                       </div>
                     </div>
 
                     {/* ── RIGHT: Summary + Payment cards stacked ── */}
-                    <div className="flex flex-col" style={{ gap: 16 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, height: '100%', overflow: 'hidden', minHeight: 0 }}>
 
                       {/* ── Summary card ── */}
                       <div
                         style={{
+                          flexShrink: 0,
                           borderRadius: 16,
                           border: '1px solid rgba(255,255,255,0.08)',
                           background: 'rgba(255,255,255,0.02)',
@@ -1349,16 +1353,26 @@ const ReviewScreen = () => {
 
                       {/* ── Payment card ── */}
                       <div
-                        className="rounded-[20px] flex flex-col gap-3 p-4"
+                        className="rounded-[20px]"
                         style={{
                           background: 'linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))',
                           border: '1px solid rgba(255,255,255,0.08)',
                           boxShadow: '0 10px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.07)',
+                          flex: 1,
+                          minHeight: 0,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          overflow: 'hidden',
                         }}
                       >
-                        <p className="text-[10px] font-bold uppercase tracking-[0.22em] px-1" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                          Payment Method
-                        </p>
+                        {/* Fixed label */}
+                        <div style={{ flexShrink: 0, padding: '14px 16px 0' }}>
+                          <p className="text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                            Payment Method
+                          </p>
+                        </div>
+                        {/* Scrollable buttons area */}
+                        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '12px 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
 
                         {/* Cash — primary card with gradient + glow */}
                         <button
