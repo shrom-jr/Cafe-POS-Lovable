@@ -524,118 +524,207 @@ const ReviewScreen = () => {
     });
   };
 
-  const getItemsCard = (tablet = false) => (
-    <div
-      className={`${tablet ? '' : 'flex-1 min-h-0 '}rounded-xl overflow-hidden flex flex-col`}
-      style={{
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.06)',
-        boxShadow: '0 4px 16px -8px rgba(0,0,0,0.3)',
-      }}
-    >
-      <div
-        className="flex-shrink-0 px-3 py-1.5 flex items-center justify-between"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
-      >
-        <span className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.22)' }}>
-          Order Items
-        </span>
-        {selectedQty.size > 0 && (
-          <span className="text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: 'rgba(59,130,246,0.7)' }}>
-            {selectedQty.size} selected
-          </span>
-        )}
-      </div>
-      <div className={tablet ? '' : 'relative flex-1 min-h-0'}>
-        <div className={tablet ? '' : 'overflow-y-auto h-full'}>
-          {items.map((item, idx) => {
-            const isPaid = item.status === 'paid';
-            const isSelected = !!item.id && selectedQty.has(item.id);
-            const selQty = (item.id ? selectedQty.get(item.id) : undefined) ?? item.quantity;
-            const showStepper = isSelected && item.quantity > 1;
-            return (
+  const getItemsCard = (tablet = false) => {
+    const itemRows = items.map((item, idx) => {
+      const isPaid = item.status === 'paid';
+      const isSelected = !!item.id && selectedQty.has(item.id);
+      const selQty = (item.id ? selectedQty.get(item.id) : undefined) ?? item.quantity;
+      const showStepper = isSelected && item.quantity > 1;
+
+      if (tablet) {
+        return (
+          <div
+            key={item.id ?? `${item.menuItemId}-${idx}`}
+            className={`flex items-center gap-3 px-5 select-none ${!isPaid ? 'cursor-pointer' : ''}`}
+            style={{
+              paddingTop: 12,
+              paddingBottom: 12,
+              borderBottom: '1px solid rgba(255,255,255,0.05)',
+              opacity: isPaid ? 0.4 : 1,
+              background: isSelected ? 'rgba(59,130,246,0.1)' : 'transparent',
+              borderLeft: isSelected ? '3px solid rgba(59,130,246,0.8)' : '3px solid transparent',
+              transition: 'background 0.1s ease, border-color 0.1s ease',
+            }}
+            onClick={() => !isPaid && item.id && toggleItemSelection(item.id, item.quantity)}
+          >
+            {!isPaid && (
               <div
-                key={item.id ?? `${item.menuItemId}-${idx}`}
-                className={`flex items-center gap-3 px-3 py-2.5 select-none ${!isPaid ? 'cursor-pointer active:scale-[0.985]' : ''}`}
+                className="flex-shrink-0 w-4 h-4 rounded flex items-center justify-center"
                 style={{
-                  borderBottom: idx < items.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-                  opacity: isPaid ? 0.38 : 1,
-                  background: isSelected
-                    ? 'rgba(59,130,246,0.24)'
-                    : isPaid ? 'rgba(255,255,255,0.02)' : 'transparent',
-                  borderLeft: isSelected ? '3px solid rgba(59,130,246,0.85)' : '3px solid transparent',
-                  transition: 'background 0.12s ease, border-color 0.12s ease, opacity 0.12s ease, transform 0.1s ease',
+                  background: isSelected ? 'rgba(59,130,246,0.9)' : 'rgba(255,255,255,0.06)',
+                  border: isSelected ? '1.5px solid rgba(96,165,250,1)' : '1.5px solid rgba(255,255,255,0.14)',
                 }}
-                onClick={() => !isPaid && item.id && toggleItemSelection(item.id, item.quantity)}
               >
-                {!isPaid && (
-                  <div
-                    className="flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center"
-                    style={{
-                      background: isSelected ? 'rgba(59,130,246,0.9)' : 'rgba(255,255,255,0.06)',
-                      border: isSelected ? '1.5px solid rgba(96,165,250,1)' : '1.5px solid rgba(255,255,255,0.16)',
-                      boxShadow: isSelected ? '0 0 8px rgba(59,130,246,0.45)' : 'none',
-                      transition: 'background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease',
-                    }}
-                  >
-                    {isSelected && <Check size={11} className="text-white" strokeWidth={3} />}
-                  </div>
-                )}
-                {isPaid && <div className="flex-shrink-0 w-5 h-5" />}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className={`text-sm font-bold truncate leading-snug ${isPaid ? 'line-through' : ''}`} style={{ color: isPaid ? 'rgba(255,255,255,0.45)' : isSelected ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.88)' }}>
-                      {item.name}
-                    </p>
-                    {isPaid && (
-                      <span className="flex-shrink-0 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded" style={{ background: 'rgba(52,211,153,0.12)', color: 'rgba(52,211,153,0.7)' }}>
-                        Paid
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs" style={{ color: 'rgba(255,255,255,0.38)' }}>
-                    {showStepper ? `${selQty}/${item.quantity}` : item.quantity} × Rs. {fmt(item.price)}
-                  </p>
-                </div>
-                {/* Quantity stepper — only when selected and qty > 1 */}
-                {showStepper && (
-                  <div
-                    className="flex items-center gap-1 flex-shrink-0"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <button
-                      className="w-6 h-6 rounded flex items-center justify-center active:scale-90 transition-transform"
-                      style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}
-                      onClick={() => setItemSelectedQty(item.id!, selQty - 1, item.quantity)}
-                    >
-                      <span className="text-xs font-bold leading-none" style={{ color: 'rgba(255,255,255,0.7)' }}>−</span>
-                    </button>
-                    <span className="text-xs font-black tabular-nums w-5 text-center" style={{ color: 'rgba(255,255,255,0.9)' }}>{selQty}</span>
-                    <button
-                      className="w-6 h-6 rounded flex items-center justify-center active:scale-90 transition-transform"
-                      style={{ background: 'rgba(59,130,246,0.18)', border: '1px solid rgba(59,130,246,0.3)' }}
-                      onClick={() => setItemSelectedQty(item.id!, selQty + 1, item.quantity)}
-                    >
-                      <span className="text-xs font-bold leading-none" style={{ color: 'rgba(147,197,253,0.9)' }}>+</span>
-                    </button>
-                  </div>
-                )}
-                <p className="text-sm font-bold tabular-nums whitespace-nowrap" style={{ color: isPaid ? 'rgba(255,255,255,0.35)' : isSelected ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.88)' }}>
-                  Rs. {fmt(item.price * (isSelected ? selQty : item.quantity))}
-                </p>
+                {isSelected && <Check size={10} className="text-white" strokeWidth={3} />}
               </div>
-            );
-          })}
+            )}
+            {isPaid && <div className="flex-shrink-0 w-4 h-4" />}
+            <div className="flex-1 min-w-0">
+              <p
+                className={`text-sm font-semibold truncate ${isPaid ? 'line-through' : ''}`}
+                style={{ color: isPaid ? 'rgba(255,255,255,0.4)' : isSelected ? '#ffffff' : 'rgba(255,255,255,0.85)' }}
+              >
+                {item.name}
+                {isPaid && <span className="ml-2 text-[10px] font-bold not-italic" style={{ color: '#34d399' }}>PAID</span>}
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                {showStepper ? `${selQty}/${item.quantity}` : item.quantity} × Rs. {fmt(item.price)}
+              </p>
+            </div>
+            {showStepper && (
+              <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                <button
+                  className="w-6 h-6 rounded flex items-center justify-center active:scale-90 transition-transform"
+                  style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
+                  onClick={() => setItemSelectedQty(item.id!, selQty - 1, item.quantity)}
+                >
+                  <span className="text-xs font-bold" style={{ color: 'rgba(255,255,255,0.7)' }}>−</span>
+                </button>
+                <span className="text-xs font-bold tabular-nums w-5 text-center" style={{ color: 'rgba(255,255,255,0.9)' }}>{selQty}</span>
+                <button
+                  className="w-6 h-6 rounded flex items-center justify-center active:scale-90 transition-transform"
+                  style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)' }}
+                  onClick={() => setItemSelectedQty(item.id!, selQty + 1, item.quantity)}
+                >
+                  <span className="text-xs font-bold" style={{ color: 'rgba(147,197,253,0.9)' }}>+</span>
+                </button>
+              </div>
+            )}
+            <p
+              className="text-sm font-bold tabular-nums whitespace-nowrap ml-2"
+              style={{ color: isPaid ? 'rgba(255,255,255,0.3)' : isSelected ? '#ffffff' : 'rgba(255,255,255,0.8)' }}
+            >
+              Rs. {fmt(item.price * (isSelected ? selQty : item.quantity))}
+            </p>
+          </div>
+        );
+      }
+
+      return (
+        <div
+          key={item.id ?? `${item.menuItemId}-${idx}`}
+          className={`flex items-center gap-3 px-3 py-2.5 select-none ${!isPaid ? 'cursor-pointer active:scale-[0.985]' : ''}`}
+          style={{
+            borderBottom: idx < items.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+            opacity: isPaid ? 0.38 : 1,
+            background: isSelected
+              ? 'rgba(59,130,246,0.24)'
+              : isPaid ? 'rgba(255,255,255,0.02)' : 'transparent',
+            borderLeft: isSelected ? '3px solid rgba(59,130,246,0.85)' : '3px solid transparent',
+            transition: 'background 0.12s ease, border-color 0.12s ease, opacity 0.12s ease, transform 0.1s ease',
+          }}
+          onClick={() => !isPaid && item.id && toggleItemSelection(item.id, item.quantity)}
+        >
+          {!isPaid && (
+            <div
+              className="flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center"
+              style={{
+                background: isSelected ? 'rgba(59,130,246,0.9)' : 'rgba(255,255,255,0.06)',
+                border: isSelected ? '1.5px solid rgba(96,165,250,1)' : '1.5px solid rgba(255,255,255,0.16)',
+                boxShadow: isSelected ? '0 0 8px rgba(59,130,246,0.45)' : 'none',
+                transition: 'background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease',
+              }}
+            >
+              {isSelected && <Check size={11} className="text-white" strokeWidth={3} />}
+            </div>
+          )}
+          {isPaid && <div className="flex-shrink-0 w-5 h-5" />}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <p className={`text-sm font-bold truncate leading-snug ${isPaid ? 'line-through' : ''}`} style={{ color: isPaid ? 'rgba(255,255,255,0.45)' : isSelected ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.88)' }}>
+                {item.name}
+              </p>
+              {isPaid && (
+                <span className="flex-shrink-0 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded" style={{ background: 'rgba(52,211,153,0.12)', color: 'rgba(52,211,153,0.7)' }}>
+                  Paid
+                </span>
+              )}
+            </div>
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.38)' }}>
+              {showStepper ? `${selQty}/${item.quantity}` : item.quantity} × Rs. {fmt(item.price)}
+            </p>
+          </div>
+          {showStepper && (
+            <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+              <button
+                className="w-6 h-6 rounded flex items-center justify-center active:scale-90 transition-transform"
+                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}
+                onClick={() => setItemSelectedQty(item.id!, selQty - 1, item.quantity)}
+              >
+                <span className="text-xs font-bold leading-none" style={{ color: 'rgba(255,255,255,0.7)' }}>−</span>
+              </button>
+              <span className="text-xs font-black tabular-nums w-5 text-center" style={{ color: 'rgba(255,255,255,0.9)' }}>{selQty}</span>
+              <button
+                className="w-6 h-6 rounded flex items-center justify-center active:scale-90 transition-transform"
+                style={{ background: 'rgba(59,130,246,0.18)', border: '1px solid rgba(59,130,246,0.3)' }}
+                onClick={() => setItemSelectedQty(item.id!, selQty + 1, item.quantity)}
+              >
+                <span className="text-xs font-bold leading-none" style={{ color: 'rgba(147,197,253,0.9)' }}>+</span>
+              </button>
+            </div>
+          )}
+          <p className="text-sm font-bold tabular-nums whitespace-nowrap" style={{ color: isPaid ? 'rgba(255,255,255,0.35)' : isSelected ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.88)' }}>
+            Rs. {fmt(item.price * (isSelected ? selQty : item.quantity))}
+          </p>
         </div>
-        {!tablet && (
+      );
+    });
+
+    if (tablet) {
+      return (
+        <div className="flex flex-col">
+          <div
+            className="flex items-center justify-between px-5 pb-3 mb-0"
+            style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}
+          >
+            <span className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: 'rgba(255,255,255,0.28)' }}>
+              {items.length} Item{items.length !== 1 ? 's' : ''}
+            </span>
+            {selectedQty.size > 0 && (
+              <span className="text-[10px] font-semibold" style={{ color: 'rgba(147,197,253,0.75)' }}>
+                {selectedQty.size} selected for split
+              </span>
+            )}
+          </div>
+          {itemRows}
+        </div>
+      );
+    }
+
+    return (
+      <div
+        className="flex-1 min-h-0 rounded-xl overflow-hidden flex flex-col"
+        style={{
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(255,255,255,0.06)',
+          boxShadow: '0 4px 16px -8px rgba(0,0,0,0.3)',
+        }}
+      >
+        <div
+          className="flex-shrink-0 px-3 py-1.5 flex items-center justify-between"
+          style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+        >
+          <span className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.22)' }}>
+            Order Items
+          </span>
+          {selectedQty.size > 0 && (
+            <span className="text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: 'rgba(59,130,246,0.7)' }}>
+              {selectedQty.size} selected
+            </span>
+          )}
+        </div>
+        <div className="relative flex-1 min-h-0">
+          <div className="overflow-y-auto h-full">
+            {itemRows}
+          </div>
           <div
             className="absolute bottom-0 inset-x-0 h-8 pointer-events-none"
             style={{ background: 'linear-gradient(to bottom, transparent, rgba(9,14,28,0.95))' }}
           />
-        )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const getBillCard = (compact = false) => (
     <div
@@ -1098,26 +1187,192 @@ const ReviewScreen = () => {
                 </div>
               </div>
 
-              {/* Tablet/Desktop layout (≥ 768px): split */}
+              {/* Tablet/Desktop layout (≥ 768px): professional POS split */}
               <div className="hidden md:flex flex-1 min-h-0 overflow-hidden">
-                {/* Left panel: scrollable items */}
-                <div className="flex-1 overflow-y-auto px-5 py-4">
+
+                {/* Left panel: clean scrollable item list */}
+                <div className="flex-1 overflow-y-auto pt-5 pb-6">
                   {getItemsCard(true)}
                 </div>
 
-                {/* Vertical divider */}
+                {/* Right panel: solid dark, sharp summary + payment */}
                 <div
-                  className="flex-shrink-0 w-px self-stretch"
-                  style={{ background: 'rgba(255,255,255,0.07)' }}
-                />
-
-                {/* Right panel: bill + payment — independently scrollable, sticky feel */}
-                <div
-                  className="flex-shrink-0 overflow-y-auto flex flex-col gap-3 px-5 py-4"
-                  style={{ width: 450 }}
+                  className="flex-shrink-0 flex flex-col overflow-y-auto"
+                  style={{ width: 440, background: '#0b1020', borderLeft: '1px solid rgba(255,255,255,0.1)' }}
                 >
-                  {getBillCard()}
-                  {getPaymentCard()}
+
+                  {/* ── Summary section ── */}
+                  <div className="px-6 pt-6 pb-5">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.22em] mb-5" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                      Order Summary
+                    </p>
+
+                    {/* Subtotal */}
+                    <div className="flex justify-between items-center py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                      <span className="text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>Subtotal</span>
+                      <span className="text-sm font-semibold tabular-nums" style={{ color: 'rgba(255,255,255,0.8)' }}>
+                        Rs. {fmt(bill.subtotal)}
+                      </span>
+                    </div>
+
+                    {/* Discount */}
+                    <div className="py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                      <div className="flex justify-between items-center mb-2.5">
+                        <span className="text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>Discount</span>
+                        <span
+                          className="text-sm font-semibold tabular-nums"
+                          style={{ color: bill.discountAmount > 0 ? '#34d399' : 'rgba(255,255,255,0.22)' }}
+                        >
+                          −Rs. {fmt(bill.discountAmount)}
+                        </span>
+                      </div>
+                      <div className="flex gap-1.5 items-center">
+                        <div className="flex gap-1">
+                          {PRESETS.map((pct) => {
+                            const isActive = activePreset === pct && discountMode === 'percent';
+                            return (
+                              <button
+                                key={pct}
+                                onClick={() => handlePreset(pct)}
+                                className="px-2 py-1 rounded text-[11px] font-bold transition-all active:scale-95 min-h-[32px]"
+                                style={
+                                  isActive
+                                    ? { background: 'rgba(59,130,246,0.2)', color: 'rgba(147,197,253,0.95)', border: '1px solid rgba(59,130,246,0.4)' }
+                                    : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.08)' }
+                                }
+                              >
+                                {pct}%
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div
+                          className="flex rounded overflow-hidden flex-shrink-0 text-[11px] font-bold"
+                          style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)' }}
+                        >
+                          <button
+                            onClick={() => handleModeToggle('percent')}
+                            className="px-2 py-1 min-h-[32px] transition-colors"
+                            style={discountMode === 'percent' ? { background: 'rgba(59,130,246,0.22)', color: 'rgba(147,197,253,0.95)' } : { color: 'rgba(255,255,255,0.36)' }}
+                          >%</button>
+                          <button
+                            onClick={() => handleModeToggle('fixed')}
+                            className="px-2 py-1 min-h-[32px] transition-colors"
+                            style={discountMode === 'fixed' ? { background: 'rgba(59,130,246,0.22)', color: 'rgba(147,197,253,0.95)' } : { color: 'rgba(255,255,255,0.36)', borderLeft: '1px solid rgba(255,255,255,0.08)' }}
+                          >Rs</button>
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          inputMode="decimal"
+                          placeholder={discountMode === 'percent' ? '%' : 'Rs'}
+                          value={discountInput}
+                          onChange={(e) => handleInputChange(e.target.value)}
+                          className="flex-1 min-w-0 px-2.5 py-1 rounded text-xs text-white placeholder:text-white/20 focus:outline-none min-h-[32px]"
+                          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                          onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(59,130,246,0.5)'; }}
+                          onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* VAT */}
+                    {bill.vatEnabled && (
+                      <div className="flex justify-between items-center py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                        <span className="text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                          VAT ({Math.round(bill.vatRate * 100)}%)
+                        </span>
+                        <span className="text-sm font-semibold tabular-nums" style={{ color: 'rgba(255,255,255,0.8)' }}>
+                          Rs. {fmt(bill.vatAmount)}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* TOTAL — dominant */}
+                    <div className="flex justify-between items-end pt-5 mt-1">
+                      <span className="text-xs font-bold uppercase tracking-[0.2em] pb-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                        {selectedQty.size > 0 ? 'Split Total' : 'Total'}
+                      </span>
+                      <span className="text-4xl font-bold tabular-nums leading-none text-white">
+                        Rs. {fmt(activeBill.total)}
+                      </span>
+                    </div>
+                    {selectedQty.size > 0 && (
+                      <p className="text-xs text-right mt-1.5" style={{ color: 'rgba(147,197,253,0.6)' }}>
+                        {selectedQty.size} item{selectedQty.size !== 1 ? 's' : ''} selected for split payment
+                      </p>
+                    )}
+                  </div>
+
+                  {/* ── Payment section ── */}
+                  <div className="px-6 py-5 flex flex-col gap-2.5 mt-auto" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.22em] mb-1" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                      Payment Method
+                    </p>
+
+                    {/* Cash — primary, dominant */}
+                    <button
+                      onClick={() => handleConfirmPayment('cash')}
+                      disabled={confirming}
+                      data-testid="button-payment-method-cash"
+                      className="w-full flex items-center justify-between px-5 rounded-lg font-bold text-white transition-all active:scale-[0.98] active:brightness-90 disabled:opacity-40"
+                      style={{ background: '#059669', minHeight: 56 }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Banknote size={18} />
+                        <span className="text-base font-bold">Cash</span>
+                      </div>
+                      <span className="text-base font-bold tabular-nums">Rs. {fmt(activeBill.total)}</span>
+                    </button>
+
+                    {/* Digital wallets — secondary */}
+                    {qrMethods.length > 0 && (
+                      <div className={`grid gap-2 ${qrMethods.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                        {qrMethods.map(({ id, label }) => {
+                          const builtInKeys = ['esewa', 'khalti', 'fonepay'] as const;
+                          const isBuiltIn = builtInKeys.includes(id as 'esewa' | 'khalti' | 'fonepay');
+                          const logoImage = isBuiltIn
+                            ? settings.wallets[id as 'esewa' | 'khalti' | 'fonepay']?.logoImage
+                            : (settings.customWallets || []).find((w) => w.id === id)?.logoImage;
+                          const brandColor =
+                            id === 'esewa' ? '#16a34a' :
+                            id === 'khalti' ? '#7c3aed' :
+                            id === 'fonepay' ? '#dc2626' :
+                            '#3b82f6';
+                          return (
+                            <button
+                              key={id}
+                              onClick={() => { if (!confirming) { setSelectedMethod(id); setShowQRModal(true); } }}
+                              data-testid={`button-payment-method-${id}`}
+                              disabled={confirming}
+                              className="flex items-center gap-2.5 px-3 rounded-lg transition-all active:scale-[0.98] active:brightness-90 disabled:opacity-40"
+                              style={{
+                                minHeight: 44,
+                                background: 'rgba(255,255,255,0.04)',
+                                border: '1px solid rgba(255,255,255,0.12)',
+                              }}
+                            >
+                              <div
+                                className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0 overflow-hidden"
+                                style={{ background: 'rgba(255,255,255,0.07)' }}
+                              >
+                                {logoImage ? (
+                                  <img src={logoImage} alt={label} className="w-full h-full object-contain p-0.5" />
+                                ) : (
+                                  <Smartphone size={13} style={{ color: 'rgba(255,255,255,0.5)' }} />
+                                )}
+                              </div>
+                              <div className="text-left min-w-0">
+                                <p className="text-sm font-semibold" style={{ color: brandColor }}>{label}</p>
+                                <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>Scan QR</p>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
                 </div>
               </div>
             </>
