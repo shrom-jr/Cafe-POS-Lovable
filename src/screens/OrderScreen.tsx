@@ -13,6 +13,13 @@ import { playClick } from '@/utils/sounds';
 const formatTime = (ts: number) =>
   new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 
+const formatRelativeTime = (ts: number, now: number): string => {
+  const diffMin = Math.floor((now - ts) / 60000);
+  if (diffMin < 1) return 'Sent just now';
+  if (diffMin < 5) return `Sent ${diffMin} min ago`;
+  return `Sent at ${formatTime(ts)}`;
+};
+
 const OrderScreen = () => {
   const { tableId } = useParams<{ tableId: string }>();
   const navigate = useNavigate();
@@ -40,7 +47,9 @@ const OrderScreen = () => {
   const [drawerSendPhase, setDrawerSendPhase] = useState<'idle' | 'sending' | 'sent'>('idle');
   const [drawerSentAt, setDrawerSentAt] = useState<number | null>(null);
   const [drawerSentItemIds, setDrawerSentItemIds] = useState<Set<string>>(new Set());
+  const [drawerFlashingIds, setDrawerFlashingIds] = useState<Set<string>>(new Set());
   const [showKitchenWarning, setShowKitchenWarning] = useState(false);
+  const [now, setNow] = useState(Date.now());
 
   // Swipe-to-close refs (portrait drawer only)
   const swipeTouchStartY = useRef(0);
@@ -57,6 +66,11 @@ const OrderScreen = () => {
       window.removeEventListener('resize', update);
       window.removeEventListener('orientationchange', update);
     };
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(id);
   }, []);
 
   const order = useMemo(() => {
@@ -143,13 +157,22 @@ const OrderScreen = () => {
 
   const handleSendToKitchen = () => {
     if (!order) return;
+    const unsentBeforeSend = order.items
+      .filter((i) => !drawerSentItemIds.has(i.menuItemId) && i.status !== 'paid')
+      .map((i) => i.menuItemId);
+    if (unsentBeforeSend.length > 0) {
+      setDrawerFlashingIds(new Set(unsentBeforeSend));
+      setTimeout(() => setDrawerFlashingIds(new Set()), 650);
+    }
     setDrawerSendPhase('sending');
     setDrawerSentItemIds(new Set(order.items.map((i) => i.menuItemId)));
-    setDrawerSentAt(Date.now());
+    const ts = Date.now();
+    setDrawerSentAt(ts);
+    setNow(ts);
     setShowKitchenWarning(false);
     sendToKitchen(order.id);
     setTimeout(() => setDrawerSendPhase('sent'), 700);
-    setTimeout(() => setDrawerSendPhase('idle'), 1800);
+    setTimeout(() => setDrawerSendPhase('idle'), 1900);
   };
 
   const handleDrawerPrimary = () => {
@@ -370,6 +393,22 @@ const OrderScreen = () => {
               transition: 'transform 300ms cubic-bezier(0.32, 0.72, 0, 1)',
             }}
           >
+            <style>{`
+              @keyframes dr-item-flash {
+                0%   { box-shadow: 0 0 0 0 rgba(251,191,36,0); }
+                35%  { box-shadow: 0 0 0 6px rgba(251,191,36,0.28); }
+                100% { box-shadow: 0 0 0 0 rgba(251,191,36,0); }
+              }
+              @keyframes dr-fade-in {
+                from { opacity: 0; transform: scale(0.88); }
+                to   { opacity: 1; transform: scale(1); }
+              }
+              @keyframes dr-btn-pulse {
+                0%   { opacity: 1; }
+                50%  { opacity: 0.65; }
+                100% { opacity: 1; }
+              }
+            `}</style>
             {/* Drag handle — swipe-to-close zone */}
             <div
               className="flex justify-center pt-3 pb-2 flex-shrink-0 cursor-grab active:cursor-grabbing"
@@ -437,60 +476,91 @@ const OrderScreen = () => {
                   <p className="text-sm font-semibold">No items yet</p>
                   <p className="text-xs opacity-60 mt-1">Tap items on the menu to add</p>
                 </div>
-              ) : (
-                (order?.items || []).map((item) => {
+              ) : (() => {
+                const allItems = order?.items || [];
+                const hasGrouping = kitchenStatus === 'placed' && hasUnsentItems;
+                const sentItems = hasGrouping
+                  ? allItems.filter((i) => drawerSentItemIds.has(i.menuItemId))
+                  : allItems;
+                const unsentItems = hasGrouping
+                  ? allItems.filter((i) => !drawerSentItemIds.has(i.menuItemId) && i.status !== 'paid')
+                  : [];
+
+                const renderItem = (item: typeof allItems[0], isUnsent: boolean) => {
                   const isPaid = item.status === 'paid';
-                  const isUnsent = kitchenStatus === 'placed' && !drawerSentItemIds.has(item.menuItemId) && !isPaid;
+                  const isFlashing = drawerFlashingIds.has(item.menuItemId);
                   return (
-                  <div
-                    key={item.menuItemId}
-                    className="flex items-center gap-2 rounded-xl px-3 py-2.5"
-                    style={{
-                      background: isPaid ? 'rgba(255,255,255,0.02)' : isUnsent ? 'rgba(251,191,36,0.05)' : 'rgba(255,255,255,0.06)',
-                      border: isPaid ? '1px solid rgba(255,255,255,0.04)' : isUnsent ? '1px solid rgba(251,191,36,0.18)' : '1px solid rgba(255,255,255,0.07)',
-                      opacity: isPaid ? 0.5 : 1,
-                    }}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <p className={`text-sm font-bold text-white/90 truncate ${isPaid ? 'line-through' : ''}`}>{item.name}</p>
-                        {isPaid && (
-                          <span className="flex-shrink-0 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded" style={{ background: 'rgba(52,211,153,0.12)', color: 'rgba(52,211,153,0.7)' }}>
-                            Paid
-                          </span>
-                        )}
-                        {isUnsent && (
-                          <span className="flex-shrink-0 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded" style={{ background: 'rgba(251,191,36,0.14)', color: 'rgba(251,191,36,0.85)' }}>
-                            New
-                          </span>
-                        )}
+                    <div
+                      key={item.menuItemId}
+                      className="flex items-center gap-2 rounded-xl px-3 py-2.5"
+                      style={{
+                        background: isPaid ? 'rgba(255,255,255,0.02)' : isUnsent ? 'rgba(251,191,36,0.05)' : 'rgba(255,255,255,0.06)',
+                        border: isPaid ? '1px solid rgba(255,255,255,0.04)' : isUnsent ? '1px solid rgba(251,191,36,0.2)' : '1px solid rgba(255,255,255,0.07)',
+                        opacity: isPaid ? 0.5 : 1,
+                        transition: 'background 0.25s ease, border-color 0.25s ease',
+                        animation: isFlashing ? 'dr-item-flash 0.65s ease' : undefined,
+                      }}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className={`text-sm font-bold text-white/90 truncate ${isPaid ? 'line-through' : ''}`}>{item.name}</p>
+                          {isPaid && (
+                            <span className="flex-shrink-0 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded" style={{ background: 'rgba(52,211,153,0.12)', color: 'rgba(52,211,153,0.7)' }}>
+                              Paid
+                            </span>
+                          )}
+                          {isUnsent && (
+                            <span className="flex-shrink-0 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded" style={{ background: 'rgba(251,191,36,0.15)', color: 'rgba(251,191,36,0.9)' }}>
+                              New
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-white/40">Rs. {fmt(item.price)} each</p>
                       </div>
-                      <p className="text-xs text-white/40">Rs. {fmt(item.price)} each</p>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => !isPaid && order && updateItemQuantity(order.id, item.menuItemId, -1)}
+                          disabled={isPaid}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-white/50 active:scale-90 transition-transform disabled:pointer-events-none disabled:opacity-30"
+                          style={{ background: 'rgba(255,255,255,0.07)' }}
+                        >
+                          <span className="text-base leading-none select-none">−</span>
+                        </button>
+                        <span className="w-7 text-center font-black text-sm text-white/90 select-none">{item.quantity}</span>
+                        <button
+                          onClick={() => !isPaid && order && updateItemQuantity(order.id, item.menuItemId, 1)}
+                          disabled={isPaid}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center active:scale-90 transition-transform disabled:pointer-events-none disabled:opacity-30"
+                          style={{ background: 'rgba(59,130,246,0.20)', border: '1px solid rgba(59,130,246,0.30)' }}
+                        >
+                          <span className="text-base leading-none text-blue-300 select-none">+</span>
+                        </button>
+                      </div>
+                      <p className="w-16 text-right text-sm font-bold" style={{ color: isPaid ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.8)' }}>
+                        Rs. {fmt(item.price * item.quantity)}
+                      </p>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => !isPaid && order && updateItemQuantity(order.id, item.menuItemId, -1)}
-                        disabled={isPaid}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-white/50 active:scale-90 transition-transform disabled:pointer-events-none disabled:opacity-30"
-                        style={{ background: 'rgba(255,255,255,0.07)' }}
-                      >
-                        <span className="text-base leading-none select-none">−</span>
-                      </button>
-                      <span className="w-7 text-center font-black text-sm text-white/90 select-none">{item.quantity}</span>
-                      <button
-                        onClick={() => !isPaid && order && updateItemQuantity(order.id, item.menuItemId, 1)}
-                        disabled={isPaid}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center active:scale-90 transition-transform disabled:pointer-events-none disabled:opacity-30"
-                        style={{ background: 'rgba(59,130,246,0.20)', border: '1px solid rgba(59,130,246,0.30)' }}
-                      >
-                        <span className="text-base leading-none text-blue-300 select-none">+</span>
-                      </button>
-                    </div>
-                    <p className="w-16 text-right text-sm font-bold" style={{ color: isPaid ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.8)' }}>Rs. {fmt(item.price * item.quantity)}</p>
-                  </div>
                   );
-                })
-              )}
+                };
+
+                return (
+                  <>
+                    {sentItems.map((item) => renderItem(item, false))}
+                    {hasGrouping && unsentItems.length > 0 && (
+                      <>
+                        <div className="flex items-center gap-2 pt-1 pb-0.5">
+                          <div className="flex-1 h-px" style={{ background: 'rgba(251,191,36,0.18)' }} />
+                          <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: 'rgba(251,191,36,0.55)' }}>
+                            New items
+                          </span>
+                          <div className="flex-1 h-px" style={{ background: 'rgba(251,191,36,0.18)' }} />
+                        </div>
+                        {unsentItems.map((item) => renderItem(item, true))}
+                      </>
+                    )}
+                  </>
+                );
+              })()}
             </div>
 
             {/* Footer — pinned */}
@@ -506,25 +576,25 @@ const OrderScreen = () => {
                 <div className="flex flex-col gap-0.5">
                   <span className="text-xs font-semibold uppercase tracking-wider text-white/35">Total</span>
                   {kitchenStatus === 'placed' && drawerSentAt && (
-                    <span className="text-[10px] font-medium" style={{ color: 'rgba(52,211,153,0.65)' }}>
-                      Sent at {formatTime(drawerSentAt)}
+                    <span
+                      key={Math.floor((now - drawerSentAt) / 60000)}
+                      className="text-[10px] font-medium"
+                      style={{ color: 'rgba(52,211,153,0.65)', animation: 'dr-fade-in 0.2s ease' }}
+                    >
+                      {formatRelativeTime(drawerSentAt, now)}
                     </span>
                   )}
                 </div>
                 <span className="text-2xl font-black text-white/95">Rs. {fmt(runningTotal)}</span>
               </div>
 
-              {/* Safety warning */}
-              {showKitchenWarning && (
-                <p className="text-[11px] text-center font-semibold mb-2 mt-1" style={{ color: 'rgba(251,191,36,0.9)' }}>
-                  Send order to kitchen first
-                </p>
-              )}
-
-              {/* Draft hint */}
-              {kitchenStatus === 'draft' && hasItems && !showKitchenWarning && (
-                <p className="text-[10px] text-center font-medium mb-2 mt-1" style={{ color: 'rgba(251,191,36,0.5)' }}>
-                  Send to kitchen before proceeding to payment
+              {/* Safety hint — shown in draft or as warning */}
+              {(showKitchenWarning || (kitchenStatus === 'draft' && hasItems)) && (
+                <p
+                  className="text-[11px] text-center font-semibold mb-2 mt-1"
+                  style={{ color: showKitchenWarning ? 'rgba(251,191,36,0.9)' : 'rgba(251,191,36,0.5)' }}
+                >
+                  Send to kitchen before payment
                 </p>
               )}
 
@@ -532,33 +602,51 @@ const OrderScreen = () => {
                 <button
                   onClick={() => { handleClear(); setShowCart(false); }}
                   className="w-full py-2.5 rounded-xl font-semibold text-sm mb-2.5 transition-all active:scale-[0.97]"
-                  style={{
-                    background: 'transparent',
-                    border: '1px solid #EF4444',
-                    color: '#EF4444',
-                  }}
+                  style={{ background: 'transparent', border: '1px solid #EF4444', color: '#EF4444' }}
                 >
                   Clear Order
                 </button>
               )}
-              <button
-                onClick={handleDrawerPrimary}
-                disabled={!order || order.items.length === 0 || drawerSendPhase === 'sending'}
-                data-testid="button-proceed-to-bill"
-                className="w-full py-3.5 rounded-2xl font-black text-base transition-all active:scale-[0.97] disabled:opacity-20 disabled:cursor-not-allowed"
-                style={{
-                  background: drawerSendPhase === 'sent'
-                    ? 'linear-gradient(90deg, #059669 0%, #10b981 100%)'
-                    : 'linear-gradient(90deg, #2563EB 0%, #3B82F6 100%)',
-                  color: '#ffffff',
-                  boxShadow: drawerSendPhase === 'sent'
-                    ? '0 4px 20px -4px rgba(16,185,129,0.6)'
-                    : '0 4px 20px -4px rgba(59,130,246,0.6)',
-                  transition: 'background 0.3s ease, box-shadow 0.3s ease',
-                }}
-              >
-                {drawerButtonLabel}
-              </button>
+
+              {/* Primary CTA — visual hierarchy by state */}
+              {(() => {
+                const isProceed = kitchenStatus === 'placed' && !hasUnsentItems;
+                const isUpdate = kitchenStatus === 'placed' && hasUnsentItems;
+                const bg = drawerSendPhase === 'sent'
+                  ? 'linear-gradient(135deg, #059669 0%, #10b981 100%)'
+                  : isProceed
+                  ? 'linear-gradient(135deg, #1d4ed8 0%, #60a5fa 60%, #3b82f6 100%)'
+                  : isUpdate
+                  ? 'linear-gradient(135deg, #1a3d9e 0%, #2d5dbf 100%)'
+                  : 'linear-gradient(135deg, #1e50d0 0%, #4186f5 100%)';
+                const shadow = drawerSendPhase === 'sent'
+                  ? '0 4px 20px -4px rgba(16,185,129,0.6)'
+                  : isProceed
+                  ? '0 6px 28px -4px rgba(59,130,246,0.75)'
+                  : isUpdate
+                  ? '0 4px 12px -4px rgba(59,130,246,0.35)'
+                  : '0 4px 20px -4px rgba(59,130,246,0.6)';
+                const py = isUpdate && drawerSendPhase === 'idle' ? '13px' : '15px';
+                return (
+                  <button
+                    onClick={handleDrawerPrimary}
+                    disabled={!order || order.items.length === 0 || drawerSendPhase === 'sending'}
+                    data-testid="button-proceed-to-bill"
+                    className="w-full rounded-2xl font-black text-base active:scale-[0.97] disabled:opacity-20 disabled:cursor-not-allowed"
+                    style={{
+                      paddingTop: py,
+                      paddingBottom: py,
+                      background: bg,
+                      color: '#ffffff',
+                      boxShadow: shadow,
+                      transition: 'background 0.35s ease, box-shadow 0.35s ease, padding 0.2s ease',
+                      animation: drawerSendPhase === 'sending' ? 'dr-btn-pulse 0.7s ease' : undefined,
+                    }}
+                  >
+                    {drawerButtonLabel}
+                  </button>
+                );
+              })()}
             </div>
           </div>
         </>

@@ -1,0 +1,162 @@
+Polish kitchen workflow UX to premium level (UI-only refinements).
+
+⚠️ DO NOT modify store logic
+⚠️ DO NOT change data model
+⚠️ DO NOT affect payment or split logic
+⚠️ Only enhance UI behavior and feedback
+
+---
+
+# GOAL
+
+Make the kitchen workflow feel responsive, clear, and professional through micro-interactions and visual clarity.
+
+---
+
+# IMPROVEMENTS
+
+## 1. Enhanced Button Feedback (important)
+
+Refine the "Send to Kitchen / Send Update" interaction:
+
+On click:
+
+* Show "Sending..." (disabled state)
+* Then show "Sent ✓" (green success state)
+* Then smoothly transition to next label
+
+Add:
+
+* slight fade-out or easing between states
+* prevent double clicks during sending
+
+---
+
+## 2. NEW Items Highlight (already exists → enhance it)
+
+Current:
+
+* NEW badge + border
+
+Enhance behavior:
+
+* When user clicks "Send Update":
+  → briefly highlight NEW items (flash or glow)
+  → then remove NEW state
+
+Purpose:
+
+* visually confirm what was just sent
+
+---
+
+## 3. Soft Grouping of Items
+
+Improve readability without major UI change:
+
+If NEW items exist:
+
+* Render them visually grouped BELOW sent items
+
+Optional:
+
+* add subtle divider or spacing
+
+Result:
+
+* cashier instantly understands what is new
+
+---
+
+## 4. Human-Friendly Timestamp
+
+Current:
+"Sent at HH:MM"
+
+Enhance:
+
+* show relative time when recent:
+
+Examples:
+
+* "Sent just now"
+* "Sent 2 min ago"
+* fallback to "Sent at HH:MM" after a few minutes
+
+---
+
+## 5. Refine Safety Message Tone
+
+Replace:
+
+"Send order to kitchen first"
+
+With:
+
+"Send to kitchen before payment"
+
+Keep it:
+
+* subtle
+* non-blocking
+* visible only when needed
+
+---
+
+## 6. Button Visual Hierarchy
+
+Adjust emphasis based on state:
+
+* Draft → "Send to Kitchen"
+  → strong primary
+
+* Placed (no new items) → "Proceed to Payment"
+  → strongest emphasis
+
+* Placed (with new items) → "Send Update"
+  → slightly reduced emphasis
+
+Goal:
+
+* guide cashier naturally toward next action
+
+---
+
+## 7. Smooth Status Transitions
+
+When status changes:
+
+* Draft → Sent
+* Updated → Sent
+
+Add:
+
+* subtle animation (fade or slight pulse)
+
+Do NOT overdo animations — keep it fast and clean
+
+---
+
+## 8. Edge Case Safety (UI consistency)
+
+Ensure:
+
+* NEW badge resets correctly after sending
+* no stale highlights remain
+* removing/re-adding items behaves correctly
+* no flickering or mismatch in states
+
+---
+
+# RESULT
+
+The system should feel:
+
+✔ Fast and responsive
+✔ Clear under pressure
+✔ Visually informative without clutter
+✔ Professional and trustworthy
+
+---
+
+Apply minimal, clean UI enhancements only.

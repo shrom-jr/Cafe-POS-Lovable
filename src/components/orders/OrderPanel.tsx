@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Order, OrderItem } from '@/types/pos';
 import { fmt } from '@/utils/format';
 import { Minus, Plus, Trash2, ShoppingBag, Users } from 'lucide-react';
@@ -29,6 +29,13 @@ const BLUE_BTN = { background: 'rgba(59,130,246,0.14)', border: '1px solid rgba(
 const formatTime = (ts: number) =>
   new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 
+const formatRelativeTime = (ts: number, now: number): string => {
+  const diffMin = Math.floor((now - ts) / 60000);
+  if (diffMin < 1) return 'Sent just now';
+  if (diffMin < 5) return `Sent ${diffMin} min ago`;
+  return `Sent at ${formatTime(ts)}`;
+};
+
 const OrderPanel = ({
   order,
   onUpdateQty,
@@ -47,6 +54,13 @@ const OrderPanel = ({
   const [sentItemIds, setSentItemIds] = useState<Set<string>>(
     () => new Set((order?.items || []).map((i) => i.menuItemId))
   );
+  const [flashingIds, setFlashingIds] = useState<Set<string>>(new Set());
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(id);
+  }, []);
 
   const items = order?.items || [];
   const unpaidItems = items.filter((i) => i.status !== 'paid');
@@ -64,30 +78,60 @@ const OrderPanel = ({
       ? { background: 'rgba(251,191,36,0.12)', color: 'rgba(251,191,36,0.8)', border: '1px solid rgba(251,191,36,0.25)' }
       : { background: 'rgba(52,211,153,0.12)', color: 'rgba(52,211,153,0.8)', border: '1px solid rgba(52,211,153,0.25)' };
 
-  const primaryLabel =
-    kitchenStatus === 'draft'
-      ? 'Send to Kitchen'
-      : hasUnsentItems
-      ? 'Send Update'
-      : 'Proceed to Payment →';
+  const isProceedState = kitchenStatus === 'placed' && !hasUnsentItems;
+  const isUpdateState = kitchenStatus === 'placed' && hasUnsentItems;
+
+  const primaryLabel = kitchenStatus === 'draft'
+    ? 'Send to Kitchen'
+    : isUpdateState
+    ? 'Send Update'
+    : 'Proceed to Payment →';
 
   const buttonLabel =
     sendPhase === 'sending' ? 'Sending...'
     : sendPhase === 'sent' ? 'Sent ✓'
     : items.length > 0 ? primaryLabel : 'Add items to order';
 
+  const btnBackground = (() => {
+    if (items.length === 0) return 'rgba(59,130,246,0.12)';
+    if (sendPhase === 'sent') return 'linear-gradient(135deg, #059669 0%, #10b981 100%)';
+    if (isProceedState) return 'linear-gradient(135deg, #1d4ed8 0%, #60a5fa 60%, #3b82f6 100%)';
+    if (isUpdateState) return 'linear-gradient(135deg, #1a3d9e 0%, #2d5dbf 100%)';
+    return 'linear-gradient(135deg, #1e50d0 0%, #4186f5 100%)';
+  })();
+
+  const btnShadow = (() => {
+    if (items.length === 0) return 'none';
+    if (sendPhase === 'sent') return '0 4px 20px -4px rgba(16,185,129,0.55), inset 0 1px 0 rgba(255,255,255,0.12)';
+    if (isProceedState) return '0 6px 28px -4px rgba(59,130,246,0.75), inset 0 1px 0 rgba(255,255,255,0.18)';
+    if (isUpdateState) return '0 4px 12px -4px rgba(59,130,246,0.35), inset 0 1px 0 rgba(255,255,255,0.08)';
+    return '0 4px 20px -4px rgba(59,130,246,0.55), inset 0 1px 0 rgba(255,255,255,0.12)';
+  })();
+
+  const btnPy = isUpdateState && sendPhase === 'idle' ? '14px' : '16px';
+
   const handleSend = () => {
+    const unsentBeforeSend = items
+      .filter((i) => !sentItemIds.has(i.menuItemId) && i.status !== 'paid')
+      .map((i) => i.menuItemId);
+
+    if (unsentBeforeSend.length > 0) {
+      setFlashingIds(new Set(unsentBeforeSend));
+      setTimeout(() => setFlashingIds(new Set()), 650);
+    }
+
     setSendPhase('sending');
     setSentItemIds(new Set(items.map((i) => i.menuItemId)));
     setSentAt(Date.now());
+    setNow(Date.now());
     onSendToKitchen();
     setTimeout(() => setSendPhase('sent'), 700);
-    setTimeout(() => setSendPhase('idle'), 1800);
+    setTimeout(() => setSendPhase('idle'), 1900);
   };
 
   const handlePrimary = () => {
     if (sendPhase !== 'idle') return;
-    if (kitchenStatus === 'placed' && !hasUnsentItems) {
+    if (isProceedState) {
       onPay();
     } else {
       handleSend();
@@ -99,30 +143,44 @@ const OrderPanel = ({
     setShowClearConfirm(false);
   };
 
+  const hasGrouping = kitchenStatus === 'placed' && hasUnsentItems;
+  const sentDisplayItems = hasGrouping
+    ? items.filter((i) => sentItemIds.has(i.menuItemId))
+    : items;
+  const unsentDisplayItems = hasGrouping
+    ? items.filter((i) => !sentItemIds.has(i.menuItemId) && i.status !== 'paid')
+    : [];
+
   return (
     <div
       className="flex-1 flex flex-col min-h-0 overflow-hidden relative"
-      style={{
-        background: 'linear-gradient(180deg, #141e30 0%, #0c1522 100%)',
-      }}
+      style={{ background: 'linear-gradient(180deg, #141e30 0%, #0c1522 100%)' }}
     >
-      {/* Top inner highlight — soft glow strip */}
-      <div
-        className="absolute inset-x-0 top-0 h-px pointer-events-none"
-        style={{ background: 'rgba(255,255,255,0.07)' }}
-      />
-      <div
-        className="absolute inset-x-0 top-0 h-16 pointer-events-none"
-        style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.025) 0%, transparent 100%)' }}
-      />
+      <style>{`
+        @keyframes op-fade-in-scale {
+          from { opacity: 0; transform: scale(0.82); }
+          to   { opacity: 1; transform: scale(1); }
+        }
+        @keyframes op-item-flash {
+          0%   { box-shadow: 0 0 0 0 rgba(251,191,36,0); }
+          35%  { box-shadow: 0 0 0 6px rgba(251,191,36,0.28); }
+          100% { box-shadow: 0 0 0 0 rgba(251,191,36,0); }
+        }
+        @keyframes op-btn-pulse {
+          0%   { opacity: 1; }
+          50%  { opacity: 0.65; }
+          100% { opacity: 1; }
+        }
+      `}</style>
+
+      {/* Top inner highlight */}
+      <div className="absolute inset-x-0 top-0 h-px pointer-events-none" style={{ background: 'rgba(255,255,255,0.07)' }} />
+      <div className="absolute inset-x-0 top-0 h-16 pointer-events-none" style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.025) 0%, transparent 100%)' }} />
 
       {/* Header */}
       <div
         className="relative px-4 py-3 flex items-center gap-2 flex-shrink-0"
-        style={{
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
-          background: 'rgba(255,255,255,0.02)',
-        }}
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}
       >
         <ShoppingBag size={16} style={{ color: 'rgba(59,130,246,0.65)' }} />
         <h3 className="font-bold text-sm flex-1 text-white/80">
@@ -130,8 +188,9 @@ const OrderPanel = ({
         </h3>
         {order && (
           <span
+            key={statusLabel}
             className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full"
-            style={statusColor}
+            style={{ ...statusColor, animation: 'op-fade-in-scale 0.22s ease' }}
           >
             {statusLabel}
           </span>
@@ -140,11 +199,7 @@ const OrderPanel = ({
           <div className="flex items-center gap-2">
             <span
               className="px-2 py-0.5 rounded-full text-xs font-bold"
-              style={{
-                background: 'rgba(59,130,246,0.16)',
-                color: 'rgba(147,197,253,0.88)',
-                border: '1px solid rgba(59,130,246,0.28)',
-              }}
+              style={{ background: 'rgba(59,130,246,0.16)', color: 'rgba(147,197,253,0.88)', border: '1px solid rgba(59,130,246,0.28)' }}
             >
               {itemCount} items
             </span>
@@ -197,6 +252,42 @@ const OrderPanel = ({
             <p className="text-base font-bold text-center">No items yet</p>
             <p className="text-xs opacity-60 mt-1.5 text-center">Tap items on the left to add</p>
           </div>
+        ) : hasGrouping ? (
+          <>
+            {sentDisplayItems.map((item) => (
+              <OrderItemRow
+                key={item.menuItemId}
+                item={item}
+                onUpdateQty={onUpdateQty}
+                onRemove={onRemove}
+                isPaid={item.status === 'paid'}
+                isUnsent={false}
+                isFlashing={false}
+              />
+            ))}
+            {unsentDisplayItems.length > 0 && (
+              <>
+                <div className="flex items-center gap-2 pt-1 pb-0.5">
+                  <div className="flex-1 h-px" style={{ background: 'rgba(251,191,36,0.18)' }} />
+                  <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: 'rgba(251,191,36,0.55)' }}>
+                    New items
+                  </span>
+                  <div className="flex-1 h-px" style={{ background: 'rgba(251,191,36,0.18)' }} />
+                </div>
+                {unsentDisplayItems.map((item) => (
+                  <OrderItemRow
+                    key={item.menuItemId}
+                    item={item}
+                    onUpdateQty={onUpdateQty}
+                    onRemove={onRemove}
+                    isPaid={false}
+                    isUnsent={true}
+                    isFlashing={flashingIds.has(item.menuItemId)}
+                  />
+                ))}
+              </>
+            )}
+          </>
         ) : (
           items.map((item) => (
             <OrderItemRow
@@ -205,7 +296,8 @@ const OrderPanel = ({
               onUpdateQty={onUpdateQty}
               onRemove={onRemove}
               isPaid={item.status === 'paid'}
-              isUnsent={kitchenStatus === 'placed' && !sentItemIds.has(item.menuItemId) && item.status !== 'paid'}
+              isUnsent={false}
+              isFlashing={false}
             />
           ))
         )}
@@ -213,26 +305,23 @@ const OrderPanel = ({
 
       {/* Footer */}
       <div
-        className="px-4 pt-3 pb-4 space-y-3 flex-shrink-0 relative"
-        style={{
-          background: 'linear-gradient(180deg, #0f1a2e 0%, #0c1522 100%)',
-        }}
+        className="px-4 pt-3 pb-4 space-y-2.5 flex-shrink-0 relative"
+        style={{ background: 'linear-gradient(180deg, #0f1a2e 0%, #0c1522 100%)' }}
       >
-        {/* Gradient fade — bleeds upward into scroll area, no layout impact */}
         <div
           className="absolute inset-x-0 pointer-events-none"
-          style={{
-            top: '-48px',
-            height: '48px',
-            background: 'linear-gradient(to bottom, transparent, #0c1522)',
-          }}
+          style={{ top: '-48px', height: '48px', background: 'linear-gradient(to bottom, transparent, #0c1522)' }}
         />
         <div className="flex items-center justify-between py-1">
           <div className="flex flex-col gap-0.5">
             <span className="text-xs font-semibold uppercase tracking-wider text-white/30">Total</span>
             {kitchenStatus === 'placed' && sentAt && (
-              <span className="text-[10px] font-medium" style={{ color: 'rgba(52,211,153,0.65)' }}>
-                Sent at {formatTime(sentAt)}
+              <span
+                key={Math.floor((now - sentAt) / 60000)}
+                className="text-[10px] font-medium"
+                style={{ color: 'rgba(52,211,153,0.65)', animation: 'op-fade-in-scale 0.2s ease' }}
+              >
+                {formatRelativeTime(sentAt, now)}
               </span>
             )}
           </div>
@@ -244,32 +333,27 @@ const OrderPanel = ({
           </span>
         </div>
 
-        {/* Safety hint — only shown in draft with items */}
+        {/* Safety hint */}
         {kitchenStatus === 'draft' && items.length > 0 && (
-          <p className="text-[10px] text-center font-medium" style={{ color: 'rgba(251,191,36,0.55)' }}>
-            Send to kitchen before proceeding to payment
+          <p className="text-[10px] text-center font-medium" style={{ color: 'rgba(251,191,36,0.5)' }}>
+            Send to kitchen before payment
           </p>
         )}
 
-        {/* Primary action — kitchen lifecycle */}
+        {/* Primary action */}
         <button
           onClick={handlePrimary}
           disabled={items.length === 0 || sendPhase === 'sending'}
           data-testid="button-proceed-to-bill"
-          className="w-full py-4 rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-all active:scale-[0.97] disabled:opacity-20 disabled:cursor-not-allowed"
+          className="w-full rounded-xl font-black text-lg flex items-center justify-center gap-2 active:scale-[0.97] disabled:opacity-20 disabled:cursor-not-allowed"
           style={{
-            background: items.length > 0
-              ? sendPhase === 'sent'
-                ? 'linear-gradient(135deg, #059669 0%, #10b981 100%)'
-                : 'linear-gradient(135deg, #1e50d0 0%, #4186f5 100%)'
-              : 'rgba(59,130,246,0.12)',
+            paddingTop: btnPy,
+            paddingBottom: btnPy,
+            background: btnBackground,
             color: items.length > 0 ? '#ffffff' : 'rgba(255,255,255,0.3)',
-            boxShadow: items.length > 0
-              ? sendPhase === 'sent'
-                ? '0 4px 20px -4px rgba(16,185,129,0.55), inset 0 1px 0 rgba(255,255,255,0.12)'
-                : '0 4px 20px -4px rgba(59,130,246,0.55), inset 0 1px 0 rgba(255,255,255,0.12)'
-              : 'none',
-            transition: 'background 0.3s ease, box-shadow 0.3s ease',
+            boxShadow: btnShadow,
+            transition: 'background 0.35s ease, box-shadow 0.35s ease, padding 0.2s ease, opacity 0.15s ease',
+            animation: sendPhase === 'sending' ? 'op-btn-pulse 0.7s ease' : undefined,
           }}
         >
           {buttonLabel}
@@ -306,32 +390,44 @@ interface OrderItemRowProps {
   onRemove: (id: string) => void;
   isPaid?: boolean;
   isUnsent?: boolean;
+  isFlashing?: boolean;
 }
 
-const OrderItemRow = ({ item, onUpdateQty, onRemove, isPaid = false, isUnsent = false }: OrderItemRowProps) => (
+const OrderItemRow = ({ item, onUpdateQty, onRemove, isPaid = false, isUnsent = false, isFlashing = false }: OrderItemRowProps) => (
   <div
-    className="flex items-center gap-2 rounded-xl p-2.5 transition-all"
+    className="flex items-center gap-2 rounded-xl p-2.5"
     data-testid={`order-item-${item.menuItemId}`}
     style={{
-      background: isPaid ? 'rgba(255,255,255,0.02)' : isUnsent ? 'rgba(251,191,36,0.05)' : 'rgba(255,255,255,0.05)',
+      background: isPaid
+        ? 'rgba(255,255,255,0.02)'
+        : isUnsent
+        ? 'rgba(251,191,36,0.05)'
+        : 'rgba(255,255,255,0.05)',
       border: isPaid
         ? '1px solid rgba(255,255,255,0.04)'
         : isUnsent
-        ? '1px solid rgba(251,191,36,0.18)'
+        ? '1px solid rgba(251,191,36,0.2)'
         : '1px solid rgba(255,255,255,0.06)',
       opacity: isPaid ? 0.5 : 1,
+      transition: 'background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease',
+      animation: isFlashing ? 'op-item-flash 0.65s ease' : undefined,
     }}
   >
     <div className="flex-1 min-w-0">
       <div className="flex items-center gap-1.5">
-        <p className={`text-sm font-bold truncate ${isPaid ? 'line-through' : ''}`} style={{ color: isPaid ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.95)' }}>{item.name}</p>
+        <p
+          className={`text-sm font-bold truncate ${isPaid ? 'line-through' : ''}`}
+          style={{ color: isPaid ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.95)' }}
+        >
+          {item.name}
+        </p>
         {isPaid && (
           <span className="flex-shrink-0 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded" style={{ background: 'rgba(52,211,153,0.12)', color: 'rgba(52,211,153,0.7)' }}>
             Paid
           </span>
         )}
         {isUnsent && (
-          <span className="flex-shrink-0 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded" style={{ background: 'rgba(251,191,36,0.14)', color: 'rgba(251,191,36,0.85)' }}>
+          <span className="flex-shrink-0 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded" style={{ background: 'rgba(251,191,36,0.15)', color: 'rgba(251,191,36,0.9)' }}>
             New
           </span>
         )}
@@ -354,7 +450,7 @@ const OrderItemRow = ({ item, onUpdateQty, onRemove, isPaid = false, isUnsent = 
         disabled={isPaid}
         data-testid={`button-increase-${item.menuItemId}`}
         className="w-7 h-7 rounded-lg flex items-center justify-center text-white/45 transition-colors active:scale-90 hover:text-blue-300 hover:brightness-110 disabled:pointer-events-none disabled:opacity-30"
-        style={BLUE_BTN}
+        style={{ background: 'rgba(59,130,246,0.14)', border: '1px solid rgba(59,130,246,0.24)' }}
       >
         <Plus size={13} />
       </button>
