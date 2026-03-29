@@ -756,66 +756,110 @@ const ReviewScreen = () => {
           </span>
         </div>
 
-        {/* ── Discount controls: Row 1 = chips, Row 2 = toggle + input ── */}
+        {/* ── Discount controls: single scrollable row ── */}
         <div
-          className={`rounded-xl ${compact ? 'p-1.5 space-y-1.5' : 'p-2 space-y-2'}`}
-          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+          className="rounded-xl"
+          style={{
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.06)',
+            padding: compact ? '5px 6px' : '6px 8px',
+          }}
         >
-          {/* Row 1: preset chips */}
-          <div className="flex gap-1.5">
+          <div
+            className="no-scrollbar"
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              overflowX: 'auto',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {/* Preset chips */}
             {PRESETS.map((pct) => {
               const isActive = activePreset === pct && discountMode === 'percent';
               return (
                 <button
                   key={pct}
                   onClick={() => handlePreset(pct)}
-                  className={`flex-1 ${compact ? 'py-1' : 'py-1.5'} rounded-lg text-[11px] font-bold transition-all active:scale-[0.93] hover:scale-[1.02]`}
-                  style={
-                    isActive
+                  className="transition-all active:scale-[0.93] flex-shrink-0"
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: 7,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    lineHeight: '16px',
+                    flexShrink: 0,
+                    ...(isActive
                       ? { background: 'rgba(59,130,246,0.24)', color: 'rgba(147,197,253,0.97)', border: '1px solid rgba(59,130,246,0.42)' }
-                      : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.42)', border: '1px solid rgba(255,255,255,0.08)' }
-                  }
+                      : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.42)', border: '1px solid rgba(255,255,255,0.08)' })
+                  }}
                 >
                   {pct}%
                 </button>
               );
             })}
-          </div>
 
-          {/* Row 2: mode toggle + custom input */}
-          <div className="flex gap-1.5 items-stretch">
+            {/* Vertical separator */}
+            <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.1)', flexShrink: 0 }} />
+
             {/* % / Rs toggle */}
             <div
-              className="flex rounded-lg overflow-hidden flex-shrink-0 text-[11px] font-bold"
-              style={{ border: '1px solid rgba(255,255,255,0.09)', background: 'rgba(255,255,255,0.04)' }}
+              className="flex flex-shrink-0 text-[11px] font-bold"
+              style={{
+                borderRadius: 7,
+                overflow: 'hidden',
+                border: '1px solid rgba(255,255,255,0.09)',
+                background: 'rgba(255,255,255,0.04)',
+                flexShrink: 0,
+              }}
             >
               <button
                 onClick={() => handleModeToggle('percent')}
-                className={`px-2.5 ${compact ? 'py-1' : 'py-1.5'} transition-colors`}
-                style={discountMode === 'percent'
-                  ? { background: 'rgba(59,130,246,0.25)', color: 'rgba(147,197,253,0.95)' }
-                  : { color: 'rgba(255,255,255,0.38)' }}
+                style={{
+                  padding: '4px 9px',
+                  lineHeight: '16px',
+                  transition: 'background 0.15s',
+                  ...(discountMode === 'percent'
+                    ? { background: 'rgba(59,130,246,0.25)', color: 'rgba(147,197,253,0.95)' }
+                    : { color: 'rgba(255,255,255,0.38)' })
+                }}
               >%</button>
               <div style={{ width: 1, background: 'rgba(255,255,255,0.08)', alignSelf: 'stretch' }} />
               <button
                 onClick={() => handleModeToggle('fixed')}
-                className={`px-2.5 ${compact ? 'py-1' : 'py-1.5'} transition-colors`}
-                style={discountMode === 'fixed'
-                  ? { background: 'rgba(59,130,246,0.25)', color: 'rgba(147,197,253,0.95)' }
-                  : { color: 'rgba(255,255,255,0.38)' }}
+                style={{
+                  padding: '4px 9px',
+                  lineHeight: '16px',
+                  transition: 'background 0.15s',
+                  ...(discountMode === 'fixed'
+                    ? { background: 'rgba(59,130,246,0.25)', color: 'rgba(147,197,253,0.95)' }
+                    : { color: 'rgba(255,255,255,0.38)' })
+                }}
               >Rs</button>
             </div>
 
-            {/* Custom value input */}
+            {/* Input */}
             <input
               type="number"
               min="0"
               inputMode="decimal"
-              placeholder={discountMode === 'percent' ? 'Custom %' : 'Custom Rs.'}
+              placeholder={discountMode === 'percent' ? '%' : 'Rs'}
               value={discountInput}
               onChange={(e) => handleInputChange(e.target.value)}
-              className={`w-[88px] flex-shrink-0 px-3 ${compact ? 'py-1' : 'py-1.5'} rounded-lg text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none transition-all`}
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+              style={{
+                width: 64,
+                flexShrink: 0,
+                padding: '4px 8px',
+                borderRadius: 7,
+                fontSize: 12,
+                lineHeight: '16px',
+                color: 'rgba(255,255,255,0.9)',
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                outline: 'none',
+              }}
               onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(59,130,246,0.5)'; }}
               onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
             />
