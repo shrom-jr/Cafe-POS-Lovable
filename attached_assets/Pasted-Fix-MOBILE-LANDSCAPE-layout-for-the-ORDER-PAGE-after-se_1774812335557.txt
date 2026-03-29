@@ -1,0 +1,123 @@
+Fix MOBILE LANDSCAPE layout for the ORDER PAGE (after selecting table where menu + cart is visible).
+
+🚨 STRICT RULES:
+
+* DO NOT touch desktop layout
+* DO NOT touch mobile portrait layout
+* DO NOT touch other pages
+* ONLY modify ORDER PAGE container
+* DO NOT use global selectors (body, div, *)
+
+---
+
+1. TARGET ONLY THIS PAGE:
+
+Use a UNIQUE parent wrapper of order page:
+Example:
+.order-page-container (or actual wrapper class)
+
+ALL changes must be inside this wrapper ONLY.
+
+---
+
+2. APPLY ONLY IN LANDSCAPE:
+
+@media (orientation: landscape) and (max-height: 500px) {
+
+---
+
+3. FIX MAIN PROBLEM (IMPORTANT):
+
+Currently layout is breaking because sections are not properly split.
+
+👉 Convert main container into FLEX ROW:
+
+.order-page-container {
+display: flex;
+flex-direction: row;
+height: 100vh;
+overflow: hidden;
+}
+
+---
+
+4. FORCE TWO-COLUMN LAYOUT:
+
+MENU SECTION (left side):
+.menu-section {
+width: 60%;
+overflow-y: auto;
+}
+
+CART / ORDER SECTION (right side):
+.cart-section {
+width: 40%;
+max-width: 340px;
+min-width: 280px;
+overflow-y: auto;
+}
+
+---
+
+5. PREVENT CUT-OFF ISSUE:
+
+* Ensure cart section is ALWAYS visible
+* Do NOT allow it to go off-screen
+* Do NOT use absolute positioning
+
+---
+
+6. FIX OVERFLOW BUG:
+
+* Remove horizontal overflow
+
+* Use:
+  overflow-x: hidden;
+
+* Ensure no element exceeds 100% width
+
+---
+
+7. COMPACT UI (IMPORTANT):
+
+Inside landscape only:
+
+* Reduce padding (16px → 8px)
+* Reduce gaps
+* Slightly reduce card sizes
+
+---
+
+8. HEADER FIX:
+
+* Reduce header height
+* Keep only essential elements (Table name, back button)
+
+---
+
+9. FINAL CHECK:
+
+✔ Both sections visible side-by-side
+✔ No cut-off UI
+✔ No overlap
+✔ No horizontal scroll
+✔ Smooth vertical scroll inside sections
+
+---
+
+GOAL:
+
+Mobile landscape should look like a REAL POS split screen:
+LEFT → menu
+RIGHT → cart
+
+NOT like broken zoomed desktop
+
+---
+
+🚫 AGAIN:
+DO NOT TOUCH:
+
+* Desktop
+* Mobile portrait
+* Other pages
