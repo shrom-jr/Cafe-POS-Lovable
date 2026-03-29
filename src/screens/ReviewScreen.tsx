@@ -814,7 +814,7 @@ const ReviewScreen = () => {
               placeholder={discountMode === 'percent' ? 'Custom %' : 'Custom Rs.'}
               value={discountInput}
               onChange={(e) => handleInputChange(e.target.value)}
-              className={`flex-1 px-3 ${compact ? 'py-1' : 'py-1.5'} rounded-lg text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none transition-all`}
+              className={`w-[88px] flex-shrink-0 px-3 ${compact ? 'py-1' : 'py-1.5'} rounded-lg text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none transition-all`}
               style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
               onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(59,130,246,0.5)'; }}
               onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
@@ -882,88 +882,79 @@ const ReviewScreen = () => {
         )}
       </div>
 
-      <div className={compact ? 'space-y-1.5' : 'space-y-2'}>
-        {/* Cash — full-width primary */}
+      {/* Unified 2-column grid — Cash + all digital wallets */}
+      <div className={`grid grid-cols-2 ${compact ? 'gap-1.5' : 'gap-2'}`}>
+        {/* Cash */}
         <button
           onClick={() => handleConfirmPayment('cash')}
           disabled={confirming}
           data-testid="button-payment-method-cash"
-          className={`w-full flex items-center gap-3 px-4 ${compact ? 'py-2' : 'py-2.5'} rounded-xl transition-all duration-100 active:scale-[0.97] hover:brightness-110 disabled:opacity-40`}
+          className={`flex items-center gap-[10px] px-3 ${compact ? 'py-2' : 'py-2.5'} rounded-xl transition-all duration-100 active:scale-[0.97] hover:brightness-110 disabled:opacity-40`}
           style={{
             background: 'rgba(52,211,153,0.09)',
             border: '1px solid rgba(52,211,153,0.3)',
             boxShadow: '0 2px 12px -4px rgba(52,211,153,0.2)',
-            alignItems: 'flex-start',
           }}
         >
           <div
-            className={`${compact ? 'w-8 h-8' : 'w-9 h-9'} rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5`}
+            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{ background: 'rgba(52,211,153,0.16)', border: '1px solid rgba(52,211,153,0.2)' }}
           >
-            <Banknote size={compact ? 15 : 17} className="text-success" />
+            <Banknote size={20} className="text-success" />
           </div>
-          <div className="flex-1 text-left">
-            <p className={`font-bold ${compact ? 'text-sm' : 'text-[15px]'}`} style={{ color: 'rgba(255,255,255,0.93)' }}>Cash</p>
-            <p className="text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.38)' }}>
-              Tap to complete payment
-            </p>
+          <div className="text-left min-w-0">
+            <p className="font-bold text-sm leading-tight" style={{ color: 'rgba(255,255,255,0.93)' }}>Cash</p>
+            <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.38)' }}>Tap to pay</p>
           </div>
-          <span className={`${compact ? 'text-sm' : 'text-[15px]'} font-black text-success tabular-nums self-center`}>
-            Rs. {fmt(activeBill.total)}
-          </span>
         </button>
 
-        {/* Digital wallets — 2-column grid */}
-        {qrMethods.length > 0 && (
-          <div className={`grid ${compact ? 'gap-1.5' : 'gap-2'} ${qrMethods.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
-            {qrMethods.map(({ id, label }) => {
-              const builtInKeys = ['esewa', 'khalti', 'fonepay'] as const;
-              const isBuiltIn = builtInKeys.includes(id as 'esewa' | 'khalti' | 'fonepay');
-              const logoImage = isBuiltIn
-                ? settings.wallets[id as 'esewa' | 'khalti' | 'fonepay']?.logoImage
-                : (settings.customWallets || []).find((w) => w.id === id)?.logoImage;
-              const brandColor =
-                id === 'esewa' ? '#16a34a' :
-                id === 'khalti' ? '#7c3aed' :
-                id === 'fonepay' ? '#dc2626' :
-                '#3b82f6';
-              const iconBg =
-                id === 'esewa' ? 'rgba(22,163,74,0.14)' :
-                id === 'khalti' ? 'rgba(124,58,237,0.14)' :
-                id === 'fonepay' ? 'rgba(220,38,38,0.14)' :
-                'rgba(59,130,246,0.14)';
-              return (
-                <button
-                  key={id}
-                  onClick={() => { if (!confirming) { setSelectedMethod(id); setShowQRModal(true); } }}
-                  data-testid={`button-payment-method-${id}`}
-                  disabled={confirming}
-                  className={`flex items-start gap-2.5 px-3 ${compact ? 'py-2' : 'py-2.5'} rounded-xl transition-all duration-100 active:scale-[0.97] hover:scale-[1.015] disabled:opacity-40`}
-                  style={{
-                    background: 'rgba(255,255,255,0.045)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    boxShadow: '0 1px 6px -2px rgba(0,0,0,0.3)',
-                  }}
-                >
-                  <div
-                    className={`${compact ? 'w-7 h-7' : 'w-8 h-8'} rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden mt-0.5`}
-                    style={{ background: iconBg, border: '1px solid rgba(255,255,255,0.08)' }}
-                  >
-                    {logoImage ? (
-                      <img src={logoImage} alt={label} className="w-full h-full object-contain p-0.5" />
-                    ) : (
-                      <Smartphone size={compact ? 12 : 14} style={{ color: brandColor, opacity: 0.85 }} />
-                    )}
-                  </div>
-                  <div className="text-left min-w-0">
-                    <p className="font-bold text-sm leading-tight" style={{ color: brandColor }}>{label}</p>
-                    <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>Scan QR</p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
+        {/* Digital wallets */}
+        {qrMethods.map(({ id, label }) => {
+          const builtInKeys = ['esewa', 'khalti', 'fonepay'] as const;
+          const isBuiltIn = builtInKeys.includes(id as 'esewa' | 'khalti' | 'fonepay');
+          const logoImage = isBuiltIn
+            ? settings.wallets[id as 'esewa' | 'khalti' | 'fonepay']?.logoImage
+            : (settings.customWallets || []).find((w) => w.id === id)?.logoImage;
+          const brandColor =
+            id === 'esewa' ? '#16a34a' :
+            id === 'khalti' ? '#7c3aed' :
+            id === 'fonepay' ? '#dc2626' :
+            '#3b82f6';
+          const iconBg =
+            id === 'esewa' ? 'rgba(22,163,74,0.14)' :
+            id === 'khalti' ? 'rgba(124,58,237,0.14)' :
+            id === 'fonepay' ? 'rgba(220,38,38,0.14)' :
+            'rgba(59,130,246,0.14)';
+          return (
+            <button
+              key={id}
+              onClick={() => { if (!confirming) { setSelectedMethod(id); setShowQRModal(true); } }}
+              data-testid={`button-payment-method-${id}`}
+              disabled={confirming}
+              className={`flex items-center gap-[10px] px-3 ${compact ? 'py-2' : 'py-2.5'} rounded-xl transition-all duration-100 active:scale-[0.97] hover:scale-[1.015] disabled:opacity-40`}
+              style={{
+                background: 'rgba(255,255,255,0.045)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                boxShadow: '0 1px 6px -2px rgba(0,0,0,0.3)',
+              }}
+            >
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden"
+                style={{ background: iconBg, border: '1px solid rgba(255,255,255,0.08)' }}
+              >
+                {logoImage ? (
+                  <img src={logoImage} alt={label} className="w-full h-full object-contain p-0.5" />
+                ) : (
+                  <Smartphone size={20} style={{ color: brandColor, opacity: 0.85 }} />
+                )}
+              </div>
+              <div className="text-left min-w-0">
+                <p className="font-bold text-sm leading-tight" style={{ color: brandColor }}>{label}</p>
+                <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>Scan QR</p>
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
     );
@@ -1055,76 +1046,75 @@ const ReviewScreen = () => {
                   <div className="flex-shrink-0 mb-1.5">
                     <p className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.35)' }}>Payment Method</p>
                   </div>
-                  {/* Scrollable list — only this scrolls when there are many options */}
-                  <div className="flex-1 min-h-0 overflow-y-auto space-y-1.5 pr-0.5">
-                    {/* Cash — full-width primary */}
-                    <button
-                      onClick={() => handleConfirmPayment('cash')}
-                      disabled={confirming}
-                      data-testid="button-payment-method-cash"
-                      className="w-full flex items-start gap-2.5 px-3 py-2 rounded-lg transition-all duration-100 active:scale-[0.97] hover:brightness-110 disabled:opacity-40"
-                      style={{
-                        background: 'rgba(52,211,153,0.09)',
-                        border: '1px solid rgba(52,211,153,0.3)',
-                        boxShadow: '0 2px 10px -4px rgba(52,211,153,0.2)',
-                      }}
-                    >
-                      <div className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5"
-                        style={{ background: 'rgba(52,211,153,0.16)', border: '1px solid rgba(52,211,153,0.2)' }}>
-                        <Banknote size={14} className="text-success" />
-                      </div>
-                      <div className="flex-1 text-left">
-                        <p className="font-bold text-sm leading-none" style={{ color: 'rgba(255,255,255,0.93)' }}>Cash</p>
-                        <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.38)' }}>
-                          Tap to complete
-                        </p>
-                      </div>
-                      <span className="text-xs font-black text-success tabular-nums self-center">Rs. {fmt(activeBill.total)}</span>
-                    </button>
+                  {/* Unified 2-column grid — Cash + digital wallets */}
+                  <div className="flex-1 min-h-0 overflow-y-auto pr-0.5">
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {/* Cash */}
+                      <button
+                        onClick={() => handleConfirmPayment('cash')}
+                        disabled={confirming}
+                        data-testid="button-payment-method-cash"
+                        className="flex items-center gap-[10px] px-3 py-2 rounded-lg transition-all duration-100 active:scale-[0.97] hover:brightness-110 disabled:opacity-40"
+                        style={{
+                          background: 'rgba(52,211,153,0.09)',
+                          border: '1px solid rgba(52,211,153,0.3)',
+                          boxShadow: '0 2px 10px -4px rgba(52,211,153,0.2)',
+                        }}
+                      >
+                        <div className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0"
+                          style={{ background: 'rgba(52,211,153,0.16)', border: '1px solid rgba(52,211,153,0.2)' }}>
+                          <Banknote size={20} className="text-success" />
+                        </div>
+                        <div className="text-left min-w-0">
+                          <p className="font-bold text-sm leading-tight" style={{ color: 'rgba(255,255,255,0.93)' }}>Cash</p>
+                          <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.38)' }}>Tap to pay</p>
+                        </div>
+                      </button>
 
-                    {/* Digital wallets */}
-                    {qrMethods.map(({ id, label }) => {
-                      const builtInKeys = ['esewa', 'khalti', 'fonepay'] as const;
-                      const isBuiltIn = builtInKeys.includes(id as 'esewa' | 'khalti' | 'fonepay');
-                      const logoImage = isBuiltIn
-                        ? settings.wallets[id as 'esewa' | 'khalti' | 'fonepay']?.logoImage
-                        : (settings.customWallets || []).find((w) => w.id === id)?.logoImage;
-                      const brandColor =
-                        id === 'esewa' ? '#16a34a' :
-                        id === 'khalti' ? '#7c3aed' :
-                        id === 'fonepay' ? '#dc2626' : '#3b82f6';
-                      const iconBg =
-                        id === 'esewa' ? 'rgba(22,163,74,0.14)' :
-                        id === 'khalti' ? 'rgba(124,58,237,0.14)' :
-                        id === 'fonepay' ? 'rgba(220,38,38,0.14)' :
-                        'rgba(59,130,246,0.14)';
-                      return (
-                        <button
-                          key={id}
-                          onClick={() => { if (!confirming) { setSelectedMethod(id); setShowQRModal(true); } }}
-                          data-testid={`button-payment-method-${id}`}
-                          disabled={confirming}
-                          className="w-full flex items-start gap-2.5 px-3 py-2 rounded-lg transition-all duration-100 active:scale-[0.97] hover:scale-[1.015] disabled:opacity-40"
-                          style={{
-                            background: 'rgba(255,255,255,0.045)',
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            boxShadow: '0 1px 6px -2px rgba(0,0,0,0.3)',
-                          }}
-                        >
-                          <div className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 overflow-hidden mt-0.5"
-                            style={{ background: iconBg, border: '1px solid rgba(255,255,255,0.08)' }}>
-                            {logoImage
-                              ? <img src={logoImage} alt={label} className="w-full h-full object-contain p-0.5" />
-                              : <Smartphone size={13} style={{ color: brandColor, opacity: 0.85 }} />
-                            }
-                          </div>
-                          <div className="flex-1 text-left min-w-0">
-                            <p className="font-bold text-sm leading-none" style={{ color: brandColor }}>{label}</p>
-                            <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>Scan QR</p>
-                          </div>
-                        </button>
-                      );
-                    })}
+                      {/* Digital wallets */}
+                      {qrMethods.map(({ id, label }) => {
+                        const builtInKeys = ['esewa', 'khalti', 'fonepay'] as const;
+                        const isBuiltIn = builtInKeys.includes(id as 'esewa' | 'khalti' | 'fonepay');
+                        const logoImage = isBuiltIn
+                          ? settings.wallets[id as 'esewa' | 'khalti' | 'fonepay']?.logoImage
+                          : (settings.customWallets || []).find((w) => w.id === id)?.logoImage;
+                        const brandColor =
+                          id === 'esewa' ? '#16a34a' :
+                          id === 'khalti' ? '#7c3aed' :
+                          id === 'fonepay' ? '#dc2626' : '#3b82f6';
+                        const iconBg =
+                          id === 'esewa' ? 'rgba(22,163,74,0.14)' :
+                          id === 'khalti' ? 'rgba(124,58,237,0.14)' :
+                          id === 'fonepay' ? 'rgba(220,38,38,0.14)' :
+                          'rgba(59,130,246,0.14)';
+                        return (
+                          <button
+                            key={id}
+                            onClick={() => { if (!confirming) { setSelectedMethod(id); setShowQRModal(true); } }}
+                            data-testid={`button-payment-method-${id}`}
+                            disabled={confirming}
+                            className="flex items-center gap-[10px] px-3 py-2 rounded-lg transition-all duration-100 active:scale-[0.97] hover:scale-[1.015] disabled:opacity-40"
+                            style={{
+                              background: 'rgba(255,255,255,0.045)',
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              boxShadow: '0 1px 6px -2px rgba(0,0,0,0.3)',
+                            }}
+                          >
+                            <div className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 overflow-hidden"
+                              style={{ background: iconBg, border: '1px solid rgba(255,255,255,0.08)' }}>
+                              {logoImage
+                                ? <img src={logoImage} alt={label} className="w-full h-full object-contain p-0.5" />
+                                : <Smartphone size={20} style={{ color: brandColor, opacity: 0.85 }} />
+                              }
+                            </div>
+                            <div className="text-left min-w-0">
+                              <p className="font-bold text-sm leading-tight" style={{ color: brandColor }}>{label}</p>
+                              <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>Scan QR</p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
@@ -1212,7 +1202,7 @@ const ReviewScreen = () => {
                           placeholder={discountMode === 'percent' ? '%' : 'Rs'}
                           value={discountInput}
                           onChange={(e) => handleInputChange(e.target.value)}
-                          className="flex-1 min-w-0 px-2 py-0.5 rounded text-[11px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none transition-all"
+                          className="w-[72px] flex-shrink-0 px-2 py-0.5 rounded text-[11px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none transition-all"
                           style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
                           onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(59,130,246,0.5)'; }}
                           onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
