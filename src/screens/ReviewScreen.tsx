@@ -756,7 +756,7 @@ const ReviewScreen = () => {
           </span>
         </div>
 
-        {/* ── Discount controls: single scrollable row ── */}
+        {/* ── Discount controls: single fitted row ── */}
         <div
           className="rounded-xl"
           style={{
@@ -766,31 +766,30 @@ const ReviewScreen = () => {
           }}
         >
           <div
-            className="no-scrollbar"
             style={{
               display: 'flex',
               flexDirection: 'row',
               alignItems: 'center',
-              gap: 6,
-              overflowX: 'auto',
-              whiteSpace: 'nowrap',
+              gap: 4,
             }}
           >
-            {/* Preset chips */}
+            {/* Preset chips — flex:1 so they share space evenly */}
             {PRESETS.map((pct) => {
               const isActive = activePreset === pct && discountMode === 'percent';
               return (
                 <button
                   key={pct}
                   onClick={() => handlePreset(pct)}
-                  className="transition-all active:scale-[0.93] flex-shrink-0"
+                  className="transition-all active:scale-[0.93]"
                   style={{
-                    padding: '4px 10px',
+                    flex: 1,
+                    minWidth: 0,
+                    padding: '4px 0',
                     borderRadius: 7,
                     fontSize: 11,
                     fontWeight: 700,
                     lineHeight: '16px',
-                    flexShrink: 0,
+                    textAlign: 'center',
                     ...(isActive
                       ? { background: 'rgba(59,130,246,0.24)', color: 'rgba(147,197,253,0.97)', border: '1px solid rgba(59,130,246,0.42)' }
                       : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.42)', border: '1px solid rgba(255,255,255,0.08)' })
@@ -806,7 +805,7 @@ const ReviewScreen = () => {
 
             {/* % / Rs toggle */}
             <div
-              className="flex flex-shrink-0 text-[11px] font-bold"
+              className="flex text-[11px] font-bold"
               style={{
                 borderRadius: 7,
                 overflow: 'hidden',
@@ -818,7 +817,7 @@ const ReviewScreen = () => {
               <button
                 onClick={() => handleModeToggle('percent')}
                 style={{
-                  padding: '4px 9px',
+                  padding: '4px 7px',
                   lineHeight: '16px',
                   transition: 'background 0.15s',
                   ...(discountMode === 'percent'
@@ -830,7 +829,7 @@ const ReviewScreen = () => {
               <button
                 onClick={() => handleModeToggle('fixed')}
                 style={{
-                  padding: '4px 9px',
+                  padding: '4px 7px',
                   lineHeight: '16px',
                   transition: 'background 0.15s',
                   ...(discountMode === 'fixed'
