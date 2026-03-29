@@ -1,0 +1,172 @@
+Enhance the Review Order screen to achieve a premium, polished POS UI with refined spacing, scroll behavior, and subtle visual effects.
+
+Goals:
+
+* Improve visual breathing space and balance
+* Make scroll areas feel smooth and intentional
+* Add subtle premium effects (fade, depth, interaction)
+* Maintain clean and professional look (avoid overdesign)
+
+---
+
+1. Scroll Area Polish
+
+For both items list and payment list:
+
+* Add internal spacing:
+  padding-right: 6px
+  padding-bottom: 8px
+
+* Ensure smooth scrolling:
+  scroll-behavior: smooth
+
+* Improve scrollbar (if custom styling is used):
+
+  * make it thin and subtle
+  * avoid bright or distracting colors
+
+---
+
+2. Fade Effect at Bottom (Premium Touch)
+
+For scrollable areas (items + payment):
+
+* Wrap scroll container with position: relative
+* Add a bottom fade overlay using ::after:
+
+  position: absolute
+  bottom: 0
+  left: 0
+  right: 0
+  height: 40px
+
+  background: linear-gradient(
+  to bottom,
+  transparent,
+  rgba(11,18,32,0.9)
+  )
+
+  pointer-events: none
+
+Goal:
+
+* Create a soft fade that suggests more content below
+* Avoid harsh cut-off of scrolling content
+
+---
+
+3. Card Spacing & Layout Rhythm
+
+* Increase spacing between major cards:
+  gap: 16px–20px
+
+* Add consistent internal padding:
+  padding: 16px–20px
+
+* Ensure all cards share:
+
+  * same border radius (16px)
+  * same border opacity
+  * consistent shadow system
+
+Goal:
+
+* Create a uniform card system
+* Avoid cramped or uneven layout
+
+---
+
+4. Payment Card Balance
+
+* Ensure payment card has minimum height:
+  min-height: 240px–280px
+
+* Keep:
+
+  * header fixed (Payment Method label)
+  * buttons inside scrollable container
+
+* Maintain comfortable vertical spacing between buttons:
+  gap: 10px–12px
+
+Goal:
+
+* Prevent cramped appearance when few payment methods exist
+* Keep balance between summary and payment sections
+
+---
+
+5. Micro Interactions (Important)
+
+For all clickable elements (payment cards, buttons):
+
+* Add transition:
+  transition: all 0.18s ease
+
+* On hover:
+  transform: translateY(-2px)
+  slightly stronger shadow
+
+* On active (click):
+  transform: scale(0.97)
+
+Goal:
+
+* Make UI feel tactile and responsive
+* Avoid flat/static interaction
+
+---
+
+6. Typography Hierarchy
+
+* Ensure clear visual hierarchy:
+
+  Labels (e.g., "Subtotal", "VAT"):
+  smaller, muted opacity
+
+  Values:
+  brighter and slightly larger
+
+  Total:
+  largest text, strong contrast
+
+* Add slight letter spacing for section titles:
+  letter-spacing: 0.08em–0.12em
+
+Goal:
+
+* Improve readability and scanning speed
+* Make total feel important
+
+---
+
+7. Overall Visual Tone
+
+* Maintain dark theme with subtle gradients
+
+* Avoid heavy blur or excessive glow
+
+* Focus on:
+
+  * depth
+  * spacing
+  * clarity
+
+* Keep everything feeling:
+  clean, modern, and professional
+
+---
+
+Final Result:
+
+* Items scroll smoothly inside their card
+* Payment methods scroll independently
+* Summary remains stable and readable
+* UI feels balanced, breathable, and premium
+* Interactions feel responsive and natural
+
+Avoid:
+
+* overcrowding
+* excessive animations
+* overly bright colors

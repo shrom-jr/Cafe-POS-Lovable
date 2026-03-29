@@ -1197,7 +1197,7 @@ const ReviewScreen = () => {
                       height: '100%',
                       display: 'grid',
                       gridTemplateColumns: '1.5fr 1fr',
-                      gap: 20,
+                      gap: 24,
                       alignItems: 'stretch',
                     }}
                   >
@@ -1231,13 +1231,15 @@ const ReviewScreen = () => {
                         </span>
                       </div>
                       {/* Scrollable item rows */}
-                      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
-                        {getItemsCard(true)}
+                      <div className="pos-scroll-wrap">
+                        <div className="pos-scroll" style={{ overflowY: 'auto', height: '100%', paddingRight: 6, paddingBottom: 8 }}>
+                          {getItemsCard(true)}
+                        </div>
                       </div>
                     </div>
 
                     {/* ── RIGHT: Summary + Payment cards stacked ── */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, height: '100%', overflow: 'hidden', minHeight: 0 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 18, height: '100%', overflow: 'hidden', minHeight: 0 }}>
 
                       {/* ── Summary card ── */}
                       <div
@@ -1359,7 +1361,7 @@ const ReviewScreen = () => {
                           border: '1px solid rgba(255,255,255,0.08)',
                           boxShadow: '0 10px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.07)',
                           flex: 1,
-                          minHeight: 0,
+                          minHeight: 260,
                           display: 'flex',
                           flexDirection: 'column',
                           overflow: 'hidden',
@@ -1372,7 +1374,8 @@ const ReviewScreen = () => {
                           </p>
                         </div>
                         {/* Scrollable buttons area */}
-                        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '12px 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <div className="pos-scroll-wrap">
+                        <div className="pos-scroll" style={{ overflowY: 'auto', height: '100%', padding: '12px 16px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
 
                         {/* Cash — primary card with gradient + glow */}
                         <button
@@ -1458,7 +1461,8 @@ const ReviewScreen = () => {
                             })}
                           </div>
                         )}
-                        </div>{/* end scrollable buttons area */}
+                        </div>{/* end pos-scroll */}
+                        </div>{/* end pos-scroll-wrap */}
                       </div>{/* end payment card */}
 
                     </div>
