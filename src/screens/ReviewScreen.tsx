@@ -1252,97 +1252,124 @@ const ReviewScreen = () => {
                           boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
                         }}
                       >
-                        <p className="text-[10px] font-bold uppercase tracking-[0.22em] mb-4" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] mb-4" style={{ color: 'rgba(255,255,255,0.42)' }}>
                           Order Summary
                         </p>
 
                         {/* Subtotal */}
-                        <div className="flex justify-between items-center py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                          <span className="text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>Subtotal</span>
-                          <span className="text-sm font-semibold tabular-nums" style={{ color: 'rgba(255,255,255,0.8)' }}>
+                        <div className="flex justify-between items-center py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                          <span className="text-[13px]" style={{ color: 'rgba(255,255,255,0.55)' }}>Subtotal</span>
+                          <span className="text-[13px] font-semibold tabular-nums" style={{ color: 'rgba(255,255,255,0.92)' }}>
                             Rs. {fmt(bill.subtotal)}
                           </span>
                         </div>
 
                         {/* Discount */}
-                        <div className="py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                          <div className="flex justify-between items-center mb-2.5">
-                            <span className="text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>Discount</span>
+                        <div className="py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                          <div className="flex justify-between items-center mb-3">
+                            <span className="text-[13px]" style={{ color: 'rgba(255,255,255,0.55)' }}>Discount</span>
                             <span
-                              className="text-sm font-semibold tabular-nums"
+                              className="text-[13px] font-semibold tabular-nums"
                               style={{ color: bill.discountAmount > 0 ? '#34d399' : 'rgba(255,255,255,0.22)' }}
                             >
                               −Rs. {fmt(bill.discountAmount)}
                             </span>
                           </div>
-                          <div className="flex gap-1.5 items-center">
-                            <div className="flex gap-1">
+                          {/* Unified discount control container */}
+                          <div
+                            className="flex items-center gap-2"
+                            style={{
+                              background: 'rgba(255,255,255,0.04)',
+                              borderRadius: 12,
+                              border: '1px solid rgba(255,255,255,0.07)',
+                              padding: '8px 10px',
+                            }}
+                          >
+                            {/* Preset chips */}
+                            <div className="flex gap-1.5">
                               {PRESETS.map((pct) => {
                                 const isActive = activePreset === pct && discountMode === 'percent';
                                 return (
                                   <button
                                     key={pct}
                                     onClick={() => handlePreset(pct)}
-                                    className="px-2 py-1 rounded text-[11px] font-bold transition-all active:scale-95 min-h-[32px]"
-                                    style={
-                                      isActive
-                                        ? { background: 'rgba(59,130,246,0.2)', color: 'rgba(147,197,253,0.95)', border: '1px solid rgba(59,130,246,0.4)' }
-                                        : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.08)' }
-                                    }
+                                    className="transition-all active:scale-95"
+                                    style={{
+                                      padding: '4px 8px',
+                                      borderRadius: 7,
+                                      fontSize: 11,
+                                      fontWeight: 700,
+                                      ...(isActive
+                                        ? { background: 'rgba(59,130,246,0.28)', color: 'rgba(147,197,253,1)', border: '1px solid rgba(59,130,246,0.5)' }
+                                        : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)', border: '1px solid transparent' })
+                                    }}
                                   >
                                     {pct}%
                                   </button>
                                 );
                               })}
                             </div>
+                            {/* Vertical separator */}
+                            <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.09)', flexShrink: 0 }} />
+                            {/* Mode toggle */}
                             <div
-                              className="flex rounded overflow-hidden flex-shrink-0 text-[11px] font-bold"
-                              style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)' }}
+                              className="flex flex-shrink-0 text-[11px] font-bold"
+                              style={{ borderRadius: 8, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)' }}
                             >
                               <button
                                 onClick={() => handleModeToggle('percent')}
-                                className="px-2 py-1 min-h-[32px] transition-colors"
-                                style={discountMode === 'percent' ? { background: 'rgba(59,130,246,0.22)', color: 'rgba(147,197,253,0.95)' } : { color: 'rgba(255,255,255,0.36)' }}
+                                className="px-2.5 py-1 transition-colors"
+                                style={discountMode === 'percent' ? { background: 'rgba(59,130,246,0.25)', color: 'rgba(147,197,253,1)' } : { color: 'rgba(255,255,255,0.38)' }}
                               >%</button>
                               <button
                                 onClick={() => handleModeToggle('fixed')}
-                                className="px-2 py-1 min-h-[32px] transition-colors"
-                                style={discountMode === 'fixed' ? { background: 'rgba(59,130,246,0.22)', color: 'rgba(147,197,253,0.95)' } : { color: 'rgba(255,255,255,0.36)', borderLeft: '1px solid rgba(255,255,255,0.08)' }}
+                                className="px-2.5 py-1 transition-colors"
+                                style={discountMode === 'fixed' ? { background: 'rgba(59,130,246,0.25)', color: 'rgba(147,197,253,1)' } : { color: 'rgba(255,255,255,0.38)', borderLeft: '1px solid rgba(255,255,255,0.08)' }}
                               >Rs</button>
                             </div>
+                            {/* Input — blends in */}
                             <input
                               type="number"
                               min="0"
                               inputMode="decimal"
-                              placeholder={discountMode === 'percent' ? '%' : 'Rs'}
+                              placeholder={discountMode === 'percent' ? '0' : '0.00'}
                               value={discountInput}
                               onChange={(e) => handleInputChange(e.target.value)}
-                              className="flex-1 min-w-0 px-2.5 py-1 rounded text-xs text-white placeholder:text-white/20 focus:outline-none min-h-[32px]"
-                              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
-                              onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(59,130,246,0.5)'; }}
-                              onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+                              className="flex-1 min-w-0 text-[12px] text-white placeholder:text-white/20 focus:outline-none bg-transparent"
+                              style={{ borderBottom: '1px solid rgba(255,255,255,0.12)', paddingBottom: 2 }}
+                              onFocus={(e) => { e.currentTarget.style.borderBottomColor = 'rgba(59,130,246,0.6)'; }}
+                              onBlur={(e) => { e.currentTarget.style.borderBottomColor = 'rgba(255,255,255,0.12)'; }}
                             />
                           </div>
                         </div>
 
                         {/* VAT */}
                         {bill.vatEnabled && (
-                          <div className="flex justify-between items-center py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                            <span className="text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                          <div className="flex justify-between items-center py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                            <span className="text-[13px]" style={{ color: 'rgba(255,255,255,0.55)' }}>
                               VAT ({Math.round(bill.vatRate * 100)}%)
                             </span>
-                            <span className="text-sm font-semibold tabular-nums" style={{ color: 'rgba(255,255,255,0.8)' }}>
+                            <span className="text-[13px] font-semibold tabular-nums" style={{ color: 'rgba(255,255,255,0.92)' }}>
                               Rs. {fmt(bill.vatAmount)}
                             </span>
                           </div>
                         )}
 
-                        {/* TOTAL — dominant */}
-                        <div className="flex justify-between items-end pt-5 mt-1">
-                          <span className="text-xs font-bold uppercase tracking-[0.2em] pb-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                        {/* TOTAL — dominant with top separator */}
+                        <div
+                          className="flex justify-between items-end"
+                          style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 16, marginTop: 6 }}
+                        >
+                          <span
+                            className="font-bold uppercase pb-1"
+                            style={{ fontSize: 11, letterSpacing: '0.16em', color: 'rgba(255,255,255,0.4)' }}
+                          >
                             {selectedQty.size > 0 ? 'Split Total' : 'Total'}
                           </span>
-                          <span className="text-4xl font-bold tabular-nums leading-none text-white">
+                          <span
+                            className="font-bold tabular-nums leading-none text-white"
+                            style={{ fontSize: 32, textShadow: '0 0 24px rgba(255,255,255,0.12)' }}
+                          >
                             Rs. {fmt(activeBill.total)}
                           </span>
                         </div>
@@ -1408,9 +1435,9 @@ const ReviewScreen = () => {
                           </div>
                         </button>
 
-                        {/* Digital wallets — full-width brand cards */}
+                        {/* Digital wallets — 2-column grid */}
                         {qrMethods.length > 0 && (
-                          <div className="flex flex-col gap-2.5">
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
                             {qrMethods.map(({ id, label }) => {
                               const builtInKeys = ['esewa', 'khalti', 'fonepay'] as const;
                               const isBuiltIn = builtInKeys.includes(id as 'esewa' | 'khalti' | 'fonepay');
@@ -1432,30 +1459,34 @@ const ReviewScreen = () => {
                                   onClick={() => { if (!confirming) { setSelectedMethod(id); setShowQRModal(true); } }}
                                   data-testid={`button-payment-method-${id}`}
                                   disabled={confirming}
-                                  className="pos-pay-card w-full flex items-center gap-4 px-4 rounded-[15px] disabled:opacity-40"
+                                  className="pos-pay-card flex flex-col items-center justify-center gap-2 rounded-[14px] disabled:opacity-40"
                                   style={{
-                                    minHeight: 58,
+                                    minHeight: 82,
+                                    padding: '14px 12px',
                                     background: `linear-gradient(145deg, ${b.bg1}, ${b.bg2})`,
                                     border: `1px solid ${b.border}`,
-                                    boxShadow: `${b.shadow}, 0 6px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)`,
+                                    boxShadow: `${b.shadow}, 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.07)`,
                                     ['--card-hover-shadow' as string]: b.hoverShadow,
                                   }}
                                 >
                                   <div
-                                    className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden"
-                                    style={{ background: b.iconBg, boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15)' }}
+                                    style={{
+                                      width: 38, height: 38,
+                                      borderRadius: 11,
+                                      background: b.iconBg,
+                                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15)',
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                      flexShrink: 0,
+                                      overflow: 'hidden',
+                                    }}
                                   >
                                     {logoImage ? (
                                       <img src={logoImage} alt={label} className="w-full h-full object-contain p-0.5" />
                                     ) : (
-                                      <Smartphone size={16} style={{ color: b.color }} />
+                                      <Smartphone size={17} style={{ color: b.color }} />
                                     )}
                                   </div>
-                                  <div className="flex-1 text-left min-w-0">
-                                    <p className="text-sm font-semibold leading-tight" style={{ color: b.color }}>{label}</p>
-                                    <p className="text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>Scan QR to pay</p>
-                                  </div>
-                                  <ChevronRight size={15} style={{ color: 'rgba(255,255,255,0.22)', flexShrink: 0 }} />
+                                  <p className="text-[12px] font-semibold leading-tight text-center" style={{ color: b.color }}>{label}</p>
                                 </button>
                               );
                             })}
