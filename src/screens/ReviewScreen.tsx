@@ -10,7 +10,7 @@ import { triggerPrint, isReceiptTextReady } from '@/utils/print';
 import { playSuccess } from '@/utils/sounds';
 import { QRCodeSVG } from 'qrcode.react';
 import {
-  ChevronLeft, ChevronDown, ChevronUp, ChevronRight, Banknote, Smartphone,
+  ChevronLeft, ChevronDown, ChevronUp, Banknote, Smartphone,
   CheckCircle2, Home, X, Loader2, Printer, Check,
 } from 'lucide-react';
 import ThermalReceiptLayout from '@/components/ThermalReceiptLayout';
@@ -1383,7 +1383,7 @@ const ReviewScreen = () => {
                               placeholder={discountMode === 'percent' ? '0' : '0.00'}
                               value={discountInput}
                               onChange={(e) => handleInputChange(e.target.value)}
-                              className="flex-1 min-w-0 text-[12px] text-white placeholder:text-white/20 focus:outline-none bg-transparent"
+                              className="w-[88px] flex-shrink-0 text-[12px] text-white placeholder:text-white/20 focus:outline-none bg-transparent"
                               style={{ borderBottom: '1px solid rgba(255,255,255,0.12)', paddingBottom: 2 }}
                               onFocus={(e) => { e.currentTarget.style.borderBottomColor = 'rgba(59,130,246,0.6)'; }}
                               onBlur={(e) => { e.currentTarget.style.borderBottomColor = 'rgba(255,255,255,0.12)'; }}
@@ -1452,94 +1452,99 @@ const ReviewScreen = () => {
                         <div className="pos-scroll-wrap">
                         <div className="pos-scroll" style={{ overflowY: 'auto', height: '100%', padding: '12px 16px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-                        {/* Cash — primary card with gradient + glow */}
-                        <button
-                          onClick={() => handleConfirmPayment('cash')}
-                          disabled={confirming}
-                          data-testid="button-payment-method-cash"
-                          className="pos-pay-card w-full flex items-center justify-between px-4 rounded-[15px] font-bold text-white disabled:opacity-40"
-                          style={{
-                            minHeight: 66,
-                            background: 'linear-gradient(135deg, #047857 0%, #059669 45%, #10b981 100%)',
-                            boxShadow: '0 6px 24px rgba(16,185,129,0.45), 0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.2)',
-                            ['--card-hover-shadow' as string]: '0 14px 36px rgba(16,185,129,0.6), 0 6px 16px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.25)',
-                          }}
-                        >
-                          <div className="flex items-center gap-3">
+                        {/* Unified 2-column grid — Cash + all digital wallets */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+
+                          {/* Cash */}
+                          <button
+                            onClick={() => handleConfirmPayment('cash')}
+                            disabled={confirming}
+                            data-testid="button-payment-method-cash"
+                            className="pos-pay-card flex items-center gap-[10px] px-3 rounded-[14px] disabled:opacity-40"
+                            style={{
+                              minHeight: 66,
+                              padding: '12px 14px',
+                              background: 'linear-gradient(135deg, rgba(4,120,87,0.5) 0%, rgba(16,185,129,0.18) 100%)',
+                              border: '1px solid rgba(52,211,153,0.35)',
+                              boxShadow: '0 2px 14px rgba(16,185,129,0.2), 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.07)',
+                              ['--card-hover-shadow' as string]: '0 14px 32px rgba(16,185,129,0.4), 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+                            }}
+                          >
                             <div
-                              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                              style={{ background: 'rgba(255,255,255,0.2)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.3)' }}
+                              style={{
+                                width: 36, height: 36,
+                                borderRadius: 10,
+                                background: 'rgba(52,211,153,0.2)',
+                                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                flexShrink: 0,
+                              }}
                             >
-                              <Banknote size={18} />
+                              <Banknote size={20} style={{ color: '#34d399' }} />
                             </div>
-                            <div className="text-left">
-                              <p className="text-[15px] font-bold leading-tight">Cash</p>
-                              <p className="text-[11px] font-medium" style={{ color: 'rgba(255,255,255,0.65)' }}>Tap to complete payment</p>
+                            <div className="text-left min-w-0">
+                              <p className="text-[14px] font-bold leading-tight text-white">Cash</p>
+                              <p className="text-[10px] font-medium mt-0.5" style={{ color: 'rgba(52,211,153,0.75)' }}>Tap to pay</p>
                             </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[15px] font-bold tabular-nums">Rs. {fmt(activeBill.total)}</span>
-                            <ChevronRight size={16} style={{ opacity: 0.6 }} />
-                          </div>
-                        </button>
+                          </button>
 
-                        {/* Digital wallets — 2-column grid */}
-                        {qrMethods.length > 0 && (
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
-                            {qrMethods.map(({ id, label }) => {
-                              const builtInKeys = ['esewa', 'khalti', 'fonepay'] as const;
-                              const isBuiltIn = builtInKeys.includes(id as 'esewa' | 'khalti' | 'fonepay');
-                              const logoImage = isBuiltIn
-                                ? settings.wallets[id as 'esewa' | 'khalti' | 'fonepay']?.logoImage
-                                : (settings.customWallets || []).find((w) => w.id === id)?.logoImage;
+                          {/* Digital wallets */}
+                          {qrMethods.map(({ id, label }) => {
+                            const builtInKeys = ['esewa', 'khalti', 'fonepay'] as const;
+                            const isBuiltIn = builtInKeys.includes(id as 'esewa' | 'khalti' | 'fonepay');
+                            const logoImage = isBuiltIn
+                              ? settings.wallets[id as 'esewa' | 'khalti' | 'fonepay']?.logoImage
+                              : (settings.customWallets || []).find((w) => w.id === id)?.logoImage;
 
-                              type BrandStyle = { color: string; bg1: string; bg2: string; border: string; shadow: string; hoverShadow: string; iconBg: string };
-                              const brandMap: Record<string, BrandStyle> = {
-                                esewa:   { color: '#4ade80', bg1: 'rgba(22,163,74,0.14)',   bg2: 'rgba(16,185,129,0.04)', border: 'rgba(34,197,94,0.28)',   shadow: '0 2px 14px rgba(22,163,74,0.2)',    hoverShadow: '0 14px 32px rgba(34,197,94,0.4), 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',  iconBg: 'rgba(34,197,94,0.18)'  },
-                                khalti:  { color: '#c084fc', bg1: 'rgba(124,58,237,0.14)',  bg2: 'rgba(139,92,246,0.04)', border: 'rgba(167,139,250,0.28)', shadow: '0 2px 14px rgba(124,58,237,0.2)',  hoverShadow: '0 14px 32px rgba(139,92,246,0.4), 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)', iconBg: 'rgba(139,92,246,0.18)' },
-                                fonepay: { color: '#f87171', bg1: 'rgba(220,38,38,0.14)',   bg2: 'rgba(239,68,68,0.04)',  border: 'rgba(239,68,68,0.28)',   shadow: '0 2px 14px rgba(220,38,38,0.2)',   hoverShadow: '0 14px 32px rgba(239,68,68,0.4), 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',  iconBg: 'rgba(239,68,68,0.18)'  },
-                              };
-                              const b: BrandStyle = brandMap[id] ?? { color: '#93c5fd', bg1: 'rgba(59,130,246,0.12)', bg2: 'rgba(96,165,250,0.04)', border: 'rgba(96,165,250,0.25)', shadow: '0 2px 14px rgba(59,130,246,0.18)', hoverShadow: '0 14px 32px rgba(96,165,250,0.4), 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)', iconBg: 'rgba(59,130,246,0.16)' };
+                            type BrandStyle = { color: string; bg1: string; bg2: string; border: string; shadow: string; hoverShadow: string; iconBg: string };
+                            const brandMap: Record<string, BrandStyle> = {
+                              esewa:   { color: '#4ade80', bg1: 'rgba(22,163,74,0.14)',   bg2: 'rgba(16,185,129,0.04)', border: 'rgba(34,197,94,0.28)',   shadow: '0 2px 14px rgba(22,163,74,0.2)',    hoverShadow: '0 14px 32px rgba(34,197,94,0.4), 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',  iconBg: 'rgba(34,197,94,0.18)'  },
+                              khalti:  { color: '#c084fc', bg1: 'rgba(124,58,237,0.14)',  bg2: 'rgba(139,92,246,0.04)', border: 'rgba(167,139,250,0.28)', shadow: '0 2px 14px rgba(124,58,237,0.2)',  hoverShadow: '0 14px 32px rgba(139,92,246,0.4), 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)', iconBg: 'rgba(139,92,246,0.18)' },
+                              fonepay: { color: '#f87171', bg1: 'rgba(220,38,38,0.14)',   bg2: 'rgba(239,68,68,0.04)',  border: 'rgba(239,68,68,0.28)',   shadow: '0 2px 14px rgba(220,38,38,0.2)',   hoverShadow: '0 14px 32px rgba(239,68,68,0.4), 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',  iconBg: 'rgba(239,68,68,0.18)'  },
+                            };
+                            const b: BrandStyle = brandMap[id] ?? { color: '#93c5fd', bg1: 'rgba(59,130,246,0.12)', bg2: 'rgba(96,165,250,0.04)', border: 'rgba(96,165,250,0.25)', shadow: '0 2px 14px rgba(59,130,246,0.18)', hoverShadow: '0 14px 32px rgba(96,165,250,0.4), 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)', iconBg: 'rgba(59,130,246,0.16)' };
 
-                              return (
-                                <button
-                                  key={id}
-                                  onClick={() => { if (!confirming) { setSelectedMethod(id); setShowQRModal(true); } }}
-                                  data-testid={`button-payment-method-${id}`}
-                                  disabled={confirming}
-                                  className="pos-pay-card flex flex-col items-center justify-center gap-2 rounded-[14px] disabled:opacity-40"
+                            return (
+                              <button
+                                key={id}
+                                onClick={() => { if (!confirming) { setSelectedMethod(id); setShowQRModal(true); } }}
+                                data-testid={`button-payment-method-${id}`}
+                                disabled={confirming}
+                                className="pos-pay-card flex items-center gap-[10px] rounded-[14px] disabled:opacity-40"
+                                style={{
+                                  minHeight: 66,
+                                  padding: '12px 14px',
+                                  background: `linear-gradient(145deg, ${b.bg1}, ${b.bg2})`,
+                                  border: `1px solid ${b.border}`,
+                                  boxShadow: `${b.shadow}, 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.07)`,
+                                  ['--card-hover-shadow' as string]: b.hoverShadow,
+                                }}
+                              >
+                                <div
                                   style={{
-                                    minHeight: 82,
-                                    padding: '14px 12px',
-                                    background: `linear-gradient(145deg, ${b.bg1}, ${b.bg2})`,
-                                    border: `1px solid ${b.border}`,
-                                    boxShadow: `${b.shadow}, 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.07)`,
-                                    ['--card-hover-shadow' as string]: b.hoverShadow,
+                                    width: 36, height: 36,
+                                    borderRadius: 10,
+                                    background: b.iconBg,
+                                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    flexShrink: 0,
+                                    overflow: 'hidden',
                                   }}
                                 >
-                                  <div
-                                    style={{
-                                      width: 38, height: 38,
-                                      borderRadius: 11,
-                                      background: b.iconBg,
-                                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15)',
-                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                      flexShrink: 0,
-                                      overflow: 'hidden',
-                                    }}
-                                  >
-                                    {logoImage ? (
-                                      <img src={logoImage} alt={label} className="w-full h-full object-contain p-0.5" />
-                                    ) : (
-                                      <Smartphone size={17} style={{ color: b.color }} />
-                                    )}
-                                  </div>
-                                  <p className="text-[12px] font-semibold leading-tight text-center" style={{ color: b.color }}>{label}</p>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
+                                  {logoImage ? (
+                                    <img src={logoImage} alt={label} className="w-full h-full object-contain p-0.5" />
+                                  ) : (
+                                    <Smartphone size={20} style={{ color: b.color }} />
+                                  )}
+                                </div>
+                                <div className="text-left min-w-0">
+                                  <p className="text-[13px] font-semibold leading-tight" style={{ color: b.color }}>{label}</p>
+                                  <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>Scan QR</p>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
                         </div>{/* end pos-scroll */}
                         </div>{/* end pos-scroll-wrap */}
                       </div>{/* end payment card */}
