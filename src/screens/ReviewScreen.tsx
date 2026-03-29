@@ -1458,7 +1458,8 @@ const ReviewScreen = () => {
                             })}
                           </div>
                         )}
-                      </div>
+                        </div>{/* end scrollable buttons area */}
+                      </div>{/* end payment card */}
 
                     </div>
                   </div>
