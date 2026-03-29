@@ -39,24 +39,22 @@ export const TopBar = ({
   title,
   showBack,
   onBack,
-  compact,
 }: {
   title: string;
   showBack?: boolean;
   onBack?: () => void;
-  compact?: boolean;
 }) => (
-  <header className={`sticky top-0 z-40 bg-card/95 backdrop-blur border-b border-border px-4 flex items-center gap-3 ${compact ? 'py-1.5' : 'py-3'}`}>
+  <header className="sticky top-0 z-40 bg-card/95 backdrop-blur border-b border-border px-4 py-3 flex items-center gap-3">
     {showBack && (
       <button onClick={onBack} className="text-muted-foreground hover:text-foreground p-1" data-testid="button-back">
-        <svg width={compact ? 18 : 24} height={compact ? 18 : 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
       </button>
     )}
     <div className="flex items-center gap-2">
-      <Coffee size={compact ? 15 : 20} className="text-accent" />
-      <h1 className={compact ? 'text-sm font-bold' : 'text-lg font-bold'}>{title}</h1>
+      <Coffee size={20} className="text-accent" />
+      <h1 className="text-lg font-bold">{title}</h1>
     </div>
   </header>
 );

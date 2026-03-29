@@ -71,15 +71,9 @@ const OrderScreen = () => {
 
   // Landscape detection: any device where width > height gets split view
   const detectLandscape = () => window.innerWidth > window.innerHeight;
-  // Compact landscape: phone in landscape (small height)
-  const detectCompactLandscape = () => window.innerWidth > window.innerHeight && window.innerHeight <= 500;
   const [isLandscape, setIsLandscape] = useState(detectLandscape);
-  const [isCompactLandscape, setIsCompactLandscape] = useState(detectCompactLandscape);
   useEffect(() => {
-    const update = () => {
-      setIsLandscape(detectLandscape());
-      setIsCompactLandscape(detectCompactLandscape());
-    };
+    const update = () => setIsLandscape(detectLandscape());
     window.addEventListener('resize', update);
     window.addEventListener('orientationchange', update);
     return () => {
@@ -270,7 +264,7 @@ const OrderScreen = () => {
 
   return (
     <div className="h-[100dvh] flex flex-col overflow-hidden" style={{ background: 'linear-gradient(180deg, #0d1525 0%, #060e1a 100%)' }}>
-      <TopBar title={`Table ${table.number}`} showBack onBack={() => navigate('/')} compact={isCompactLandscape} />
+      <TopBar title={`Table ${table.number}`} showBack onBack={() => navigate('/')} />
 
       {/* Move success banner */}
       {moveSuccessBanner && (
@@ -292,8 +286,8 @@ const OrderScreen = () => {
         </div>
       )}
 
-      {/* Kitchen status label — hidden in compact landscape to save vertical space */}
-      {order && !isCompactLandscape && (
+      {/* Kitchen status label */}
+      {order && (
         <div className="flex items-center gap-2 px-4 py-1.5 flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
           <span className="text-xs font-semibold text-white/35">Order status:</span>
           <span
@@ -324,7 +318,7 @@ const OrderScreen = () => {
         <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
 
           {/* Search */}
-          <div className={`${isCompactLandscape ? 'p-1.5' : 'p-3'} border-b border-border bg-card/60 flex-shrink-0`}>
+          <div className="p-3 border-b border-border bg-card/60 flex-shrink-0">
             <div className="relative">
               <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
@@ -348,13 +342,13 @@ const OrderScreen = () => {
 
           {/* Category tabs — horizontal scroll on mobile, wrapping on tablet+ */}
           {!search && (
-            <div className={`flex gap-1.5 ${isCompactLandscape ? 'p-1.5' : 'p-3'} border-b border-border no-scrollbar bg-card/40 flex-shrink-0 overflow-x-auto sm:overflow-x-visible sm:flex-wrap`}>
+            <div className="flex gap-2 p-3 border-b border-border no-scrollbar bg-card/40 flex-shrink-0 overflow-x-auto sm:overflow-x-visible sm:flex-wrap">
               {categories.map((cat) => (
                 <button
                   key={cat.id}
                   onClick={() => setActiveCat(cat.id)}
                   data-testid={`button-category-${cat.id}`}
-                  className={`${isCompactLandscape ? 'px-3 py-1 text-xs' : 'px-4 py-1.5 text-sm'} rounded-lg font-semibold whitespace-nowrap transition-all active:scale-95`}
+                  className="px-4 py-1.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-all active:scale-95"
                   style={activeCat === cat.id ? {
                     background: 'rgba(59,130,246,0.22)',
                     color: 'rgba(255,255,255,0.95)',
@@ -373,8 +367,8 @@ const OrderScreen = () => {
           )}
 
           {/* Items grid — only this section scrolls */}
-          <div className={`flex-1 min-h-0 overflow-y-auto bg-background ${isCompactLandscape ? 'p-1.5' : 'p-3 lg:p-4'} ${!isLandscape ? 'pb-24' : ''}`}>
-            <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 ${isCompactLandscape ? 'gap-1.5' : 'gap-3 lg:gap-4'}`}>
+          <div className={`flex-1 min-h-0 overflow-y-auto p-3 lg:p-4 bg-background ${!isLandscape ? 'pb-24' : ''}`}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
               {filteredItems.map((item) => (
                 <MenuItemCard
                   key={item.id}
@@ -397,7 +391,7 @@ const OrderScreen = () => {
         {/* ── Cart panel — JS-conditional, shown in landscape on any device ── */}
         {isLandscape && (
           <div
-            className={`${isCompactLandscape ? 'w-[260px]' : 'w-80 lg:w-[360px]'} flex-shrink-0 flex flex-col min-h-0 overflow-hidden`}
+            className="w-80 lg:w-[360px] flex-shrink-0 flex flex-col min-h-0 overflow-hidden"
             style={{
               borderLeft: '1px solid rgba(255,255,255,0.10)',
               boxShadow: '-10px 0 30px rgba(0,0,0,0.4)',
