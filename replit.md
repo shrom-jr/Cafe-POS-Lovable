@@ -92,7 +92,15 @@ Cashier / Time
 - **Payments** — wallet config (eSewa, Khalti, Fonepay, custom)
 - **Company Profile** — café name, address, PAN, footer, bill counter, VAT toggle, logo, bill preview
 - **Reports** — revenue reports, CSV export
+- **Inventory** — ingredients CRUD, recipes (menu item ↔ ingredients), stock levels with low stock warnings
 - **Backup** — JSON export/import
+
+## Inventory System
+- **Types**: `Ingredient` (id, name, unit, quantity, threshold) and `Recipe` (menuItemId, ingredients[]) in `src/types/pos.ts`
+- **Storage**: `pos_ingredients` and `pos_recipes` keys in localStorage via `src/storage/db.ts`
+- **State**: `ingredients` and `recipes` arrays in `usePOSStore.ts`
+- **Stock deduction**: Automatically fires in `sendToKitchen()` — deducts ingredient quantities for all unsent items before marking them sent
+- **UI**: `src/screens/InventorySection.tsx` — 3 tabs: Ingredients (CRUD), Recipes (link menu items to ingredients), Stock (read-only view with low stock badges)
 
 ## Running the App
 Port 5000 via `npm run dev`. Server: `host: "0.0.0.0"`, `allowedHosts: true`.

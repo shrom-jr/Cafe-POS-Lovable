@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { db } from '@/storage/db';
-import { CafeTable, Category, MenuItem, Order, Payment, Settings, TablePayment } from '@/types/pos';
+import { CafeTable, Category, Ingredient, MenuItem, Order, Payment, Recipe, RecipeIngredient, Settings, TablePayment } from '@/types/pos';
 
 db.seed();
 
@@ -44,6 +44,17 @@ interface POSState {
   updateSettings: (updates: Partial<Settings>) => void;
   getNextBillNumber: () => number;
 
+  ingredients: Ingredient[];
+  recipes: Recipe[];
+
+  addIngredient: (ingredient: Omit<Ingredient, 'id'>) => void;
+  updateIngredient: (id: string, updates: Partial<Ingredient>) => void;
+  deleteIngredient: (id: string) => void;
+
+  saveRecipe: (menuItemId: string, ingredients: RecipeIngredient[]) => void;
+  deleteRecipe: (menuItemId: string) => void;
+  deductStockForOrder: (orderId: string) => void;
+
   exportData: () => string;
   importData: (json: string) => void;
   factoryReset: () => void;
@@ -71,6 +82,8 @@ export const usePOSStore = create<POSState>((set, get) => ({
   })(),
   payments: db.getPayments(),
   settings: db.getSettings(),
+  ingredients: db.getIngredients(),
+  recipes: db.getRecipes(),
 
   addTable: (number) => {
     set((state) => {
@@ -282,6 +295,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
   },
 
   sendToKitchen: (orderId) => {
+    get().deductStockForOrder(orderId);
     set((state) => {
       const orders = state.orders.map((o) =>
         o.id === orderId
@@ -426,6 +440,81 @@ export const usePOSStore = create<POSState>((set, get) => ({
     return next;
   },
 
+  addIngredient: (ingredient) => {
+    set((state) => {
+      const ingredients = [...state.ingredients, { ...ingredient, id: crypto.randomUUID() }];
+      db.saveIngredients(ingredients);
+      return { ingredients };
+    });
+  },
+
+  updateIngredient: (id, updates) => {
+    set((state) => {
+      const ingredients = state.ingredients.map((i) => (i.id === id ? { ...i, ...updates } : i));
+      db.saveIngredients(ingredients);
+      return { ingredients };
+    });
+  },
+
+  deleteIngredient: (id) => {
+    set((state) => {
+      const ingredients = state.ingredients.filter((i) => i.id !== id);
+      const recipes = state.recipes.map((r) => ({
+        ...r,
+        ingredients: r.ingredients.filter((ri) => ri.ingredientId !== id),
+      }));
+      db.saveIngredients(ingredients);
+      db.saveRecipes(recipes);
+      return { ingredients, recipes };
+    });
+  },
+
+  saveRecipe: (menuItemId, ingredients) => {
+    set((state) => {
+      const existing = state.recipes.find((r) => r.menuItemId === menuItemId);
+      const recipes = existing
+        ? state.recipes.map((r) => (r.menuItemId === menuItemId ? { ...r, ingredients } : r))
+        : [...state.recipes, { menuItemId, ingredients }];
+      db.saveRecipes(recipes);
+      return { recipes };
+    });
+  },
+
+  deleteRecipe: (menuItemId) => {
+    set((state) => {
+      const recipes = state.recipes.filter((r) => r.menuItemId !== menuItemId);
+      db.saveRecipes(recipes);
+      return { recipes };
+    });
+  },
+
+  deductStockForOrder: (orderId) => {
+    set((state) => {
+      const order = state.orders.find((o) => o.id === orderId);
+      if (!order) return {};
+      const unsentItems = order.items.filter((i) => !i.sentToKitchen && i.status !== 'paid');
+      if (unsentItems.length === 0) return {};
+
+      const deductions: Record<string, number> = {};
+      for (const item of unsentItems) {
+        const recipe = state.recipes.find((r) => r.menuItemId === item.menuItemId);
+        if (!recipe) continue;
+        for (const ri of recipe.ingredients) {
+          deductions[ri.ingredientId] = (deductions[ri.ingredientId] ?? 0) + ri.quantity * item.quantity;
+        }
+      }
+
+      if (Object.keys(deductions).length === 0) return {};
+
+      const ingredients = state.ingredients.map((ing) => {
+        const deduct = deductions[ing.id] ?? 0;
+        return deduct > 0 ? { ...ing, quantity: Math.max(0, ing.quantity - deduct) } : ing;
+      });
+      db.saveIngredients(ingredients);
+      return { ingredients };
+    });
+  },
+
   exportData: () => db.exportAll(),
 
   importData: (json) => {
@@ -437,6 +526,8 @@ export const usePOSStore = create<POSState>((set, get) => ({
       orders: db.getOrders(),
       payments: db.getPayments(),
       settings: db.getSettings(),
+      ingredients: db.getIngredients(),
+      recipes: db.getRecipes(),
     });
   },
 
@@ -450,6 +541,8 @@ export const usePOSStore = create<POSState>((set, get) => ({
       orders: db.getOrders(),
       payments: db.getPayments(),
       settings: db.getSettings(),
+      ingredients: db.getIngredients(),
+      recipes: db.getRecipes(),
     });
   },
 }));

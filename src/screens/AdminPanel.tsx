@@ -2,18 +2,19 @@ import { useState, useRef } from 'react';
 import { usePOSStore } from '@/store/usePOSStore';
 import AppLayout from '@/components/ui/AppLayout';
 import ReceiptPreview from '@/components/ReceiptPreview';
+import { InventorySection } from '@/screens/InventorySection';
 import { toast } from 'sonner';
 import {
   BarChart3, Coffee, CreditCard, Table2, TrendingUp, FileDown,
   Plus, Trash2, Edit3, Save, X, Lock, DollarSign, ShoppingCart,
   Download, Upload, Smartphone, ToggleLeft, ToggleRight,
-  Receipt, ImagePlus, Image, Menu as MenuIcon, Users,
+  Receipt, ImagePlus, Image, Menu as MenuIcon, Users, Package,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { fmt } from '@/utils/format';
 import { format, startOfDay, subDays, startOfWeek, startOfMonth } from 'date-fns';
 
-type AdminTab = 'dashboard' | 'menu' | 'tables' | 'payments' | 'bill' | 'reports' | 'backup';
+type AdminTab = 'dashboard' | 'menu' | 'tables' | 'payments' | 'bill' | 'reports' | 'backup' | 'inventory';
 
 const SIDEBAR_BG = 'linear-gradient(180deg, #080f1e 0%, #040a14 100%)';
 const ACTIVE_STYLE = {
@@ -108,6 +109,7 @@ const AdminPanel = () => {
     { id: 'payments',  label: 'Payments',        icon: <CreditCard size={15} />, subtitle: 'Configure payment methods' },
     { id: 'bill',      label: 'Company Profile', icon: <Receipt size={15} />,    subtitle: 'Business info and receipt settings' },
     { id: 'reports',   label: 'Reports',         icon: <TrendingUp size={15} />, subtitle: 'Sales reports and exports' },
+    { id: 'inventory', label: 'Inventory',       icon: <Package size={15} />,    subtitle: 'Ingredients, recipes and stock levels' },
     { id: 'backup',    label: 'Backup',          icon: <FileDown size={15} />,   subtitle: 'Export, restore or reset data' },
   ];
 
@@ -191,6 +193,7 @@ const AdminPanel = () => {
             {activeTab === 'payments'  && <PaymentsSection />}
             {activeTab === 'bill'      && <BillDesignSection />}
             {activeTab === 'reports'   && <ReportsSection />}
+            {activeTab === 'inventory' && <InventorySection />}
             {activeTab === 'backup'    && <BackupSection />}
           </div>
         </div>

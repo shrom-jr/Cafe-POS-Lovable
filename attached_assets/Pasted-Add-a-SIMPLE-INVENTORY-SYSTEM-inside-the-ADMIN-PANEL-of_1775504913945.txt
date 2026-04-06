@@ -1,0 +1,153 @@
+Add a SIMPLE INVENTORY SYSTEM inside the ADMIN PANEL of the app.
+
+🚨 STRICT RULES:
+
+* DO NOT modify POS/order page UI
+* DO NOT break existing menu or ordering system
+* ONLY add new functionality inside ADMIN PANEL
+* Keep UI consistent with existing design (dark theme, cards, buttons)
+
+---
+
+1. CREATE NEW SECTION:
+
+Add a new sidebar/menu item:
+"Inventory"
+
+This should open a new page:
+Admin → Inventory
+
+---
+
+2. CREATE 3 TABS INSIDE INVENTORY:
+
+Tabs:
+
+1. Ingredients
+2. Recipes
+3. Stock
+
+Use tab navigation UI (same style as existing tabs if available)
+
+---
+
+3. INGREDIENTS TAB:
+
+Create CRUD for ingredients:
+
+Fields:
+
+* Name (e.g. Milk, Coffee Beans)
+* Unit (ml, g, pcs)
+* Current Quantity (number)
+
+Features:
+
+* Add ingredient
+* Edit ingredient
+* Delete ingredient
+* Show list in card or table
+
+---
+
+4. RECIPES TAB (MOST IMPORTANT):
+
+Each MENU ITEM should be linked to ingredients.
+
+For each menu item:
+
+* Select item (e.g. Cappuccino)
+* Add ingredients:
+
+  * Ingredient (Milk)
+  * Quantity used (150 ml)
+
+Allow multiple ingredients per item.
+
+UI:
+
+* Dropdown for menu item
+* Add ingredient rows dynamically
+
+---
+
+5. STOCK LOGIC (CORE FUNCTION):
+
+WHEN an order is PLACED:
+
+For each item in order:
+
+* Find its recipe
+* Reduce ingredient quantities automatically
+
+Example:
+Cappuccino ordered →
+Milk -150ml
+Coffee -18g
+
+---
+
+6. STOCK TAB:
+
+Show:
+
+* Ingredient name
+* Remaining quantity
+* Status:
+
+If low:
+
+* Show warning (e.g. "Low stock ⚠️")
+
+---
+
+7. LOW STOCK RULE:
+
+If quantity < predefined threshold:
+
+* Highlight in red
+* Show warning badge
+
+---
+
+8. DATA STRUCTURE (IMPORTANT):
+
+Create:
+
+* ingredients table
+* recipes table (itemId + ingredientId + quantity)
+
+---
+
+9. SAFETY:
+
+* If no recipe exists → do NOT reduce stock
+* Prevent negative stock (minimum 0)
+
+---
+
+10. UI STYLE:
+
+* Use same card style as POS
+* Same buttons (rounded, blue glow)
+* Keep spacing consistent
+
+---
+
+GOAL:
+
+Simple inventory system:
+
+* Add ingredients
+* Link to menu items
+* Auto deduct when order is placed
+* Show remaining stock
+
+🚫 DO NOT ADD:
+
+* suppliers
+* purchase orders
+* complex analytics
+* multi-warehouse
+
+Keep it SIMPLE and WORKING.

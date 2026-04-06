@@ -87,6 +87,24 @@ export interface CustomWallet {
   logoImage?: string;
 }
 
+export interface Ingredient {
+  id: string;
+  name: string;
+  unit: string;
+  quantity: number;
+  threshold: number;
+}
+
+export interface RecipeIngredient {
+  ingredientId: string;
+  quantity: number;
+}
+
+export interface Recipe {
+  menuItemId: string;
+  ingredients: RecipeIngredient[];
+}
+
 export interface Settings {
   cafeName: string;
   cafeLogo?: string;
