@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Ingredient, RecipeIngredient } from '@/types/pos';
 import { format, startOfDay } from 'date-fns';
+import { baseUnitOf, displayAmount, displayUnit, displayQty } from '@/utils/units';
 
 type InvTab = 'ingredients' | 'recipes' | 'stock';
 
@@ -210,11 +211,11 @@ const IngredientsTab = () => {
                           <span className={`font-medium ${isLow ? 'text-red-400' : 'text-foreground'}`}>{ing.name}</span>
                         </td>
                         <td className={`py-3 font-semibold ${isLow ? 'text-red-400' : 'text-foreground'}`}>
-                          {ing.quantity} {ing.unit}
+                          {displayQty(ing.quantity, ing.unit)}
                         </td>
-                        <td className="py-3 text-muted-foreground hidden sm:table-cell">{ing.threshold} {ing.unit}</td>
+                        <td className="py-3 text-muted-foreground hidden sm:table-cell">{displayQty(ing.threshold, ing.unit)}</td>
                         <td className="py-3 text-muted-foreground hidden sm:table-cell">
-                          {ing.costPerUnit !== undefined ? ing.costPerUnit.toFixed(3) : '—'}
+                          {ing.costPerUnit !== undefined ? `${ing.costPerUnit.toFixed(4)} / ${ing.unit}` : '—'}
                         </td>
                         <td className="py-3">
                           <div className="flex gap-1 justify-end">
@@ -349,15 +350,20 @@ const RecipesTab = () => {
                     <option key={ing.id} value={ing.id}>{ing.name} ({ing.unit})</option>
                   ))}
                 </select>
-                <input
-                  type="number"
-                  min="0"
-                  step="any"
-                  className={`${INPUT} w-24`}
-                  placeholder="Qty"
-                  value={row.quantity || ''}
-                  onChange={(e) => updateRow(idx, 'quantity', parseFloat(e.target.value) || 0)}
-                />
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    className={`${INPUT} w-20`}
+                    placeholder="Qty"
+                    value={row.quantity || ''}
+                    onChange={(e) => updateRow(idx, 'quantity', parseFloat(e.target.value) || 0)}
+                  />
+                  <span className="text-xs text-muted-foreground w-6 flex-shrink-0">
+                    {row.ingredientId ? baseUnitOf(getIngredient(row.ingredientId)?.unit ?? '') : ''}
+                  </span>
+                </div>
                 <button onClick={() => removeRow(idx)} className="p-2 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-400/10 transition-colors flex-shrink-0">
                   <X size={14} />
                 </button>
@@ -661,9 +667,9 @@ const StockTab = () => {
                   {/* Quantity */}
                   <td className="px-3 py-4">
                     <span className={`font-bold text-base tabular-nums ${isLow ? 'text-red-400' : 'text-foreground'}`}>
-                      {ing.quantity}
+                      {displayAmount(ing.quantity, ing.unit)}
                     </span>
-                    <span className="text-xs font-normal text-muted-foreground/60 ml-1">{ing.unit}</span>
+                    <span className="text-xs font-normal text-muted-foreground/60 ml-1">{displayUnit(ing.quantity, ing.unit)}</span>
                   </td>
 
                   {/* Threshold (desktop) */}

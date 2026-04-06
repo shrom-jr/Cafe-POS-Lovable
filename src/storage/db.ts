@@ -106,6 +106,44 @@ function migrateSettings() {
 
 migrateSettings();
 
+// ── Ingredient unit migration (L→ml, kg→g) ────────────────────────────────
+const INGREDIENT_UNIT_VERSION = '1';
+
+function migrateIngredientUnits() {
+  const versionKey = 'pos_ingredients_unit_version';
+  if (localStorage.getItem(versionKey) === INGREDIENT_UNIT_VERSION) return;
+  const raw = localStorage.getItem(KEYS.ingredients);
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw) as Array<Record<string, unknown>>;
+      const converted = parsed.map((ing) => {
+        const unit = ing.unit as string;
+        const quantity = ing.quantity as number;
+        const costPerUnit = ing.costPerUnit as number | undefined;
+        if (unit === 'L' || unit === 'kg') {
+          const factor = 1000;
+          return {
+            ...ing,
+            quantity: Math.round(quantity * factor * 1000) / 1000,
+            unit: unit === 'L' ? 'ml' : 'g',
+            costPerUnit:
+              costPerUnit !== undefined
+                ? Math.round((costPerUnit / factor) * 1_000_000) / 1_000_000
+                : undefined,
+          };
+        }
+        return ing;
+      });
+      localStorage.setItem(KEYS.ingredients, JSON.stringify(converted));
+    } catch {
+      // ignore – corrupted data, leave as-is
+    }
+  }
+  localStorage.setItem(versionKey, INGREDIENT_UNIT_VERSION);
+}
+
+migrateIngredientUnits();
+
 export const db = {
   getTables: (): CafeTable[] => get(KEYS.tables, defaultTables),
   saveTables: (t: CafeTable[]) => set(KEYS.tables, t),

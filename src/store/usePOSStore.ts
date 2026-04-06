@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { db } from '@/storage/db';
 import { CafeTable, Category, Ingredient, MenuItem, Order, Payment, Recipe, RecipeIngredient, Settings, StockMovement, TablePayment } from '@/types/pos';
+import { normalizeToBase } from '@/utils/units';
 
 db.seed();
 
@@ -446,7 +447,15 @@ export const usePOSStore = create<POSState>((set, get) => ({
 
   addIngredient: (ingredient) => {
     set((state) => {
-      const ingredients = [...state.ingredients, { ...ingredient, id: crypto.randomUUID() }];
+      const normalized = normalizeToBase(ingredient.quantity, ingredient.unit, ingredient.costPerUnit);
+      const entry: Ingredient = {
+        ...ingredient,
+        id: crypto.randomUUID(),
+        quantity: normalized.quantity,
+        unit: normalized.unit,
+        costPerUnit: normalized.costPerUnit,
+      };
+      const ingredients = [...state.ingredients, entry];
       db.saveIngredients(ingredients);
       return { ingredients };
     });
@@ -454,7 +463,16 @@ export const usePOSStore = create<POSState>((set, get) => ({
 
   updateIngredient: (id, updates) => {
     set((state) => {
-      const ingredients = state.ingredients.map((i) => (i.id === id ? { ...i, ...updates } : i));
+      const ingredients = state.ingredients.map((i) => {
+        if (i.id !== id) return i;
+        const merged = { ...i, ...updates };
+        // Re-normalize whenever quantity or unit changes
+        if (updates.quantity !== undefined || updates.unit !== undefined) {
+          const normalized = normalizeToBase(merged.quantity, merged.unit, merged.costPerUnit);
+          return { ...merged, quantity: normalized.quantity, unit: normalized.unit, costPerUnit: normalized.costPerUnit };
+        }
+        return merged;
+      });
       db.saveIngredients(ingredients);
       return { ingredients };
     });
