@@ -10,15 +10,21 @@ import { format, startOfDay } from 'date-fns';
 
 type InvTab = 'ingredients' | 'recipes' | 'stock';
 
-const CARD = 'rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5';
+const CARD = 'rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5';
 const BTN_PRIMARY = 'flex items-center gap-2 px-4 py-2 rounded-xl bg-accent text-accent-foreground text-sm font-semibold transition-all hover:brightness-110 active:scale-[0.97]';
 const BTN_GHOST = 'flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-white/50 hover:text-white/80 hover:bg-white/[0.06] transition-all';
-const BTN_DANGER = 'flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-red-400/70 hover:text-red-400 hover:bg-red-400/10 transition-all';
 const INPUT = 'w-full px-3 py-2.5 rounded-xl bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent';
 const SELECT = 'w-full px-3 py-2.5 rounded-xl bg-secondary border border-border text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-accent';
 
 const UNITS = ['ml', 'g', 'kg', 'L', 'pcs', 'tbsp', 'tsp'];
 const CATEGORIES = ['Coffee', 'Dairy', 'Syrup', 'Grain', 'Add-on', 'Produce', 'Other'];
+
+const LOW_MARGIN_THRESHOLD = 0.20;
+
+function quickAddAmounts(unit: string): number[] {
+  if (['pcs', 'tbsp', 'tsp'].includes(unit)) return [10, 50, 100];
+  return [100, 500, 1000];
+}
 
 // ── ROOT ─────────────────────────────────────────────────────────────────────
 export const InventorySection = () => {
@@ -200,17 +206,17 @@ const IngredientsTab = () => {
                     const isLow = ing.quantity <= ing.threshold;
                     return (
                       <tr key={ing.id} className="border-b border-white/[0.04] last:border-0">
-                        <td className="py-2.5">
+                        <td className="py-3">
                           <span className={`font-medium ${isLow ? 'text-red-400' : 'text-foreground'}`}>{ing.name}</span>
                         </td>
-                        <td className={`py-2.5 font-semibold ${isLow ? 'text-red-400' : 'text-foreground'}`}>
+                        <td className={`py-3 font-semibold ${isLow ? 'text-red-400' : 'text-foreground'}`}>
                           {ing.quantity} {ing.unit}
                         </td>
-                        <td className="py-2.5 text-muted-foreground hidden sm:table-cell">{ing.threshold} {ing.unit}</td>
-                        <td className="py-2.5 text-muted-foreground hidden sm:table-cell">
+                        <td className="py-3 text-muted-foreground hidden sm:table-cell">{ing.threshold} {ing.unit}</td>
+                        <td className="py-3 text-muted-foreground hidden sm:table-cell">
                           {ing.costPerUnit !== undefined ? ing.costPerUnit.toFixed(3) : '—'}
                         </td>
-                        <td className="py-2.5">
+                        <td className="py-3">
                           <div className="flex gap-1 justify-end">
                             <button onClick={() => startEdit(ing)} className="p-1.5 rounded-lg text-white/40 hover:text-blue-400 hover:bg-blue-400/10 transition-colors">
                               <Edit3 size={13} />
@@ -246,7 +252,7 @@ const RecipesTab = () => {
   const [editingMenuItemId, setEditingMenuItemId] = useState<string | null>(null);
 
   const getIngredient = (id: string) => ingredients.find((i) => i.id === id);
-  const getMenuItemName = (id: string) => menuItems.find((m) => m.id === id)?.name ?? id;
+  const getMenuItem = (id: string) => menuItems.find((m) => m.id === id);
 
   const calcRecipeCost = (recipeIngredients: RecipeIngredient[]) =>
     recipeIngredients.reduce((sum, ri) => {
@@ -289,6 +295,8 @@ const RecipesTab = () => {
   const menuItemsWithoutRecipe = menuItems.filter((m) => !menuItemsWithRecipe.has(m.id));
 
   const editingCost = calcRecipeCost(rows.filter((r) => r.ingredientId && r.quantity > 0));
+  const editingPrice = getMenuItem(selectedMenuItemId)?.price ?? 0;
+  const editingProfit = editingPrice - editingCost;
 
   return (
     <div className="space-y-4">
@@ -309,7 +317,7 @@ const RecipesTab = () => {
       {editingMenuItemId !== null && ingredients.length > 0 && (
         <div className={CARD}>
           <h3 className="text-sm font-semibold text-foreground mb-4">
-            {editingMenuItemId === '__new__' ? 'New Recipe' : `Editing: ${getMenuItemName(selectedMenuItemId)}`}
+            {editingMenuItemId === '__new__' ? 'New Recipe' : `Editing: ${getMenuItem(selectedMenuItemId)?.name ?? ''}`}
           </h3>
 
           {editingMenuItemId === '__new__' && (
@@ -322,7 +330,7 @@ const RecipesTab = () => {
               >
                 <option value="">Select menu item…</option>
                 {menuItemsWithoutRecipe.map((m) => (
-                  <option key={m.id} value={m.id}>{m.name}</option>
+                  <option key={m.id} value={m.id}>{m.name} — Rs. {m.price}</option>
                 ))}
               </select>
             </div>
@@ -357,14 +365,20 @@ const RecipesTab = () => {
             ))}
           </div>
 
-          <button onClick={addRow} className={`${BTN_GHOST} text-xs mb-3`}>
+          <button onClick={addRow} className={`${BTN_GHOST} text-xs mb-4`}>
             <Plus size={13} /> Add row
           </button>
 
-          {editingCost > 0 && (
-            <p className="text-xs text-muted-foreground mb-4">
-              Estimated item cost: <span className="text-foreground font-semibold">{editingCost.toFixed(2)}</span>
-            </p>
+          {/* Live cost/profit preview while editing */}
+          {editingCost > 0 && editingPrice > 0 && (
+            <div className="flex gap-4 mb-4 px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06] text-xs">
+              <span className="text-muted-foreground">Cost: <span className="text-foreground font-semibold">Rs. {editingCost.toFixed(2)}</span></span>
+              <span className="text-muted-foreground">Price: <span className="text-foreground font-semibold">Rs. {editingPrice}</span></span>
+              <span className="text-muted-foreground">Profit: <span className={`font-semibold ${editingProfit < 0 ? 'text-red-400' : 'text-green-400'}`}>Rs. {editingProfit.toFixed(2)}</span></span>
+            </div>
+          )}
+          {editingCost > 0 && editingPrice === 0 && (
+            <p className="text-xs text-muted-foreground mb-4">Cost: <span className="text-foreground font-semibold">Rs. {editingCost.toFixed(2)}</span></p>
           )}
 
           <div className="flex gap-2">
@@ -381,20 +395,54 @@ const RecipesTab = () => {
       ) : (
         <div className="space-y-3">
           {recipes.map((recipe) => {
+            const menuItem = getMenuItem(recipe.menuItemId);
             const cost = calcRecipeCost(recipe.ingredients);
+            const price = menuItem?.price ?? 0;
+            const profit = price - cost;
+            const margin = price > 0 ? profit / price : null;
+            const isLowMargin = margin !== null && margin < LOW_MARGIN_THRESHOLD;
+            const hasCostData = cost > 0;
+
             return (
               <div key={recipe.menuItemId} className={CARD}>
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <p className="font-semibold text-foreground text-sm">{getMenuItemName(recipe.menuItemId)}</p>
-                    <div className="flex items-center gap-3 mt-0.5">
-                      <p className="text-xs text-muted-foreground">{recipe.ingredients.length} ingredient{recipe.ingredients.length !== 1 ? 's' : ''}</p>
-                      {cost > 0 && (
-                        <p className="text-xs text-blue-400 font-medium">Cost: {cost.toFixed(2)}</p>
-                      )}
-                    </div>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground text-sm">{menuItem?.name ?? recipe.menuItemId}</p>
+
+                    {/* Profit breakdown */}
+                    {hasCostData && price > 0 ? (
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5 mt-1.5">
+                        <span className="text-xs text-muted-foreground">
+                          Cost: <span className="text-foreground/80">Rs. {cost.toFixed(2)}</span>
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          Price: <span className="text-foreground/80">Rs. {price}</span>
+                        </span>
+                        <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                          Profit:{' '}
+                          <span className={`font-semibold ${isLowMargin ? 'text-orange-400' : 'text-green-400'}`}>
+                            Rs. {profit.toFixed(2)}
+                          </span>
+                          {isLowMargin && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/15 border border-orange-500/20 text-orange-400 font-medium leading-none">
+                              Low margin
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    ) : hasCostData ? (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Cost: <span className="text-blue-400 font-medium">Rs. {cost.toFixed(2)}</span>
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {recipe.ingredients.length} ingredient{recipe.ingredients.length !== 1 ? 's' : ''}
+                        <span className="ml-2 opacity-50">· Add cost/unit to ingredients to see profit</span>
+                      </p>
+                    )}
                   </div>
-                  <div className="flex gap-1">
+
+                  <div className="flex gap-1 ml-3 flex-shrink-0">
                     <button onClick={() => startEdit(recipe.menuItemId)} className="p-1.5 rounded-lg text-white/40 hover:text-blue-400 hover:bg-blue-400/10 transition-colors">
                       <Edit3 size={13} />
                     </button>
@@ -403,11 +451,13 @@ const RecipesTab = () => {
                     </button>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
+
+                {/* Ingredient chips */}
+                <div className="flex flex-wrap gap-1.5 mt-3">
                   {recipe.ingredients.map((ri, i) => {
                     const ing = getIngredient(ri.ingredientId);
                     return (
-                      <span key={i} className="text-xs px-2.5 py-1 rounded-lg bg-white/[0.06] border border-white/[0.08] text-muted-foreground">
+                      <span key={i} className="text-xs px-2.5 py-1 rounded-lg bg-white/[0.05] border border-white/[0.07] text-muted-foreground">
                         {ing?.name ?? ri.ingredientId} — {ri.quantity} {ing?.unit ?? ''}
                       </span>
                     );
@@ -422,7 +472,7 @@ const RecipesTab = () => {
   );
 };
 
-// ── STOCK TAB ────────────────────────────────────────────────────────────────
+// ── STOCK TAB ─────────────────────────────────────────────────────────────────
 const StockTab = () => {
   const ingredients = usePOSStore((s) => s.ingredients);
   const stockMovements = usePOSStore((s) => s.stockMovements);
@@ -477,6 +527,11 @@ const StockTab = () => {
     setShowAdjust(false);
   };
 
+  const handleQuickAdd = (ing: Ingredient, amount: number) => {
+    adjustStock(ing.id, amount, 'Quick Add');
+    toast.success(`+${amount} ${ing.unit} added to ${ing.name}`);
+  };
+
   if (ingredients.length === 0) {
     return (
       <div className={`${CARD} text-center py-12 text-muted-foreground text-sm`}>
@@ -488,16 +543,16 @@ const StockTab = () => {
   return (
     <div className="space-y-4">
       {lowCount > 0 && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-yellow-500/30 bg-yellow-500/10 text-yellow-300 text-sm">
-          <AlertTriangle size={16} className="flex-shrink-0" />
-          <span><strong>{lowCount}</strong> ingredient{lowCount !== 1 ? 's are' : ' is'} running low on stock.</span>
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-yellow-500/25 bg-yellow-500/[0.08] text-yellow-300 text-sm">
+          <AlertTriangle size={15} className="flex-shrink-0 opacity-80" />
+          <span className="text-yellow-200/80"><strong className="text-yellow-300">{lowCount}</strong> ingredient{lowCount !== 1 ? 's are' : ' is'} running low on stock.</span>
         </div>
       )}
 
       {/* Toolbar */}
       <div className="flex gap-2 flex-wrap">
         <div className="relative flex-1 min-w-[180px]">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/70" />
           <input
             className={`${INPUT} pl-9`}
             placeholder="Search ingredients…"
@@ -557,44 +612,88 @@ const StockTab = () => {
       )}
 
       {/* Stock Table */}
-      <div className={CARD}>
+      <div className={CARD + ' p-0 overflow-hidden'}>
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-xs text-muted-foreground border-b border-white/[0.06]">
-              <th className="pb-3 font-medium">Ingredient</th>
-              <th className="pb-3 font-medium hidden sm:table-cell">Category</th>
-              <th className="pb-3 font-medium">Remaining</th>
-              <th className="pb-3 font-medium hidden sm:table-cell">Threshold</th>
-              <th className="pb-3 font-medium">Status</th>
+              <th className="px-5 py-3.5 font-medium">Ingredient</th>
+              <th className="px-3 py-3.5 font-medium hidden sm:table-cell">Category</th>
+              <th className="px-3 py-3.5 font-medium">Qty</th>
+              <th className="px-3 py-3.5 font-medium hidden md:table-cell">Threshold</th>
+              <th className="px-3 py-3.5 font-medium">Status</th>
+              <th className="px-4 py-3.5 font-medium text-right hidden sm:table-cell">Quick Add</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-muted-foreground text-sm">No results for "{search}"</td>
+                <td colSpan={6} className="px-5 py-10 text-center text-muted-foreground text-sm">
+                  No results for "{search}"
+                </td>
               </tr>
-            ) : filtered.map((ing) => {
+            ) : filtered.map((ing, idx) => {
               const isLow = ing.quantity <= ing.threshold;
+              const amounts = quickAddAmounts(ing.unit);
               return (
-                <tr key={ing.id} className={`border-b border-white/[0.04] last:border-0 ${isLow ? 'bg-red-500/[0.03]' : ''}`}>
-                  <td className="py-3">
-                    <span className={`font-medium ${isLow ? 'text-red-400' : 'text-foreground'}`}>{ing.name}</span>
+                <tr
+                  key={ing.id}
+                  className={`border-b border-white/[0.04] last:border-0 transition-colors ${
+                    isLow ? 'bg-red-500/[0.04]' : idx % 2 === 0 ? '' : 'bg-white/[0.01]'
+                  }`}
+                >
+                  {/* Name */}
+                  <td className="px-5 py-4">
+                    <div>
+                      <span className={`font-medium text-sm ${isLow ? 'text-red-400' : 'text-foreground'}`}>
+                        {ing.name}
+                      </span>
+                      {ing.category && (
+                        <span className="block text-xs text-muted-foreground/60 mt-0.5 sm:hidden">{ing.category}</span>
+                      )}
+                    </div>
                   </td>
-                  <td className="py-3 text-muted-foreground text-xs hidden sm:table-cell">{ing.category ?? '—'}</td>
-                  <td className={`py-3 font-semibold ${isLow ? 'text-red-400' : 'text-foreground'}`}>
-                    {ing.quantity} {ing.unit}
+
+                  {/* Category (desktop) */}
+                  <td className="px-3 py-4 text-xs text-muted-foreground hidden sm:table-cell">
+                    {ing.category ?? '—'}
                   </td>
-                  <td className="py-3 text-muted-foreground hidden sm:table-cell">{ing.threshold} {ing.unit}</td>
-                  <td className="py-3">
+
+                  {/* Quantity */}
+                  <td className={`px-3 py-4 font-semibold text-sm ${isLow ? 'text-red-400' : 'text-foreground'}`}>
+                    {ing.quantity} <span className="text-xs font-normal text-muted-foreground">{ing.unit}</span>
+                  </td>
+
+                  {/* Threshold (desktop) */}
+                  <td className="px-3 py-4 text-sm text-muted-foreground hidden md:table-cell">
+                    {ing.threshold} <span className="text-xs">{ing.unit}</span>
+                  </td>
+
+                  {/* Status */}
+                  <td className="px-3 py-4">
                     {isLow ? (
-                      <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-red-500/15 border border-red-500/25 text-red-400 font-medium">
-                        <AlertTriangle size={10} /> Low
+                      <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 font-medium border border-red-500/20">
+                        <AlertTriangle size={9} /> Low
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-500/15 border border-green-500/20 text-green-400 font-medium">
+                      <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-400 font-medium border border-green-500/15">
                         OK
                       </span>
                     )}
+                  </td>
+
+                  {/* Quick Add (desktop) */}
+                  <td className="px-4 py-4 hidden sm:table-cell">
+                    <div className="flex gap-1 justify-end">
+                      {amounts.map((amt) => (
+                        <button
+                          key={amt}
+                          onClick={() => handleQuickAdd(ing, amt)}
+                          className="text-xs px-2 py-1 rounded-lg bg-white/[0.05] border border-white/[0.08] text-white/50 hover:text-blue-400 hover:border-blue-400/30 hover:bg-blue-400/[0.07] transition-colors font-medium leading-none"
+                        >
+                          +{amt}
+                        </button>
+                      ))}
+                    </div>
                   </td>
                 </tr>
               );
@@ -606,8 +705,8 @@ const StockTab = () => {
       {/* Today's Usage */}
       {Object.keys(todayUsage).length > 0 && (
         <div className={CARD}>
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingDown size={15} className="text-orange-400" />
+          <div className="flex items-center gap-2 mb-3">
+            <TrendingDown size={14} className="text-orange-400/80" />
             <h3 className="text-sm font-semibold text-foreground">Today's Usage</h3>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -615,9 +714,9 @@ const StockTab = () => {
               const ing = ingredients.find((i) => i.id === ingId);
               if (!ing) return null;
               return (
-                <div key={ingId} className="flex items-center justify-between px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.06]">
-                  <span className="text-sm text-foreground">{ing.name}</span>
-                  <span className="text-sm font-semibold text-orange-400 ml-2">−{used} {ing.unit}</span>
+                <div key={ingId} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                  <span className="text-sm text-foreground/80 truncate">{ing.name}</span>
+                  <span className="text-sm font-semibold text-orange-400 ml-2 flex-shrink-0">−{used} {ing.unit}</span>
                 </div>
               );
             })}
@@ -633,28 +732,28 @@ const StockTab = () => {
             onClick={() => setShowHistory((v) => !v)}
           >
             <div className="flex items-center gap-2">
-              <Clock size={15} className="text-muted-foreground" />
+              <Clock size={14} className="text-muted-foreground" />
               Movement History
               <span className="text-xs text-muted-foreground font-normal">({recentHistory.length} recent)</span>
             </div>
-            <span className="text-muted-foreground text-xs">{showHistory ? '▲ Hide' : '▼ Show'}</span>
+            <span className="text-muted-foreground/60 text-xs">{showHistory ? '▲ Hide' : '▼ Show'}</span>
           </button>
 
           {showHistory && (
-            <div className="mt-4 space-y-1">
+            <div className="mt-4 space-y-0">
               {recentHistory.map((mv) => {
                 const ing = ingredients.find((i) => i.id === mv.ingredientId);
                 const isPositive = mv.change > 0;
                 return (
-                  <div key={mv.id} className="flex items-center gap-3 py-2 border-b border-white/[0.04] last:border-0">
-                    <span className={`text-sm font-semibold w-16 flex-shrink-0 ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                  <div key={mv.id} className="flex items-center gap-3 py-2.5 border-b border-white/[0.04] last:border-0">
+                    <span className={`text-sm font-semibold w-20 flex-shrink-0 tabular-nums ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
                       {isPositive ? '+' : ''}{mv.change} {ing?.unit ?? ''}
                     </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-foreground truncate">{ing?.name ?? mv.ingredientId}</p>
-                      <p className="text-xs text-muted-foreground truncate">{mv.source}</p>
+                      <p className="text-xs text-muted-foreground/70 truncate">{mv.source}</p>
                     </div>
-                    <span className="text-xs text-muted-foreground flex-shrink-0">
+                    <span className="text-xs text-muted-foreground/60 flex-shrink-0 tabular-nums">
                       {format(mv.timestamp, 'MMM d, HH:mm')}
                     </span>
                   </div>
