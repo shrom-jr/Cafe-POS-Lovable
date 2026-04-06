@@ -93,6 +93,16 @@ export interface Ingredient {
   unit: string;
   quantity: number;
   threshold: number;
+  category?: string;
+  costPerUnit?: number;
+}
+
+export interface StockMovement {
+  id: string;
+  ingredientId: string;
+  change: number;
+  source: string;
+  timestamp: number;
 }
 
 export interface RecipeIngredient {

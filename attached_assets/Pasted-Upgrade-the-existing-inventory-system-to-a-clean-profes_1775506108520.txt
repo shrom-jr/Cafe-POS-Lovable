@@ -1,0 +1,128 @@
+Upgrade the existing inventory system to a clean, professional, production-level system (without unnecessary complexity).
+
+🚨 STRICT RULES:
+
+* Do NOT break existing POS or inventory logic
+* Do NOT redesign unrelated UI
+* Keep system simple but powerful
+* Do NOT add supplier or purchase-order features
+* Do NOT implement stock blocking
+
+---
+
+1. INGREDIENT IMPROVEMENTS:
+
+Extend ingredient model:
+
+Add fields:
+
+* category (e.g. Dairy, Coffee, Add-ons)
+* costPerUnit (number)
+* lowStockThreshold (already exists, keep it)
+
+---
+
+2. RECIPE SYSTEM UPGRADE:
+
+For each menu item:
+
+* Support multiple ingredients (already exists)
+* Calculate total item cost automatically:
+  sum(ingredient quantity × costPerUnit)
+
+Display item cost in UI
+
+---
+
+3. STOCK MOVEMENT HISTORY:
+
+Create a structured log system:
+
+Fields:
+
+* ingredientId
+* change (+ or -)
+* source:
+  "Order: [item name]"
+  "Manual Adjustment"
+* timestamp
+
+Log when:
+
+* Order deducts stock
+* Manual adjustment occurs
+
+---
+
+4. MANUAL STOCK ADJUSTMENT:
+
+In Stock tab:
+
+Add button:
+"Adjust Stock"
+
+Modal:
+
+* Select ingredient
+* Enter amount (+ or -)
+* Enter reason (required)
+
+Update stock and log it
+
+---
+
+5. STOCK OVERVIEW UPGRADE:
+
+Improve Stock tab:
+
+Each row shows:
+
+* Ingredient name
+* Current quantity
+* Unit
+* Status (Normal / Low)
+
+Features:
+
+* Highlight low stock
+* Sort low stock first
+* Add search bar
+
+---
+
+6. DAILY USAGE SUMMARY:
+
+Add simple section:
+
+"Today Usage"
+
+Calculate:
+
+* Total usage per ingredient for current day
+
+Display as list:
+Milk → 3.2L used
+Coffee → 420g used
+
+(No charts needed)
+
+---
+
+7. DATA SAFETY:
+
+* Ensure all data persists (localStorage/db)
+* Include inventory data in export/import
+* Prevent negative stock
+
+---
+
+GOAL:
+
+A clean, professional inventory system that:
+
+* Tracks stock accurately
+* Shows usage insights
+* Maintains full history
+* Feels like a real POS system
+
+Avoid unnecessary enterprise features.

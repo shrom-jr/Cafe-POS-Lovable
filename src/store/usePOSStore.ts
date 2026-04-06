@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { db } from '@/storage/db';
-import { CafeTable, Category, Ingredient, MenuItem, Order, Payment, Recipe, RecipeIngredient, Settings, TablePayment } from '@/types/pos';
+import { CafeTable, Category, Ingredient, MenuItem, Order, Payment, Recipe, RecipeIngredient, Settings, StockMovement, TablePayment } from '@/types/pos';
 
 db.seed();
 
@@ -51,9 +51,12 @@ interface POSState {
   updateIngredient: (id: string, updates: Partial<Ingredient>) => void;
   deleteIngredient: (id: string) => void;
 
+  stockMovements: StockMovement[];
+
   saveRecipe: (menuItemId: string, ingredients: RecipeIngredient[]) => void;
   deleteRecipe: (menuItemId: string) => void;
   deductStockForOrder: (orderId: string) => void;
+  adjustStock: (ingredientId: string, change: number, reason: string) => void;
 
   exportData: () => string;
   importData: (json: string) => void;
@@ -84,6 +87,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
   settings: db.getSettings(),
   ingredients: db.getIngredients(),
   recipes: db.getRecipes(),
+  stockMovements: db.getStockMovements(),
 
   addTable: (number) => {
     set((state) => {
@@ -495,23 +499,57 @@ export const usePOSStore = create<POSState>((set, get) => ({
       const unsentItems = order.items.filter((i) => !i.sentToKitchen && i.status !== 'paid');
       if (unsentItems.length === 0) return {};
 
-      const deductions: Record<string, number> = {};
+      const deductions: Record<string, { amount: number; sources: string[] }> = {};
       for (const item of unsentItems) {
         const recipe = state.recipes.find((r) => r.menuItemId === item.menuItemId);
         if (!recipe) continue;
         for (const ri of recipe.ingredients) {
-          deductions[ri.ingredientId] = (deductions[ri.ingredientId] ?? 0) + ri.quantity * item.quantity;
+          if (!deductions[ri.ingredientId]) deductions[ri.ingredientId] = { amount: 0, sources: [] };
+          deductions[ri.ingredientId].amount += ri.quantity * item.quantity;
+          deductions[ri.ingredientId].sources.push(`Order: ${item.name}`);
         }
       }
 
       if (Object.keys(deductions).length === 0) return {};
 
+      const now = Date.now();
+      const newMovements: StockMovement[] = Object.entries(deductions).map(([ingId, { amount, sources }]) => ({
+        id: crypto.randomUUID(),
+        ingredientId: ingId,
+        change: -amount,
+        source: [...new Set(sources)].join(', '),
+        timestamp: now,
+      }));
+
       const ingredients = state.ingredients.map((ing) => {
-        const deduct = deductions[ing.id] ?? 0;
+        const deduct = deductions[ing.id]?.amount ?? 0;
         return deduct > 0 ? { ...ing, quantity: Math.max(0, ing.quantity - deduct) } : ing;
       });
+      const stockMovements = [...state.stockMovements, ...newMovements];
       db.saveIngredients(ingredients);
-      return { ingredients };
+      db.saveStockMovements(stockMovements);
+      return { ingredients, stockMovements };
+    });
+  },
+
+  adjustStock: (ingredientId, change, reason) => {
+    set((state) => {
+      const ingredients = state.ingredients.map((ing) =>
+        ing.id === ingredientId
+          ? { ...ing, quantity: Math.max(0, ing.quantity + change) }
+          : ing
+      );
+      const movement: StockMovement = {
+        id: crypto.randomUUID(),
+        ingredientId,
+        change,
+        source: `Manual Adjustment: ${reason}`,
+        timestamp: Date.now(),
+      };
+      const stockMovements = [...state.stockMovements, movement];
+      db.saveIngredients(ingredients);
+      db.saveStockMovements(stockMovements);
+      return { ingredients, stockMovements };
     });
   },
 
@@ -528,6 +566,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
       settings: db.getSettings(),
       ingredients: db.getIngredients(),
       recipes: db.getRecipes(),
+      stockMovements: db.getStockMovements(),
     });
   },
 
@@ -543,6 +582,7 @@ export const usePOSStore = create<POSState>((set, get) => ({
       settings: db.getSettings(),
       ingredients: db.getIngredients(),
       recipes: db.getRecipes(),
+      stockMovements: db.getStockMovements(),
     });
   },
 }));

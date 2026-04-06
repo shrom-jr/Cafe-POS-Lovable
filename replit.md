@@ -96,11 +96,15 @@ Cashier / Time
 - **Backup** — JSON export/import
 
 ## Inventory System
-- **Types**: `Ingredient` (id, name, unit, quantity, threshold) and `Recipe` (menuItemId, ingredients[]) in `src/types/pos.ts`
-- **Storage**: `pos_ingredients` and `pos_recipes` keys in localStorage via `src/storage/db.ts`
-- **State**: `ingredients` and `recipes` arrays in `usePOSStore.ts`
-- **Stock deduction**: Automatically fires in `sendToKitchen()` — deducts ingredient quantities for all unsent items before marking them sent
-- **UI**: `src/screens/InventorySection.tsx` — 3 tabs: Ingredients (CRUD), Recipes (link menu items to ingredients), Stock (read-only view with low stock badges)
+- **Types**: `Ingredient` (id, name, unit, quantity, threshold, category?, costPerUnit?), `Recipe`, `RecipeIngredient`, `StockMovement` (id, ingredientId, change, source, timestamp) in `src/types/pos.ts`
+- **Storage**: `pos_ingredients`, `pos_recipes`, `pos_stockMovements` keys in localStorage via `src/storage/db.ts`
+- **State**: `ingredients`, `recipes`, `stockMovements` arrays in `usePOSStore.ts`
+- **Stock deduction**: Fires in `sendToKitchen()` — deducts unsent items and logs a `StockMovement` per ingredient
+- **Manual adjustment**: `adjustStock(id, change, reason)` — updates quantity and logs a `StockMovement`
+- **UI**: `src/screens/InventorySection.tsx` — 3 tabs:
+  - Ingredients: CRUD with category, unit, qty, threshold, costPerUnit; grouped by category
+  - Recipes: link menu items to ingredients; shows auto-calculated item cost (Σ qty × costPerUnit)
+  - Stock: search bar, sort low first, Adjust Stock modal, Today's Usage summary, Movement History (collapsible, 50 most recent)
 
 ## Running the App
 Port 5000 via `npm run dev`. Server: `host: "0.0.0.0"`, `allowedHosts: true`.

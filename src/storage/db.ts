@@ -1,4 +1,4 @@
-import { CafeTable, Category, Ingredient, MenuItem, Order, Payment, Recipe, Settings } from '@/types/pos';
+import { CafeTable, Category, Ingredient, MenuItem, Order, Payment, Recipe, Settings, StockMovement } from '@/types/pos';
 
 const KEYS = {
   tables: 'pos_tables',
@@ -9,6 +9,7 @@ const KEYS = {
   settings: 'pos_settings',
   ingredients: 'pos_ingredients',
   recipes: 'pos_recipes',
+  stockMovements: 'pos_stockMovements',
 };
 
 function get<T>(key: string, fallback: T): T {
@@ -126,6 +127,9 @@ export const db = {
 
   getRecipes: (): Recipe[] => get(KEYS.recipes, []),
   saveRecipes: (r: Recipe[]) => set(KEYS.recipes, r),
+
+  getStockMovements: (): StockMovement[] => get(KEYS.stockMovements, []),
+  saveStockMovements: (m: StockMovement[]) => set(KEYS.stockMovements, m),
 
   getSettings: (): Settings => {
     const stored = get<Partial<Settings>>(KEYS.settings, defaultSettings);
