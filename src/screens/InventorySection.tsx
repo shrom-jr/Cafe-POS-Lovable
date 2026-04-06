@@ -412,15 +412,15 @@ const RecipesTab = () => {
                     {/* Profit breakdown */}
                     {hasCostData && price > 0 ? (
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5 mt-1.5">
-                        <span className="text-xs text-muted-foreground">
-                          Cost: <span className="text-foreground/80">Rs. {cost.toFixed(2)}</span>
+                        <span className="text-xs text-muted-foreground/60">
+                          Cost: <span className="text-foreground/50">Rs. {cost.toFixed(2)}</span>
                         </span>
-                        <span className="text-xs text-muted-foreground">
-                          Price: <span className="text-foreground/80">Rs. {price}</span>
+                        <span className="text-xs text-muted-foreground/70">
+                          Price: <span className="text-foreground/65">Rs. {price}</span>
                         </span>
                         <span className="text-xs text-muted-foreground flex items-center gap-1.5">
                           Profit:{' '}
-                          <span className={`font-semibold ${isLowMargin ? 'text-orange-400' : 'text-green-400'}`}>
+                          <span className={`font-semibold text-[13px] ${isLowMargin ? 'text-orange-400' : 'text-green-400'}`}>
                             Rs. {profit.toFixed(2)}
                           </span>
                           {isLowMargin && (
@@ -637,7 +637,7 @@ const StockTab = () => {
               return (
                 <tr
                   key={ing.id}
-                  className={`border-b border-white/[0.04] last:border-0 transition-colors ${
+                  className={`group border-b border-white/[0.04] last:border-0 transition-colors ${
                     isLow ? 'bg-red-500/[0.04]' : idx % 2 === 0 ? '' : 'bg-white/[0.01]'
                   }`}
                 >
@@ -659,8 +659,11 @@ const StockTab = () => {
                   </td>
 
                   {/* Quantity */}
-                  <td className={`px-3 py-4 font-semibold text-sm ${isLow ? 'text-red-400' : 'text-foreground'}`}>
-                    {ing.quantity} <span className="text-xs font-normal text-muted-foreground">{ing.unit}</span>
+                  <td className="px-3 py-4">
+                    <span className={`font-bold text-base tabular-nums ${isLow ? 'text-red-400' : 'text-foreground'}`}>
+                      {ing.quantity}
+                    </span>
+                    <span className="text-xs font-normal text-muted-foreground/60 ml-1">{ing.unit}</span>
                   </td>
 
                   {/* Threshold (desktop) */}
@@ -681,9 +684,9 @@ const StockTab = () => {
                     )}
                   </td>
 
-                  {/* Quick Add (desktop) */}
-                  <td className="px-4 py-4 hidden sm:table-cell">
-                    <div className="flex gap-1 justify-end">
+                  {/* Quick Add — always visible on mobile, fade in on hover on desktop */}
+                  <td className="px-4 py-4 sm:table-cell">
+                    <div className="flex gap-1 justify-end sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150">
                       {amounts.map((amt) => (
                         <button
                           key={amt}
