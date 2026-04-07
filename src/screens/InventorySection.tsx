@@ -87,11 +87,14 @@ const IngredientsTab = () => {
     const factor = unitConversionFactor(form.unit, newUnit);
     const qty = parseFloat(form.quantity);
     const thr = parseFloat(form.threshold);
+    const cpu = parseFloat(form.costPerUnit);
     setForm((prev) => ({
       ...prev,
       unit: newUnit,
-      quantity:  isNaN(qty) ? prev.quantity  : String(Math.round(qty * factor * 10000) / 10000),
-      threshold: isNaN(thr) ? prev.threshold : String(Math.round(thr * factor * 10000) / 10000),
+      quantity:    isNaN(qty) ? prev.quantity    : String(Math.round(qty * factor * 10000) / 10000),
+      threshold:   isNaN(thr) ? prev.threshold   : String(Math.round(thr * factor * 10000) / 10000),
+      // costPerUnit is per unit, so it inverts: ml→L means cost per L = cost per ml × 1000
+      costPerUnit: isNaN(cpu) ? prev.costPerUnit : String(Math.round((cpu / factor) * 1_000_000) / 1_000_000),
     }));
   };
 
