@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { Ingredient, RecipeIngredient } from '@/types/pos';
 import { format, startOfDay } from 'date-fns';
-import { baseUnitOf, displayAmount, displayUnit, displayQty } from '@/utils/units';
+import { baseUnitOf, displayAmount, displayUnit, displayQty, allowedUnitsFor, unitGroupLabel, unitConversionFactor } from '@/utils/units';
 
 type InvTab = 'ingredients' | 'recipes' | 'stock';
 
@@ -80,6 +80,20 @@ const IngredientsTab = () => {
 
   const f = (field: keyof typeof EMPTY_FORM) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+  // When editing, unit can only switch within the same group (ml↔L, g↔kg).
+  // Auto-convert quantity and threshold values when the display unit changes.
+  const handleUnitChange = (newUnit: string) => {
+    const factor = unitConversionFactor(form.unit, newUnit);
+    const qty = parseFloat(form.quantity);
+    const thr = parseFloat(form.threshold);
+    setForm((prev) => ({
+      ...prev,
+      unit: newUnit,
+      quantity:  isNaN(qty) ? prev.quantity  : String(Math.round(qty * factor * 10000) / 10000),
+      threshold: isNaN(thr) ? prev.threshold : String(Math.round(thr * factor * 10000) / 10000),
+    }));
+  };
 
   const handleSubmit = () => {
     if (!form.name.trim()) return toast.error('Ingredient name is required');
@@ -158,9 +172,22 @@ const IngredientsTab = () => {
               </select>
             </div>
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Unit</label>
-              <select className={SELECT} value={form.unit} onChange={f('unit')}>
-                {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs text-muted-foreground">Unit</label>
+                {editId && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.05] border border-white/[0.08] text-muted-foreground/70 leading-none">
+                    {unitGroupLabel(form.unit)} · locked
+                  </span>
+                )}
+              </div>
+              <select
+                className={SELECT}
+                value={form.unit}
+                onChange={(e) => editId ? handleUnitChange(e.target.value) : f('unit')(e)}
+              >
+                {(editId ? allowedUnitsFor(form.unit) : UNITS).map((u) => (
+                  <option key={u} value={u}>{u}</option>
+                ))}
               </select>
             </div>
             <div>

@@ -37,6 +37,48 @@ export function normalizeToBase(
   };
 }
 
+// ── Unit type grouping ────────────────────────────────────────────────────────
+
+export type UnitGroup = 'liquid' | 'solid' | 'count';
+
+// Which logical group a unit belongs to.
+export function unitGroupOf(unit: string): UnitGroup {
+  const base = baseUnitOf(unit);
+  if (base === 'ml') return 'liquid';
+  if (base === 'g')  return 'solid';
+  return 'count';
+}
+
+// Human-readable group label.
+export function unitGroupLabel(unit: string): string {
+  const g = unitGroupOf(unit);
+  if (g === 'liquid') return 'Liquid';
+  if (g === 'solid')  return 'Solid';
+  return 'Count';
+}
+
+// Units allowed when editing an ingredient whose stored base unit is `unit`.
+// ml/L  → liquid group → [ml, L]    (interchangeable; both normalize to ml)
+// g/kg  → solid group  → [g, kg]    (interchangeable; both normalize to g)
+// pcs/tbsp/tsp → locked to themselves (no conversion factor defined)
+export function allowedUnitsFor(unit: string): string[] {
+  const base = baseUnitOf(unit);
+  if (base === 'ml') return ['ml', 'L'];
+  if (base === 'g')  return ['g', 'kg'];
+  return [base];
+}
+
+// Conversion factor between two units in the same group.
+// Returns 1 if they are the same or unknown pairing.
+export function unitConversionFactor(from: string, to: string): number {
+  if (from === to) return 1;
+  if (from === 'ml' && to === 'L')  return 0.001;
+  if (from === 'L'  && to === 'ml') return 1000;
+  if (from === 'g'  && to === 'kg') return 0.001;
+  if (from === 'kg' && to === 'g')  return 1000;
+  return 1;
+}
+
 // ── Friendly display helpers ──────────────────────────────────────────────────
 
 // Returns a human-readable amount string (no unit).
