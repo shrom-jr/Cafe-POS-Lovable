@@ -596,7 +596,7 @@ const StockTab = () => {
               >
                 <option value="">Select…</option>
                 {ingredients.map((ing) => (
-                  <option key={ing.id} value={ing.id}>{ing.name} ({ing.quantity} {ing.unit})</option>
+                  <option key={ing.id} value={ing.id}>{ing.name} ({displayQty(ing.quantity, ing.unit)})</option>
                 ))}
               </select>
             </div>
@@ -685,7 +685,7 @@ const StockTab = () => {
 
                   {/* Threshold (desktop) */}
                   <td className="px-3 py-4 text-sm text-muted-foreground hidden md:table-cell">
-                    {ing.threshold} <span className="text-xs">{ing.unit}</span>
+                    {displayQty(ing.threshold, ing.unit)}
                   </td>
 
                   {/* Status */}
@@ -736,7 +736,7 @@ const StockTab = () => {
               return (
                 <div key={ingId} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
                   <span className="text-sm text-foreground/80 truncate">{ing.name}</span>
-                  <span className="text-sm font-semibold text-orange-400 ml-2 flex-shrink-0">−{used} {ing.unit}</span>
+                  <span className="text-sm font-semibold text-orange-400 ml-2 flex-shrink-0">−{displayQty(used, ing.unit)}</span>
                 </div>
               );
             })}
@@ -767,7 +767,7 @@ const StockTab = () => {
                 return (
                   <div key={mv.id} className="flex items-center gap-3 py-2.5 border-b border-white/[0.04] last:border-0">
                     <span className={`text-sm font-semibold w-20 flex-shrink-0 tabular-nums ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
-                      {isPositive ? '+' : ''}{mv.change} {ing?.unit ?? ''}
+                      {isPositive ? '+' : '−'}{displayQty(Math.abs(mv.change), ing?.unit ?? '')}
                     </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-foreground truncate">{ing?.name ?? mv.ingredientId}</p>

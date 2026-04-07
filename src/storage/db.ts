@@ -107,7 +107,8 @@ function migrateSettings() {
 migrateSettings();
 
 // ── Ingredient unit migration (L→ml, kg→g) ────────────────────────────────
-const INGREDIENT_UNIT_VERSION = '1';
+// v2 also converts threshold (v1 missed it)
+const INGREDIENT_UNIT_VERSION = '2';
 
 function migrateIngredientUnits() {
   const versionKey = 'pos_ingredients_unit_version';
@@ -119,13 +120,16 @@ function migrateIngredientUnits() {
       const converted = parsed.map((ing) => {
         const unit = ing.unit as string;
         const quantity = ing.quantity as number;
+        const threshold = ing.threshold as number;
         const costPerUnit = ing.costPerUnit as number | undefined;
         if (unit === 'L' || unit === 'kg') {
           const factor = 1000;
+          const baseUnit = unit === 'L' ? 'ml' : 'g';
           return {
             ...ing,
-            quantity: Math.round(quantity * factor * 1000) / 1000,
-            unit: unit === 'L' ? 'ml' : 'g',
+            quantity:  Math.round(quantity  * factor * 1000) / 1000,
+            threshold: Math.round(threshold * factor * 1000) / 1000,
+            unit: baseUnit,
             costPerUnit:
               costPerUnit !== undefined
                 ? Math.round((costPerUnit / factor) * 1_000_000) / 1_000_000

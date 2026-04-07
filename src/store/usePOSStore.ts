@@ -447,11 +447,13 @@ export const usePOSStore = create<POSState>((set, get) => ({
 
   addIngredient: (ingredient) => {
     set((state) => {
+      const factor = (ingredient.unit === 'L' || ingredient.unit === 'kg') ? 1000 : 1;
       const normalized = normalizeToBase(ingredient.quantity, ingredient.unit, ingredient.costPerUnit);
       const entry: Ingredient = {
         ...ingredient,
         id: crypto.randomUUID(),
-        quantity: normalized.quantity,
+        quantity:  normalized.quantity,
+        threshold: Math.round(ingredient.threshold * factor * 1000) / 1000,
         unit: normalized.unit,
         costPerUnit: normalized.costPerUnit,
       };
@@ -467,9 +469,16 @@ export const usePOSStore = create<POSState>((set, get) => ({
         if (i.id !== id) return i;
         const merged = { ...i, ...updates };
         // Re-normalize whenever quantity or unit changes
-        if (updates.quantity !== undefined || updates.unit !== undefined) {
+        if (updates.quantity !== undefined || updates.unit !== undefined || updates.threshold !== undefined) {
           const normalized = normalizeToBase(merged.quantity, merged.unit, merged.costPerUnit);
-          return { ...merged, quantity: normalized.quantity, unit: normalized.unit, costPerUnit: normalized.costPerUnit };
+          const factor = (merged.unit === 'L' || merged.unit === 'kg') ? 1000 : 1;
+          return {
+            ...merged,
+            quantity: normalized.quantity,
+            threshold: Math.round(merged.threshold * factor * 1000) / 1000,
+            unit: normalized.unit,
+            costPerUnit: normalized.costPerUnit,
+          };
         }
         return merged;
       });
