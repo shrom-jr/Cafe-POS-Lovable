@@ -796,8 +796,8 @@ const StockTab = () => {
                 const isPositive = mv.change > 0;
                 return (
                   <div key={mv.id} className="flex items-center gap-3 py-2.5 border-b border-white/[0.04] last:border-0">
-                    <span className={`text-sm font-semibold w-20 flex-shrink-0 tabular-nums ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
-                      {isPositive ? '+' : '−'}{displayQty(Math.abs(mv.change), ing?.unit ?? '')}
+                    <span className={`text-sm font-semibold min-w-[6rem] flex-shrink-0 tabular-nums ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                      {isPositive ? '+' : '−'}{ing?.unit ? displayQty(Math.abs(mv.change), ing.unit) : Math.abs(mv.change)}
                     </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-foreground truncate">{ing?.name ?? mv.ingredientId}</p>
