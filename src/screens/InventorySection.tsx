@@ -351,18 +351,29 @@ const RecipesTab = () => {
                   ))}
                 </select>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <input
-                    type="number"
-                    min="0"
-                    step="any"
-                    className={`${INPUT} w-20`}
-                    placeholder="Qty"
-                    value={row.quantity || ''}
-                    onChange={(e) => updateRow(idx, 'quantity', parseFloat(e.target.value) || 0)}
-                  />
-                  <span className="text-xs text-muted-foreground w-6 flex-shrink-0">
-                    {row.ingredientId ? baseUnitOf(getIngredient(row.ingredientId)?.unit ?? '') : ''}
-                  </span>
+                  {(() => {
+                    const unit = row.ingredientId ? baseUnitOf(getIngredient(row.ingredientId)?.unit ?? '') : '';
+                    return (
+                      <>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.5"
+                          className={`${INPUT} w-20`}
+                          placeholder={unit ? `e.g. 150` : 'Qty'}
+                          value={row.quantity || ''}
+                          onChange={(e) => {
+                            const raw = parseFloat(e.target.value);
+                            if (isNaN(raw)) { updateRow(idx, 'quantity', 0); return; }
+                            // Round to max 1 decimal place to prevent 0.0001-style values
+                            const clamped = Math.round(raw * 10) / 10;
+                            updateRow(idx, 'quantity', Math.max(0, clamped));
+                          }}
+                        />
+                        <span className="text-xs text-muted-foreground w-6 flex-shrink-0">{unit}</span>
+                      </>
+                    );
+                  })()}
                 </div>
                 <button onClick={() => removeRow(idx)} className="p-2 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-400/10 transition-colors flex-shrink-0">
                   <X size={14} />
